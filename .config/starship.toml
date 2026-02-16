@@ -4,9 +4,8 @@ add_newline = true
 
 # Command duration.
 [cmd_duration]
-min_time = 4
-show_milliseconds = false
-format = "󱎫 $duration "
+min_time = 500
+format = " 󱎫 [$duration]($style) "
 style = "bold italic #87A752"
 
 # Directory.
@@ -17,22 +16,15 @@ style = "bold cyan"
 
 # Hostname.
 [hostname]
-ssh_only = false
-format = "<$hostname>"
+ssh_only = true
+format = "[<$hostname>]($style)"
 trim_at = "-"
 style = "bold dimmed white"
-disabled = true
 
 # Character.
 [character]
 success_symbol = "[➜](bold green) "
 error_symbol = "[✖](bold red) "
-
-# Username.
-[username]
-show_always = false
-style_user = "bold dimmed blue"
-style_root = "bold dimmed red"
 
 # Packages.
 [package]
@@ -51,7 +43,7 @@ symbol = ""
 style = "bold yellow"
 
 [git_commit]
-commit_hash_length = 8
+commit_hash_length = 4
 style = "bold white"
 
 [git_state]
@@ -69,64 +61,67 @@ staged = "󰐖 ×${count} "
 renamed = "󰑕 ×${count} "
 deleted = "󰆴 ×${count} "
 style = "bright-white"
-format = "$all_status$ahead_behind| "
+format = "$all_status$ahead_behind"
 
 # Languages & Tools.
 [nodejs]
-format = " $version "
+format = "|  $version "
 style = "bold green"
 
 [rust]
-format = " $version "
+format = "|  $version "
 style = "bold red"
 
 [python]
-format = " $version "
+format = "|  $version "
 style = "bold blue"
 
 [golang]
-format = " $version "
+format = "|  $version "
 style = "bold cyan"
 
 [java]
-format = " $version "
+format = "|  $version "
 style = "bold purple"
 
 [kubernetes]
-format = "󱄄 $context "
+format = "| 󱄄 $context "
 style = "bold blue"
 
 [docker_context]
-format = " $context "
+format = "|  $context "
 style = "blue bold"
 
 [c]
-format = " $version "
+format = "|  $version "
 style = "bold orange"
 
 [dotnet]
-format = " $version "
+format = "|  $version "
 style = "bold blue"
 
 [dart]
-format = " $version "
+format = "|  $version "
 style = "bold cyan"
 
 [ruby]
-format = " $version "
+format = "|  $version "
 style = "bold red"
 
 [php]
-format = "󰑄 $version "
+format = "| 󰑄 $version "
 style = "bold purple"
 
 [lua]
-format = " $version "
+format = "|  $version "
 style = "bold blue"
 
 [cpp]
-format = " $version "
+format = "|  $version "
 style = "bold blue"
 
 [aws]
+disabled = true
+
+[gcloud]
 disabled = true
