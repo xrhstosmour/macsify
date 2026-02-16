@@ -41,12 +41,17 @@ if command -v pake &>/dev/null; then
         # Skip empty lines and comments.
         [[ -z "$line" || "$line" =~ ^# ]] && continue
 
-        name="${line%%|*}"
-        url="${line#*|}"
+        IFS='|' read -r name url icon <<< "$line"
         name="$(echo "$name" | xargs)"
         url="$(echo "$url" | xargs)"
+        icon="$(echo "$icon" | xargs)"
 
-        PAKE_CREATE_APP=1 pake "$url" --name "$name" --width 1200 --height 800 --dark-mode --new-window --enable-drag-drop --force-internal-navigation --wasm
+        pake_args=("$url" --name "$name" --width 1200 --height 800 --dark-mode --new-window --enable-drag-drop --force-internal-navigation --wasm)
+        if [[ -n "$icon" ]]; then
+            pake_args+=(--icon "$icon")
+        fi
+
+        PAKE_CREATE_APP=1 pake "${pake_args[@]}"
 
         app_source="$PWD/${name}.app"
         if [ -d "$app_source" ]; then

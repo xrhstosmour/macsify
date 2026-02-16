@@ -1,4 +1,4 @@
-# Format: <app_name>|<app_url>
+# Format: <app_name>|<app_url>|<optional_app_icon_url>
 Gemini|https://gemini.google.com
-Google Messages|https://messages.google.com/web
-Google Photos|https://photos.google.com
+Google Messages|https://messages.google.com/web|https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/google-messages.png
+Google Photos|https://photos.google.com|https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/google-photos.png
