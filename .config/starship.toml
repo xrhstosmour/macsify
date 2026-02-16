@@ -6,7 +6,7 @@ add_newline = true
 [cmd_duration]
 min_time = 4
 show_milliseconds = false
-format = "🕙 $duration "
+format = "󱎫 $duration "
 style = "bold italic #87A752"
 
 # Directory.
@@ -58,16 +58,16 @@ style = "bold white"
 format = '[\($state( $progress_current of $progress_total)\)]($style) '
 
 [git_status]
-conflicted = "⚔️ "
-ahead = "🏎️ ×${count} "
-behind = "🐢 ×${count} "
-diverged = "🏎️ ×${ahead_count} 🐢 ×${behind_count} "
-untracked = "🛤️ ×${count} "
-stashed = "📦 ×${count} "
-modified = "📝 ×${count} "
-staged = "🗃️ ×${count} "
-renamed = "📛 ×${count} "
-deleted = "🗑️ ×${count} "
+conflicted = "󰞇 "
+ahead = "󰶣 ×${count} "
+behind = "󰶡 ×${count} "
+diverged = "󰶣 ×${ahead_count} 󰶡 ×${behind_count} "
+untracked = "󰇘 ×${count} "
+stashed = "󰏗 ×${count} "
+modified = "󰏫 ×${count} "
+staged = "󰐖 ×${count} "
+renamed = "󰑕 ×${count} "
+deleted = "󰆴 ×${count} "
 style = "bright-white"
 format = "$all_status$ahead_behind| "
 
