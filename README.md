@@ -122,8 +122,9 @@ Open `Finder` and configure sidebar:
 
 ### `1Password`
 
-| Setup | Action |
-|-------|--------|
-| [SSH Agent](https://developer.1password.com/docs/ssh/get-started) | Enable SSH key management |
-| [Git Signing](https://1password.com/blog/git-commit-signing) | Enable commit signing |
-| Keyboard Shortcuts | `Settings → General → Keyboard Shortcuts`<br>• Autofill: `Key 2 + Shift + A`<br>• Quick Access: `Key 2 + Shift + S`<br>• Clear remaining |
+- [Enable SSH key management](https://developer.1password.com/docs/ssh/get-started).
+- [Enable commit signing](https://1password.com/blog/git-commit-signing).
+- Configure keyboard shortcuts (`Settings → General → Keyboard Shortcuts`):
+  - Autofill: `Key 2 + Shift + A`
+  - Quick Access: `Key 2 + Shift + S`
+  - Clear remaining shortcuts to avoid conflicts.
