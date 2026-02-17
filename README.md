@@ -24,7 +24,7 @@ Opinionated `macOS` configuration via shell scripts.
 | Cleanup | `Mole` + Bloatware removal |
 | Automation | Login and `Dock` items auto-configured |
 | Authentication | `TouchID` for `sudo` |
-| `PWA`s | via `Google Chrome` |
+| Progressive Web Applications | via `Google Chrome` |
 | Packages | See [Brewfile](packages/Brewfile) and [Store applications](packages/store_applications_ids.txt) |
 
 ## Pre-Installation
