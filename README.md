@@ -132,7 +132,7 @@ Open `Finder` and configure sidebar:
 ### `PWA`s
 
 1. Open `Google Chrome` and navigate to the below `URL`s:
-    - [`Gemini`](https://gemini.google.com/app)
+    - [`Google Gemini`](https://gemini.google.com/app)
     - [`Google Messages`](https://messages.google.com/web)
     - [`Google Photos`](https://photos.google.com/)
 2. In the right side of `URL` bar, look for a small computer screen with a down arrow, click it and then select **Install**.
