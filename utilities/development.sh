@@ -17,6 +17,7 @@ LANGUAGE_DISPLAY_NAMES=(
     "Node.js"
     "Python"
     "Ruby"
+    "Bun"
 )
 
 LANGUAGE_NAMES=(
@@ -26,6 +27,7 @@ LANGUAGE_NAMES=(
     "node"
     "python"
     "ruby"
+    "bun"
 )
 
 
