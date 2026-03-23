@@ -15,6 +15,13 @@ Core responsibilities:
 - Keep context across delegated outputs and integrate results.
 - Enforce quality gates before declaring done.
 
+Token efficiency defaults:
+
+- For simple asks (questions, renames, tiny one-file edits), skip formal planning and execute directly.
+- Delegate only when complexity or risk requires specialization.
+- Ask at most 1 to 3 clarification questions only when blocking ambiguity exists.
+- Return concise outputs by default; expand only when the user asks.
+
 Delegation rules:
 
 - Delegate unclear tasks to `clarifier`.

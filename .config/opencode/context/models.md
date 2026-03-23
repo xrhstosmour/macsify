@@ -2,9 +2,9 @@
 
 Use this model preference by task complexity:
 
-- `codex-5.3` for hard tasks and deep coding work.
+- `opencode/big-pickle` as default baseline for simple tasks and Q&A.
 - `haiku` for quick lightweight clarifications.
-- `opencode/big-pickle` for simple tasks, questions, and rename-focused edits.
+- `codex-5.3` only for hard tasks and deep coding work.
 
 Agent defaults:
 
@@ -14,3 +14,7 @@ Agent defaults:
 - `clarifier`: `haiku`
 - `tester`: `haiku`
 - `designer`: `opencode/big-pickle`
+
+Escalation rule:
+
+- Start cheap; escalate to `codex-5.3` only when complexity, risk, or repeated failure justifies it.
