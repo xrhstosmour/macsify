@@ -62,5 +62,5 @@ if ! command -v mise &>/dev/null; then
     log_info "Installing 'mise' version manager..."
     brew install mise
     log_success "'mise' installed successfully."
+    log_divider
 fi
-log_divider
