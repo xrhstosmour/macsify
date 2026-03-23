@@ -2,4 +2,4 @@
 mise use -g bun@latest && mise x bun -- bun install -g @tobilu/qmd && (fish -c 'fish_add_path "$HOME/.bun/bin"' 2>/dev/null; export PATH="$HOME/.bun/bin:$PATH")
 
 # https://github.com/sameerasw/airsync-mac
-LATEST_URL=\$(curl -s https://api.github.com/repos/sameerasw/airsync-mac/releases/latest | grep 'browser_download_url.*dmg' | cut -d '\"' -f 4) && curl -L \"\$LATEST_URL\" -o AirSync.dmg && sudo hdiutil attach AirSync.dmg -mountpoint /Volumes/AirSync && sudo cp -R /Volumes/AirSync/AirSync.app /Applications/ && sudo hdiutil detach /Volumes/AirSync && rm AirSync.dmg
+LATEST_URL=$(curl -s https://api.github.com/repos/sameerasw/airsync-mac/releases/latest | grep 'browser_download_url.*dmg' | cut -d '"' -f 4) && curl -L "$LATEST_URL" -o AirSync.dmg && sudo hdiutil attach AirSync.dmg -mountpoint /Volumes/AirSync && sudo cp -R /Volumes/AirSync/AirSync.app /Applications/ && sudo hdiutil detach /Volumes/AirSync && rm AirSync.dmg
