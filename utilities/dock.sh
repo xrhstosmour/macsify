@@ -33,7 +33,7 @@ apply_dock_configuration() {
         "/Applications/Visual Studio Code.app"
         "/Applications/DataGrip.app"
         "/Applications/Docker.app"
-        "/Applications/Postman.app"
+        "/Applications/Bruno.app"
         "/Applications/Spotify.app"
         "/Applications/LocalSend.app"
         "/Applications/Obsidian.app"
