@@ -1,8 +1,8 @@
 ---
-description: Implement approved scope to satisfy tests
+description: Implement approved scope
 agent: implementor
 ---
 
 # Code
 
-Implement approved scope with strict adherence to repository patterns.
+Implement approved scope. Show changes and iterate based on feedback until user approves.

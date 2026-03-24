@@ -1,8 +1,8 @@
 ---
-description: Plan a feature implementation and request approval before coding
+description: Assess scope and plan implementation approach
 agent: leader
 ---
 
 # Plan
 
-Assess scope and orchestrate requirements + architecture planning for the requested feature.
+Assess scope, present approach, and iterate based on feedback until user approves.
