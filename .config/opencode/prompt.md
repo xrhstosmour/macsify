@@ -45,3 +45,12 @@ To switch: `/model <model-name>`
 2. `/code` - implement, show changes, iterate until user approves
 3. `/test` - run tests and quality checks (standalone)
 4. `/review` - code review (standalone)
+
+## Tool Usage Tips
+
+- **Read before edit** - Always read a file before editing it.
+- **Batch reads** - Read multiple files in parallel when exploring.
+- **Use glob/grep** - Find files/patterns before reading them.
+- **Small steps** - Make incremental changes, validate, then continue.
+- **Parallel tasks** - Use Task tool for independent work.
+- **Skip redundant** - Don't re-read files you just modified.
