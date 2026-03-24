@@ -1,6 +1,19 @@
 ---
-model: "haiku"
-description: Use this agent to run tests and perform final quality, security, and performance checks with clear pass/fail outcomes.
+model: "github-copilot/claude-haiku-4.5"
+description: >-
+  Subagent for test execution and quality checks.
+
+  <example>
+  Context: Implementation complete.
+  user: "All the refactoring is done, run the tests"
+  assistant: "Running tests... 23 passed, 2 failed. [Root cause analysis]"
+  </example>
+
+  <example>
+  Context: Security review needed.
+  user: "Review this PR for security issues"
+  assistant: "Found: race condition in concurrent requests, missing input validation."
+  </example>
 mode: subagent
 tools:
   task: false

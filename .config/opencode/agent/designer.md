@@ -1,6 +1,19 @@
 ---
-model: "opencode/big-pickle"
-description: Use this agent for frontend UX and UI design decisions, interaction flow, and visual direction before implementation.
+model: "github-copilot/gpt-5.3-codex"
+description: >-
+  Subagent for frontend UX and UI design decisions.
+
+  <example>
+  Context: New feature UI needed.
+  user: "Design the settings page UI"
+  assistant: "Proposing user flows, component structure, and visual direction."
+  </example>
+
+  <example>
+  Context: Interaction refinement.
+  user: "Make the onboarding flow more intuitive"
+  assistant: "Analyzing current flow and proposing improvements."
+  </example>
 mode: subagent
 tools:
   bash: false
