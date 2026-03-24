@@ -1,5 +1,4 @@
 ---
-model: "github-copilot/gpt-5.3-codex"
 description: >-
   Subagent for architecture decisions and technical trade-offs only.
 

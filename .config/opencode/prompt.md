@@ -18,6 +18,18 @@ Read available context in the repository:
 - `context/`, `docs/` folders
 - Any `.md` files at root level
 
+## Model Selection
+
+By default, use FREE models to conserve quota. Ask user at session start:
+
+"Use free models or switch to premium models?"
+
+See `context/models.md` for model mappings and complexity escalation.
+
+To switch: `/model <model-name>`
+
+**Note:** When invoked directly, agents should still follow model selection from `context/models.md`.
+
 ## Operating Rules
 
 - Think first, then implement in small validated steps.

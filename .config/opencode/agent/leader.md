@@ -1,5 +1,4 @@
 ---
-model: "github-copilot/gpt-5.3-codex"
 description: >-
   Primary orchestration agent for pragmatic software development.
 

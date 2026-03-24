@@ -1,5 +1,4 @@
 ---
-model: "opencode/big-pickle"
 description: >-
   Subagent for frontend UX and UI design decisions.
 
