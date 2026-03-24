@@ -1,5 +1,5 @@
 ---
-model: "github-copilot/gpt-5.3-codex"
+model: "opencode/big-pickle"
 description: >-
   Subagent for frontend UX and UI design decisions.
 
