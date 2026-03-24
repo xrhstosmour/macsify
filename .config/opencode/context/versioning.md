@@ -15,7 +15,7 @@ chore(scope): upgrade `npm` dependencies
 
 **Wrap in backticks:**
 
-- Names (classes, functions, variables, services): `UserService`, `getUserById`
+- Names (classes, functions, variables, constants, services, modules, interfaces, types, enumerations): `UserService`, `getUserById`
 - Technical terms and acronyms: `API`, `CLI`, `SQL`, `HTTP`
 - File names and paths: `config.yaml`, `src/auth/`
 - Commands and tools: `npm`, `docker`, `gh`
@@ -43,7 +43,7 @@ refactor/<name>
 When a branch already has commits and you need to amend a specific earlier commit (e.g. addressing review feedback, fixing a typo):
 
 ```bash
-# Stage the fix, then create a fixup commit targeting the original
+# Stage the fix, then create a fixup commit targeting the original.
 git add <file>
 git commit --fixup <SHA_of_original_commit>
 ```
