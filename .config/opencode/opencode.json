@@ -1,6 +1,9 @@
 {
   "model": "opencode/big-pickle",
   "autoupdate": true,
+  "instructions": [
+    "~/.config/opencode/INSTRUCTIONS.md"
+  ],
   "tui": {
     "scroll_acceleration": {
       "enabled": true
