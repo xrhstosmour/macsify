@@ -25,6 +25,5 @@ Minimal specialist setup for pragmatic software development.
 
 - `communication.md` - Communication style
 - `knowledge.md` - Knowledge context
-- `models.md` - Model selection
 - `rules.md` - Implementation rules
 - `versioning.md` - Versioning, Git, and GitHub guidelines
