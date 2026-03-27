@@ -3,7 +3,7 @@
 ## Markdown Searching
 
 Use `qmd` for searching your markdown files.
-If not installed, use default `grep`/search tools instead.
+If not installed, use default search tools instead.
 Usage:
 
 ```bash
