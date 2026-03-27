@@ -27,6 +27,11 @@ git add <file>
 git commit --amend --no-edit
 ```
 
+### Git safety
+
+- Never force-push to `main`/`master`.
+- Never commit `.env`, secrets, or credential files. Warn user immediately if such files are staged.
+
 ### Review fixups
 
 When addressing review comments:
