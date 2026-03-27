@@ -22,7 +22,7 @@ Follow these steps in order.
 
 First, try to get the `PR` details from the current branch:
 ```bash
-gh pr view --json number,repository,url
+gh pr view --json number,headRepository,url
 ```
 
 If there is an open `PR` for the current branch, extract owner, repo, and `PR` number from the response.
