@@ -23,6 +23,7 @@ git commit --fixup <SHA>
 git rebase -i --autosquash master
 git add <file>
 git commit --amend --no-edit
+git push origin <current_branch> --force-with-lease
 ```
 
 ## Branch
