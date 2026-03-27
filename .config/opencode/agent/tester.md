@@ -1,5 +1,6 @@
 ---
 model: "github-copilot/claude-haiku-4.5"
+variant: "max"
 description: >-
   Subagent for test execution and quality checks.
   Examples: "Run the tests", "Review this PR for security"

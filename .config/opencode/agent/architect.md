@@ -1,5 +1,6 @@
 ---
 model: "github-copilot/claude-sonnet-4.6"
+variant: "max"
 description: >-
   Subagent for architecture decisions and technical trade-offs only.
   Examples: "Design a notification system", "Push or pull sync?"

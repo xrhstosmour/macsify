@@ -1,5 +1,6 @@
 ---
 model: "github-copilot/gpt-5.3-codex"
+variant: "xhigh"
 description: >-
   Subagent for precise implementation of approved scope.
   Examples: "Implement circuit breaker", "Fix data consistency"

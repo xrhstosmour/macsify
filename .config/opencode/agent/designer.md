@@ -1,5 +1,6 @@
 ---
 model: "github-copilot/claude-haiku-4.5"
+variant: "max"
 description: >-
   Subagent for frontend UX and UI design decisions.
   Examples: "Design settings page", "Improve onboarding flow"
