@@ -1,4 +1,5 @@
 ---
+model: "github-copilot/claude-haiku-4.5"
 description: >-
   Subagent for code review and quality assessment.
   Examples: "Review authentication changes", "Check diff before commit"

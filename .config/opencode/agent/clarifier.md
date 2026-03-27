@@ -1,4 +1,5 @@
 ---
+model: "github-copilot/claude-haiku-4.5"
 description: >-
   Subagent for transforming vague requests into clear requirements.
   Examples: "Add better error handling", "Add export functionality"
