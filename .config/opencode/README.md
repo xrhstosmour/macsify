@@ -22,7 +22,7 @@ Minimal specialist setup for pragmatic software development.
 | `leader` | Orchestration, delegates only when needed |
 | `clarifier` | Requirements clarification |
 | `architect` | Architecture decisions |
-| `designer` | UI/UX design (frontend only) |
+| `designer` | `UI`/`UX` design (frontend only) |
 | `implementor` | Bounded implementation |
 | `tester` | Tests and quality checks |
 | `reviewer` | Code review |
@@ -31,5 +31,6 @@ Minimal specialist setup for pragmatic software development.
 
 - `communication.md` - Communication style
 - `knowledge.md` - Knowledge context
+- `preferences.md` - Writing and formatting preferences
 - `rules.md` - Implementation rules
-- `versioning.md` - Versioning, Git, and GitHub guidelines
+- `versioning.md` - Versioning, `Git`, and `GitHub` guidelines
