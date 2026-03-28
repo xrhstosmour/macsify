@@ -1,18 +1,10 @@
 {
+  "$schema": "https://opencode.ai/config.json",
   "model": "opencode/big-pickle",
   "autoupdate": true,
   "instructions": [
     "~/.config/opencode/INSTRUCTIONS.md"
   ],
-  "tui": {
-    "scroll_acceleration": {
-      "enabled": true
-    },
-    "keybinds": {
-      "input_submit": "return",
-      "input_newline": "shift+return"
-    }
-  },
   "watcher": {
     "ignore": [
       "**/.DS_Store",
