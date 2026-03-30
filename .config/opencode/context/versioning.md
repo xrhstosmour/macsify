@@ -2,72 +2,58 @@
 
 ## Commits
 
-Conventional commits with backtick-wrapped technical terms.
-Enclose all technical identifiers, code elements, file names, and paths in backticks, while leaving natural language words unformatted.
+Conventional commits. Wrap technical terms in backticks.
 
-Example:
-
-```text
+```
 feat: Add `Sentry` integration
-feat: Add startup scripts
 fix: Fix `APIEndpoint` timeout
-refactor: Rename `UserService` to `AccountService`
-test: Add tests for `AuthMiddleware`
+refactor: Rename `utils` file to `utilities.py`
+test: Add tests for `User` model
+docs: Update `README.md` with setup instructions
 ```
 
-Use fixup for fixing review comments, correcting typos, small oversights in earlier commits.
-Use amend for single commit changes.
-
-For new changes, split into multiple commits by context rather than bundling everything into one. Each commit should represent a logical unit of work.
-
-Tests (unit or integration) for a feature, method, or change should be included in the same commit as the code they test, not in a separate commit.
-
-Example:
+- fixup: for review comment fixes, typos, small oversights
+- amend: for single commit changes
+- Split by context. Include tests in same commit as code.
 
 ```bash
-git add <file>
-git commit --fixup <SHA>
+git add <file> && git commit --fixup <SHA>
 git rebase -i --autosquash master
-git add <file>
 git commit --amend --no-edit
 ```
 
 ### Git safety
 
-- Never force-push to `main` or `master`.
-- Never commit `.env`, secrets, or credential files. Warn user immediately if such files are staged.
+- Never force-push to `main` or `master`
+- Never commit `.env`, secrets, credentials. Warn immediately if staged.
 
-### Review fixups
+### Fixups
 
-When addressing review comments:
+Target only original commits. NEVER fixup a fixup.
 
-- Create fixup commits only for changes tied to existing commits.
-- Target commits must be in current feature branch range: `<base_branch>..HEAD`.
-- Keep one target per fixup commit. Never mix hunks from different target `SHA`s.
-- Use `git add -p` to split hunks by target `SHA`.
-- If mapping is uncertain, stop and clarify before committing.
-- If change is genuinely new work (no valid fixup target), use a regular conventional commit.
-- Never push review-fix commits to `main` or `master`. Push to feature branch with `--force-with-lease`.
+Rules:
 
-Example:
+- Target must be in `<base>..HEAD`
+- One target per fixup. Never mix hunks from different `SHA`s
+- Use `git add -p` to split hunks
+- Uncertain mapping: stop and clarify
+- New work (no valid target): use regular commit
+- Push with `--force-with-lease`
+
+Wrong: `git commit --fixup <fixup_sha>`
+Right: `git commit --fixup <original_sha>`
+
+To fix a fixup: find original, fixup that directly, or `git rebase -i` to squash.
 
 ```bash
-git log --format="%H" <base_branch>..HEAD
-git add -p <file_or_files>
-git commit --fixup <target_sha_a>
-git add -p <file_or_files>
-git commit --fixup <target_sha_b>
-git push origin <current_branch> --force-with-lease
+# Original.
+abc123 feat: Add feature X
+# Fixup (correct).
+def456 fixup! feat: Add feature X
+# Another fix -> fixup ORIGINAL, NOT def456.
+git commit --fixup abc123
 ```
 
 ## Branch
 
-Employ branch naming conventions that reflect the type of work being done, using concise prefixes and descriptive names.
-
-Examples:
-
-```text
-feature/<name>
-fix/<name>
-refactor/<name>
-```
+`feature/<name>` / `fix/<name>` / `refactor/<name>`
