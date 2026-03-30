@@ -71,7 +71,32 @@
       ".browserslistrc",
       ".babelrc",
       "*.min.js",
-      "*.min.css"
+      "*.min.css",
+      "*.log",
+      "logs/**",
+      ".wrangler/**",
+      ".vercel/**",
+      ".serverless/**",
+      ".dynamodb/**",
+      ".esbuild/**",
+      ".tflog/**",
+      ".claude/**",
+      ".cursor/**",
+      ".windsurf/**",
+      ".github/**",
+      ".env",
+      ".env.*",
+      "!.env.example",
+      "*.local",
+      ".tmp/**",
+      ".temp/**",
+      "*.tmp",
+      "*.temp",
+      "Thumbs.db",
+      ".AppleDouble",
+      ".LSOverride",
+      ".DocumentRevisions-V100",
+      ".com.apple.timemachine.donotpresent"
     ]
   }
 }
