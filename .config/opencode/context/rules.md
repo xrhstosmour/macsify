@@ -9,12 +9,16 @@
 - Keep communication concise and direct.
 - Always read file before editing.
 - Read multiple files in parallel.
+- Before executing any command, state your reasoning.
+- Always use non-interactive mode.
+- Use absolute paths or verify them before destructive commands.
+- Inform user of long-running processes.
 
 ## Model Selection
 
 - Start using free models, upgrade to premium only when needed and approved by user.
 
-## Self-Critique (Ralph Wiggum Loop)
+## Self-Critique
 
 After implementing code, pause and self-critique:
 
@@ -22,6 +26,7 @@ After implementing code, pause and self-critique:
 2. Question your approach: "Did I do this right? Is there a better way?".
 3. If concerns arise, fix them before moving on.
 4. Max 3 iterations, then ask user for help.
+5. If you realize you made a mistake or ignored a rule, acknowledge it immediately, revert, and explain.
 
 ## Verification Before Code
 
