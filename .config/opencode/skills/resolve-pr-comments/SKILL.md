@@ -48,7 +48,7 @@ Get user confirmation before proceeding.
 2. NOT VALID: add `:eyes` reaction to each
 
 ```bash
-gh api "repos/<owner>/<repo>/pulls/comments/<id>/reactions" -X POST -F content='+1'
+gh api "repos/<owner>/<repo>/pulls/comments/<id>/reactions" -X POST -H "Accept: application/vnd.github+json" -F content='+1'
 gh api "repos/<owner>/<repo>/pulls/comments/<id>/reactions" -X POST -H "Accept: application/vnd.github+json" -F content='eyes'
 ```
 
