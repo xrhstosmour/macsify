@@ -126,10 +126,19 @@ gh api graphql -f query='mutation($threadId:ID!){resolveReviewThread(input:{thre
 
 ## 9. Finish
 
-1. Re-request reviews:
+1. Re-request reviews (skip reviewers who already approved):
    ```bash
-   gh api repos/<owner>/<repo>/pulls/<pr_number>/comments --jq '.[].user.login' | sort -u | grep -v bot | grep -v <user>
-   gh pr edit <pr_number> --add-reviewer <reviewer1> --add-reviewer ...
+   # Get approved reviewers to exclude
+   approved=$(gh pr view <pr_number> --json reviews -q '.reviews[] | select(.state=="APPROVED") | .author.login' | sort -u)
+
+   # Get all reviewers who commented (excluding self and bots)
+   reviewers=$(gh api repos/<owner>/<repo>/pulls/<pr_number>/comments --jq '.[].user.login' | sort -u | grep -v bot | grep -v <user>)
+
+   # Filter out approved reviewers
+   to_re_request=$(comm -23 <(echo "$reviewers") <(echo "$approved"))
+
+   # Re-request each reviewer
+   echo "$to_re_request" | xargs -I {} gh pr edit <pr_number> --add-reviewer {}
    ```
 2. Summary: `PR` link, resolved `SHA`s, not-valid reasons
 
