@@ -3,7 +3,7 @@
   "model": "opencode/big-pickle",
   "autoupdate": true,
   "instructions": [
-    "~/.config/opencode/INSTRUCTIONS.md"
+    "~/.config/opencode/AGENTS.md"
   ],
   "watcher": {
     "ignore": [
