@@ -18,7 +18,7 @@ description: Review PR review comments, assess validity, make fixes, create fixu
 2. Extract `owner/repo/pr_number`
 3. Fetch comments:
    ```bash
-   gh api graphql -f query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$number){reviewThreads(first:100){nodes{id,isResolved,comments(first:50){nodes{databaseId,author{login,isBot},body,createdAt,path,line,originalCommit{oid}}}}}}}}' -F owner=<owner> -F repo=<repo> -F number=<pr_number>
+   gh api graphql -f query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$number){reviewThreads(first:100){nodes{id,isResolved,comments(first:50){nodes{databaseId,author{login},body,createdAt,path,line,originalCommit{oid}}}}}}}}' -F owner=<owner> -F repo=<repo> -F number=<pr_number>
    ```
 4. Filter: include unresolved, skip resolved bots + already addressed (`SHA` reply, no follow-up)
 
@@ -48,8 +48,8 @@ Get user confirmation before proceeding.
 2. NOT VALID: add `:eyes` reaction to each
 
 ```bash
-gh api "repos/<owner>/<repo>/pulls/comments/<id>/reactions" -X POST -H "Accept: application/vnd.github+json" -F content='+1'
-gh api "repos/<owner>/<repo>/pulls/comments/<id>/reactions" -X POST -H "Accept: application/vnd.github+json" -F content='eyes'
+echo '{"content":"+1"}' | gh api "repos/<owner>/<repo>/pulls/comments/<id>/reactions" -X POST -H "Accept: application/vnd.github+json" --input -
+echo '{"content":"eyes"}' | gh api "repos/<owner>/<repo>/pulls/comments/<id>/reactions" -X POST -H "Accept: application/vnd.github+json" --input -
 ```
 
 ## 4. Make Changes
