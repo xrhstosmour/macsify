@@ -106,10 +106,12 @@ git push origin <branch> --force-with-lease
 
 ## 7. Post Valid
 
-Get all new `SHA`s (newest first, so reverse for oldest first = comment order):
+Get all new `SHA`s and verify mapping before replying.
+Commits are returned newest-first, reverse to match comment order (oldest fixup = comment #1).
+Always cross-check each `SHA` against its fixup message (`git log --oneline`) before mapping to a comment.
 
 ```bash
-git log --format="%H" -n <valid_count>
+git log --format="%H %s" -n <valid_count>
 ```
 
 Reply to each VALID comment in order (SHA[n] = comment #n):
@@ -138,17 +140,23 @@ gh api graphql -f query='mutation($threadId:ID!){resolveReviewThread(input:{thre
 
 1. Re-request reviews (skip reviewers who already approved):
    ```bash
-   # Get approved reviewers to exclude
-   approved=$(gh pr view <pr_number> --json reviews -q '.reviews[] | select(.state=="APPROVED") | .author.login' | sort -u)
+   # Get approved reviewers.
+   gh pr view <pr_number> --json reviews \
+     --jq '.reviews[] | select(.state=="APPROVED") | .author.login' \
+     | sort -u > /tmp/approved.txt
 
-   # Get all reviewers who commented (excluding self and bots)
-   reviewers=$(gh api repos/<owner>/<repo>/pulls/<pr_number>/comments --jq '.[].user.login' | sort -u | grep -v bot | grep -v <user>)
+   # Get all reviewers who commented (excluding self and bots).
+   gh api repos/<owner>/<repo>/pulls/<pr_number>/comments \
+     --jq '.[].user.login' \
+     | sort -u \
+     | grep -v bot \
+     | grep -v <user> > /tmp/reviewers.txt
 
-   # Filter out approved reviewers
-   to_re_request=$(comm -23 <(echo "$reviewers") <(echo "$approved"))
+   # Re-request only non-approved reviewers.
+   comm -23 /tmp/reviewers.txt /tmp/approved.txt \
+     | xargs -I {} gh pr edit <pr_number> --add-reviewer {}
 
-   # Re-request each reviewer
-   echo "$to_re_request" | xargs -I {} gh pr edit <pr_number> --add-reviewer {}
+   rm /tmp/approved.txt /tmp/reviewers.txt
    ```
 2. Summary: `PR` link, resolved `SHA`s, not-valid reasons
 
