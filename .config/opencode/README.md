@@ -7,16 +7,17 @@ Minimal specialist setup for pragmatic software development.
 ```text
 ~/.config/opencode/           # BASE CONFIG
 ├── opencode.json             # Main configuration
-├── INSTRUCTIONS.md           # Startup instructions
+├── AGENTS.md                 # Startup instructions
 ├── context/                  # Base context (loaded always)
 │   ├── communication.md
 │   ├── github.md
 │   ├── knowledge.md
+│   ├── models.md
 │   ├── preferences.md
 │   ├── rules.md
 │   └── versioning.md
 ├── commands/                 # Workflow commands
-├── agent/                    # Agent definitions
+├── agents/                   # Agent definitions
 └── skills/                   # Reusable skills
 ```
 
@@ -44,11 +45,12 @@ Minimal specialist setup for pragmatic software development.
 | File | Purpose |
 | ---- | ------- |
 | `communication.md` | Communication style guidelines |
+| `github.md` | `GitHub CLI` commands and `PR` guidelines |
 | `knowledge.md` | Tools and knowledge base info |
+| `models.md` | Model routing, selection by task, escalation path |
 | `preferences.md` | Writing and formatting preferences |
 | `rules.md` | Core implementation rules, safety, error handling, debugging |
 | `versioning.md` | `Git` conventions and commit rules |
-| `github.md` | `GitHub CLI` commands and `PR` guidelines |
 
 ## Skills
 
@@ -62,10 +64,10 @@ Skills are loaded by agents and triggered via commands.
 
 | Agent | Model | Purpose |
 | ----- | ----- | ------- |
-| `leader` | `claude-sonnet-4-5` | Orchestration, delegates only when needed |
-| `clarifier` | `claude-haiku-4-5` | Requirements clarification |
-| `architect` | `claude-sonnet-4-5` | Architecture decisions |
-| `designer` | `claude-haiku-4-5` | `UI`/`UX` design (frontend only) |
-| `implementor` | `claude-sonnet-4-5` | Bounded implementation |
-| `tester` | `claude-haiku-4-5` | Tests and quality checks |
-| `reviewer` | `claude-haiku-4-5` | Code review |
+| `leader` | `github-copilot/gpt-5` | Orchestration, delegates only when needed |
+| `clarifier` | `github-copilot/gpt-5-mini` | Requirements clarification |
+| `architect` | `github-copilot/gpt-5.4` | Architecture decisions |
+| `designer` | `github-copilot/gpt-5-mini` | `UI`/`UX` design (frontend only) |
+| `implementor` | `github-copilot/gpt-5.3-codex` | Bounded implementation |
+| `tester` | `github-copilot/gpt-5.2-codex` | Tests and quality checks |
+| `reviewer` | `github-copilot/gpt-5.4` | Code review |
