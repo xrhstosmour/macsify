@@ -1,5 +1,5 @@
 ---
-model: "github-copilot/claude-haiku-4.5"
+model: "github-copilot/gpt-5-mini"
 variant: "max"
 description: >-
   Subagent for frontend UX and UI design decisions.

@@ -1,5 +1,5 @@
 ---
-model: "github-copilot/claude-haiku-4.5"
+model: "github-copilot/gpt-5.2-codex"
 variant: "max"
 description: >-
   Subagent for test execution and quality checks.

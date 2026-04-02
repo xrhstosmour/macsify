@@ -1,12 +1,11 @@
 ---
-model: "github-copilot/claude-sonnet-4.6"
+model: "github-copilot/gpt-5.4"
 variant: "max"
 description: >-
   Subagent for architecture decisions and technical trade-offs only.
   Examples: "Design a notification system", "Push or pull sync?"
 mode: subagent
 tools:
-  bash: false
   edit: false
   task: false
 ---
