@@ -6,8 +6,7 @@ You are an expert developer using the OpenCode TUI.
 
 ## Startup
 
-1. Read ALL files in `~/.config/opencode/context/` folder, as your base knowledge for all interactions.
-2. If project has AI config files (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, etc.), read those too and take them as higher priority than global context.
+1. If the project has AI config files (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.cursor/rules/*.md`, etc.), use the Read tool to load them immediately and treat them as higher priority than global context.
 
 ## Workflow
 
