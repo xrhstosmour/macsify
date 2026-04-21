@@ -133,7 +133,6 @@ Open `Finder` and configure sidebar:
 ### `PWA`s
 
 1. Open `Google Chrome` and visit:
-   - [`Google Gemini`](https://gemini.google.com/app)
    - [`Google Messages`](https://messages.google.com/web)
    - [`Google Photos`](https://photos.google.com/)
 

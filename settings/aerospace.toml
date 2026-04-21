@@ -156,7 +156,7 @@ alt-k = 'exec-and-forget open -a /Applications/Obsidian.app'
 
 alt-quote = 'exec-and-forget open -a "/System/Applications/System Settings.app"'
 
-alt-slash = 'exec-and-forget open -a "$HOME/Applications/Chrome Apps.localized/Google Gemini.app"'
+alt-slash = 'exec-and-forget open -a "/Applications/Gemini.app"'
 
 alt-semicolon = 'exec-and-forget osascript ~/.config/scripts/open_wezterm.scpt'
 
