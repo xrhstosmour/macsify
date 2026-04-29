@@ -39,9 +39,14 @@ Opinionated `macOS` configuration via shell scripts.
 
 3. Customize packages and application lists:
 
-- Edit [packages/Brewfile](packages/Brewfile).
-- Edit [packages/additional_packages.txt](packages/additional_packages.txt).
-- Edit [packages/store_applications_ids.txt](packages/store_applications_ids.txt).
+    - Edit [packages/Brewfile](packages/Brewfile).
+    - Edit [packages/additional_packages.txt](packages/additional_packages.txt).
+    - Edit [packages/store_applications_ids.txt](packages/store_applications_ids.txt).
+
+4. Configure `AI` models:
+
+    - Edit [.config/opencode/agents/*.md](.config/opencode/agents/) with your selected models.
+    - Edit [.config/opencode/opencode.json](.config/opencode/opencode.json) with your preferred agent assignments.
 
 ## Installation
 
