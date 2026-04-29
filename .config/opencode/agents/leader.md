@@ -1,6 +1,6 @@
 ---
 model: "github-copilot/claude-sonnet-4.6"
-variant: "max"
+variant: "high"
 description: >-
   Primary orchestration agent for pragmatic software development.
   Examples:
