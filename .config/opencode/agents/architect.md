@@ -1,5 +1,5 @@
 ---
-model: "github-copilot/gpt-5.4-mini"
+model: "github-copilot/gpt-5.3-codex"
 variant: "max"
 description: >-
   Subagent for architecture decisions and technical trade-offs only.
