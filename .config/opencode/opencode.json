@@ -2,13 +2,17 @@
   "$schema": "https://opencode.ai/config.json",
   "model": "opencode/big-pickle",
   "agent": {
+    "plan": {
+      "mode": "subagent",
+      "model": "opencode-go/kimi-k2.5"
+    },
     "explore": {
       "mode": "subagent",
-      "model": "opencode/big-pickle"
+      "model": "opencode-go/deepseek-v4-pro"
     },
     "compaction": {
       "mode": "subagent",
-      "model": "opencode/big-pickle"
+      "model": "opencode-go/kimi-k2.5"
     }
   },
   "autoupdate": true,
