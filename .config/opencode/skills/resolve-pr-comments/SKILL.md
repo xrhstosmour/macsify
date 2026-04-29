@@ -18,17 +18,22 @@ Recommended model `github-copilot/gpt-5.4-mini`
    gh pr view --json number,headRepository,url,title
    ```
 2. Extract `owner/repo/pr_number`
-3. Fetch comments:
+3. Fetch review threads:
    ```bash
    gh api graphql --method POST -f query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$number){reviewThreads(first:100){nodes{id,isResolved,comments(first:50){nodes{databaseId,author{login},body,createdAt,path,line,originalCommit{oid}}}}}}}}' -F owner=<owner> -F repo=<repo> -F number=<pr_number>
    ```
-4. Filter: categorize comments:
-   - ALREADY RESOLVED: isResolved=true (thread resolved, skip - no action needed)
-   - VALID: isResolved=false AND you haven't replied yet (needs your fix)
-   - NOT VALID: isResolved=false AND you already replied with "not valid" reason
+4. Fetch standalone PR comments:
    ```bash
-   # Check if you already replied
+   gh api repos/<owner>/<repo>/issues/<pr_number>/comments --jq '.[] | {id, user: .user.login, body, created_at, node_id}'
+   ```
+5. Filter comments:
+   - Review threads: isResolved=false AND no reply from you
+   - Standalone: no reply from you
+   ```bash
+   # Check replies to review comment.
    gh api "repos/<owner>/<repo>/pulls/<pr_number>/comments" --jq '.[] | select(.id==<databaseId>) | ._links.self.href' | xargs -I {} gh api "{}/replies" --jq '.[] | select(.user.login=="<user>")'
+   # Check replies to standalone comment.
+   gh api "repos/<owner>/<repo>/issues/comments/<id>/replies" --jq '.[] | select(.user.login=="<user>")'
    ```
 
 ## 2. Assess
@@ -53,12 +58,15 @@ Get user confirmation before proceeding.
 
 ## 3. Batch Reactions
 
-1. VALID: add `:+1` reaction to each
-2. NOT VALID: add `:eyes` reaction to each
+Add reactions to acknowledge:
 
 ```bash
+# Review comments.
 echo '{"content":"+1"}' | gh api "repos/<owner>/<repo>/pulls/comments/<id>/reactions" -X POST -H "Accept: application/vnd.github+json" --input -
+# Review comments which are not valid.
 echo '{"content":"eyes"}' | gh api "repos/<owner>/<repo>/pulls/comments/<id>/reactions" -X POST -H "Accept: application/vnd.github+json" --input -
+# Standalone comments.
+echo '{"content":"+1"}' | gh api "repos/<owner>/<repo>/issues/comments/<id>/reactions" -X POST -H "Accept: application/vnd.github+json" --input -
 ```
 
 ## 4. Make Changes
@@ -83,7 +91,8 @@ Get user confirmation to commit.
 ## 5. Batch Commit
 
 Create commits locally first. Do NOT push until user explicitly approves.
-Commit each fixup in comment order:
+Commit each fixup in comment order. One fixup per original commit.
+If a comment touches files from different commits, split into multiple fixups.
 
 ```bash
 # Comment #1.
@@ -116,14 +125,16 @@ Always cross-check each `SHA` against its fixup message (`git log --oneline`) be
 git log --format="%H %s" -n <valid_count>
 ```
 
-Reply to each VALID comment in order (SHA[n] = comment #n):
+Reply with just the SHA URL(s), comma-separated for multiple:
 
 ```bash
-echo '{"body":"https://github.com/<owner>/<repo>/commit/<sha1>"}' | gh api "repos/<owner>/<repo>/pulls/<pr_number>/comments/<id1>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
-echo '{"body":"https://github.com/<owner>/<repo>/commit/<sha2>"}' | gh api "repos/<owner>/<repo>/pulls/<pr_number>/comments/<id2>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
+# Review thread comment.
+echo '{"body":"https://github.com/<owner>/<repo>/commit/<sha>"}' | gh api "repos/<owner>/<repo>/pulls/<pr_number>/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
+# Standalone comment.
+echo '{"body":"https://github.com/<owner>/<repo>/commit/<sha>"}' | gh api "repos/<owner>/<repo>/issues/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
 ```
 
-Resolve threads:
+Resolve review threads:
 
 ```bash
 gh api graphql -f query='mutation($threadId:ID!){resolveReviewThread(input:{threadId:$threadId}){thread{isResolved}}}' -F threadId=<thread_id>
@@ -131,11 +142,14 @@ gh api graphql -f query='mutation($threadId:ID!){resolveReviewThread(input:{thre
 
 ## 8. Post Not Valid
 
-For each NOT VALID comment:
+For each NOT VALID comment, reply with concise reason only:
 
 ```bash
+# Review thread comment.
 echo '{"body":"<reason>"}' | gh api "repos/<owner>/<repo>/pulls/<pr_number>/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
 gh api graphql -f query='mutation($threadId:ID!){resolveReviewThread(input:{threadId:$threadId}){thread{isResolved}}}' -F threadId=<thread_id>
+# Standalone comment.
+echo '{"body":"<reason>"}' | gh api "repos/<owner>/<repo>/issues/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
 ```
 
 ## 9. Finish
@@ -169,3 +183,5 @@ gh api graphql -f query='mutation($threadId:ID!){resolveReviewThread(input:{thre
 - Reply to review comments, not `PR` body
 - On command failure: show error, stop, ask user
 - Commit order must match comment order for correct `SHA` mapping
+- Reply with just the SHA URL(s), no extra text for valid comments
+- Reply with concise reason for not valid comments
