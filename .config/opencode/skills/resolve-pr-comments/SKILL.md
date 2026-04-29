@@ -27,8 +27,8 @@ Recommended model `github-copilot/gpt-5.4-mini`
    gh api repos/<owner>/<repo>/issues/<pr_number>/comments --jq '.[] | {id, user: .user.login, body, created_at, node_id}'
    ```
 5. Filter comments:
-   - Review threads: isResolved=false AND no reply from you
-   - Standalone: no reply from you
+   - Review threads: isResolved=false AND no reply from you AND author is not bot (except Copilot)
+   - Standalone: no reply from you AND author is not bot (except Copilot)
    ```bash
    # Check replies to review comment.
    gh api "repos/<owner>/<repo>/pulls/<pr_number>/comments" --jq '.[] | select(.id==<databaseId>) | ._links.self.href' | xargs -I {} gh api "{}/replies" --jq '.[] | select(.user.login=="<user>")'
@@ -125,13 +125,13 @@ Always cross-check each `SHA` against its fixup message (`git log --oneline`) be
 git log --format="%H %s" -n <valid_count>
 ```
 
-Reply with just the SHA URL(s), comma-separated for multiple:
+Reply with just the SHA URL(s), comma-separated for multiple. For standalone comments, quote the original comment above your reply:
 
 ```bash
 # Review thread comment.
 echo '{"body":"https://github.com/<owner>/<repo>/commit/<sha>"}' | gh api "repos/<owner>/<repo>/pulls/<pr_number>/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
-# Standalone comment.
-echo '{"body":"https://github.com/<owner>/<repo>/commit/<sha>"}' | gh api "repos/<owner>/<repo>/issues/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
+# Standalone comment, which will be answered with quote reply.
+echo '{"body":"> <original_comment_text>\n\nhttps://github.com/<owner>/<repo>/commit/<sha>"}' | gh api "repos/<owner>/<repo>/issues/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
 ```
 
 Resolve review threads:
@@ -142,14 +142,14 @@ gh api graphql -f query='mutation($threadId:ID!){resolveReviewThread(input:{thre
 
 ## 8. Post Not Valid
 
-For each NOT VALID comment, reply with concise reason only:
+For each NOT VALID comment, reply with concise reason only. For standalone comments, quote the original comment above your reply:
 
 ```bash
 # Review thread comment.
 echo '{"body":"<reason>"}' | gh api "repos/<owner>/<repo>/pulls/<pr_number>/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
 gh api graphql -f query='mutation($threadId:ID!){resolveReviewThread(input:{threadId:$threadId}){thread{isResolved}}}' -F threadId=<thread_id>
-# Standalone comment.
-echo '{"body":"<reason>"}' | gh api "repos/<owner>/<repo>/issues/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
+# Standalone comment, which will be answered with quote reply.
+echo '{"body":"> <original_comment_text>\n\n<reason>"}' | gh api "repos/<owner>/<repo>/issues/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
 ```
 
 ## 9. Finish
