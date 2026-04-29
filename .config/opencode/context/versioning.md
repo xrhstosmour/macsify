@@ -2,7 +2,8 @@
 
 ## Commits
 
-Conventional commits. Wrap in backticks:
+Conventional commits, without agent co-authors.
+Wrap in backticks:
 
 - technical identifiers
 - code elements
