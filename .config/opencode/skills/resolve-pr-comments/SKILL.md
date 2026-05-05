@@ -96,6 +96,23 @@ echo '{"content":"eyes"}' | gh api "repos/<owner>/<repo>/pulls/comments/<id>/rea
 echo '{"content":"+1"}' | gh api "repos/<owner>/<repo>/issues/comments/<id>/reactions" -X POST -H "Accept: application/vnd.github+json" --input -
 ```
 
+Reaction policy:
+- VALID review comments: must react with `+1`.
+- NOT VALID review comments: must react with `eyes`.
+- VALID standalone non-bot comments: must react with `+1`.
+- NOT VALID standalone non-bot comments: must react with `eyes`.
+- Bot standalone comments: skip reactions.
+
+Verification (required before Step 7/8):
+
+```bash
+# Review comment reaction check.
+gh api repos/<owner>/<repo>/pulls/comments/<id>/reactions --jq '.[] | select(.user.login=="<user>") | .content'
+
+# Standalone comment reaction check.
+gh api repos/<owner>/<repo>/issues/comments/<id>/reactions --jq '.[] | select(.user.login=="<user>") | .content'
+```
+
 ## 4. Make Changes
 
 For each VALID comment:
@@ -142,7 +159,24 @@ Get user confirmation to push.
 git push origin <branch> --force-with-lease
 ```
 
+After push, verify the remote branch contains the fixup commits before posting any PR replies:
+
+```bash
+# Local latest commits, newest first.
+git log --format="%H %s" -n <valid_count>
+
+# Remote head includes latest local commits.
+git fetch origin <branch>
+git rev-parse HEAD
+git rev-parse origin/<branch>
+
+# Optional strict check: each fixup SHA exists on remote branch.
+git branch -r --contains <fixup_sha> | grep "origin/<branch>"
+```
+
 ## 7. Post Valid
+
+Before posting any valid-comment reply, Step 3 reactions must be applied and verified, and Step 6 push must be completed and verified. If push has not happened yet, stop and ask for push approval.
 
 Get all new `SHA`s and verify mapping before replying.
 Commits are returned newest-first, reverse to match comment order (oldest fixup = comment #1).
@@ -168,6 +202,8 @@ gh api graphql -f query='mutation($threadId:ID!){resolveReviewThread(input:{thre
 ```
 
 ## 8. Post Not Valid
+
+Before posting or resolving any not-valid thread, Step 3 reactions must be applied and verified, and Step 6 push must be completed and verified. If push has not happened yet, stop and ask for push approval.
 
 For review thread comments from any author: Reply with concise reason + resolve.
 For standalone comments from non-bot authors only: Quote reply with reason. Bot standalones are skipped, no reply, no resolve.
@@ -208,6 +244,9 @@ echo '{"body":"> <original_comment_text>\n\n<reason>"}' | gh api "repos/<owner>/
 
 - No remote actions without user approval
 - Create fixup commits locally, show them to user first and get approval before pushing
+- Never reply/resolve PR comments before fixup commits are pushed and verified on remote branch
+- Reactions are mandatory: `+1` for valid, `eyes` for not valid, except bot standalone comments
+- Verify reactions exist before posting any reply/resolve actions
 - Reply to review comments, not `PR` body
 - On command failure: show error, stop, ask user
 - Commit order must match comment order for correct `SHA` mapping
