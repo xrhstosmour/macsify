@@ -5,6 +5,7 @@
 1. Look for a token in `~/.sentryclirc`.
 2. Look for an environment variable named `$SENTRY_AUTH_TOKEN`.
 3. Look for a token in 1Password (`op item get "Sentry Token" --fields label=credential --reveal`).
+4. Ask the user to provide a token.
 
 ## Commands
 
@@ -29,11 +30,6 @@ sentry-cli issues list -o <org> -p <proj> -i <id>
 ```
 
 ## Fetch events for an issue
-
-- `sentry-cli events list` doesn't filter by issue, use the REST API.
-- `full=true` required for stacktraces and request params.
-- URLs are organization-scoped: `/api/0/organizations/<org>/issues/<id>/events/`.
-- Token scopes: `event:read`, `org:read`, `project:read`.
 
 ```bash
 TOKEN=<token>
@@ -85,3 +81,10 @@ for r, count in sorted(routes.items(), key=lambda x: -x[1]):
     print(f'  {r}: {count} events')
 "
 ```
+
+## Notes
+
+- `sentry-cli events list` doesn't filter by issue, use the REST API.
+- `full=true` required for stacktraces and request params.
+- URLs are organization-scoped: `/api/0/organizations/<org>/issues/<id>/events/`.
+- Token scopes: `event:read`, `org:read`, `project:read`.
