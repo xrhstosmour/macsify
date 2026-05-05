@@ -54,8 +54,8 @@ Store `owner/repo/pr_number`.
    gh api repos/<owner>/<repo>/issues/<pr_number>/comments --jq '.[] | {id, user: .user.login, body, created_at, node_id}'
    ```
 5. Filter comments:
-   - Review threads: isResolved=false AND no reply from you AND author is not bot (except Copilot)
-   - Standalone: no reply from you AND author is not bot (except Copilot)
+   - Review threads: isResolved=false AND no reply from you (bot authors included, reply and resolve like any other)
+   - Standalone: no reply from you AND author is not bot (bot standalones are skipped — no reply, no resolve)
    ```bash
    # Check replies to review comment.
    gh api "repos/<owner>/<repo>/pulls/<pr_number>/comments" --jq '.[] | select(.id==<databaseId>) | ._links.self.href' | xargs -I {} gh api "{}/replies" --jq '.[] | select(.user.login=="<user>")'
@@ -152,16 +152,16 @@ Always cross-check each `SHA` against its fixup message (`git log --oneline`) be
 git log --format="%H %s" -n <valid_count>
 ```
 
-Reply with just the SHA URL(s), comma-separated for multiple. For standalone comments, quote the original comment above your reply:
+Reply and resolve for review thread comments (any author, bot or human). For standalone comments from non-bot authors: quote reply with fixup SHA(s). Bot standalones are skipped no reply, no resolve.
 
 ```bash
-# Review thread comment.
+# Review thread comment, reply with fixup SHA(s) + resolve, for both human and bot review comments.
 echo '{"body":"https://github.com/<owner>/<repo>/commit/<sha>"}' | gh api "repos/<owner>/<repo>/pulls/<pr_number>/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
-# Standalone comment, which will be answered with quote reply.
+# Standalone comment, non-bot only, quote reply with fixup SHA(s), no resolve.
 echo '{"body":"> <original_comment_text>\n\nhttps://github.com/<owner>/<repo>/commit/<sha>"}' | gh api "repos/<owner>/<repo>/issues/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
 ```
 
-Resolve review threads:
+Resolve review threads, after replying:
 
 ```bash
 gh api graphql -f query='mutation($threadId:ID!){resolveReviewThread(input:{threadId:$threadId}){thread{isResolved}}}' -F threadId=<thread_id>
@@ -169,13 +169,14 @@ gh api graphql -f query='mutation($threadId:ID!){resolveReviewThread(input:{thre
 
 ## 8. Post Not Valid
 
-For each NOT VALID comment, reply with concise reason only. For standalone comments, quote the original comment above your reply:
+For review thread comments from any author: Reply with concise reason + resolve.
+For standalone comments from non-bot authors only: Quote reply with reason. Bot standalones are skipped, no reply, no resolve.
 
 ```bash
-# Review thread comment.
+# Review thread comment, reply with reason + resolve, for both human and bot review comments.
 echo '{"body":"<reason>"}' | gh api "repos/<owner>/<repo>/pulls/<pr_number>/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
 gh api graphql -f query='mutation($threadId:ID!){resolveReviewThread(input:{threadId:$threadId}){thread{isResolved}}}' -F threadId=<thread_id>
-# Standalone comment, which will be answered with quote reply.
+# Standalone comment, non-bot only, quote reply with reason, no resolve.
 echo '{"body":"> <original_comment_text>\n\n<reason>"}' | gh api "repos/<owner>/<repo>/issues/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
 ```
 
