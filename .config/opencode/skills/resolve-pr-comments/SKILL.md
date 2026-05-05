@@ -228,12 +228,15 @@ echo '{"body":"> <original_comment_text>\n\n<reason>"}' | gh api "repos/<owner>/
      --jq '.reviews[] | select(.state=="APPROVED") | .author.login' \
      | sort -u > /tmp/approved.txt
 
-   # Get all reviewers who commented (excluding self and bots).
+   # Get all non-bot reviewers who commented (excluding self).
    gh api repos/<owner>/<repo>/pulls/<pr_number>/comments \
      --jq '.[].user.login' \
      | sort -u \
-     | grep -v bot \
-     | grep -v <user> > /tmp/reviewers.txt
+     | grep -v <user> \
+     | while read login; do
+         type=$(gh api "users/$login" --jq '.type' 2>/dev/null)
+         if [ "$type" != "Bot" ]; then echo "$login"; fi
+       done > /tmp/reviewers.txt
 
    # Re-request only non-approved reviewers.
    comm -23 /tmp/reviewers.txt /tmp/approved.txt \
