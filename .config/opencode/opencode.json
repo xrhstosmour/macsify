@@ -13,7 +13,7 @@
   },
   "autoupdate": true,
   "instructions": [
-    "~/.config/opencode/context/*.md"
+    "~/.config/opencode/context/**/*.md"
   ],
   "watcher": {
     "ignore": [
