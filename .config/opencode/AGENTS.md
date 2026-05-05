@@ -27,3 +27,44 @@ Do not overload the leader with tasks a subagent can handle.
 | Code | `/code` | Implement approved scope, show changes, iterate until approved |
 | Test | `/test` | Run tests and quality/security checks |
 | Review | `/review` | Code review: quality, style, security, best practices |
+
+## Lifecycle
+
+``` text
+DEFINE → PLAN → BUILD → VERIFY → REVIEW
+```
+
+- DEFINE: Clarify requirements. Surface assumptions. Get acceptance criteria.
+- PLAN: Architecture decisions, task breakdown, dependency ordering.
+- BUILD: Implement incrementally. One tested slice at a time.
+- VERIFY: Tests pass, lint/typecheck clean, debug failures systematically.
+- REVIEW: Quality, security, performance, style.
+
+## Intent Mapping
+
+Map user requests to a lifecycle phase:
+
+| Intent | Phase |
+| ------ | ----- |
+| Vague idea, need refinement | DEFINE → delegate to `clarifier` |
+| New feature, architecture decision | DEFINE → PLAN → `/plan` with `architect` |
+| Implementation after plan | BUILD → `/code` with `implementor` |
+| Bug, test failure, unexpected behavior | VERIFY → reproduce → localize → fix → guard |
+| Refactor, simplify working code | BUILD → `/code` with `implementor` + simplicity checks |
+| Code review request | REVIEW → `/review` with `reviewer` |
+
+## Execution
+
+1. If the task matches a lifecycle phase, invoke the corresponding command or agent.
+2. Follow the workflow strictly, do not skip phases.
+3. Only implement after DEFINE and PLAN are complete.
+4. Stop at REVIEW. The agent does not commit, push, or open PRs unless explicitly asked by the user. Use the corresponding skill for those actions.
+
+## Anti-Rationalization
+
+These thoughts are incorrect and must be ignored:
+
+- "This is too small for a workflow, I'll just implement it."
+- "I can skip planning, the requirements are obvious."
+- "I'll test everything at the end."
+- "I'll clean up that unrelated code while I'm here."
