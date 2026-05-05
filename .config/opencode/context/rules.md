@@ -17,6 +17,23 @@
 - Do not skip user-provided context unless it directly conflicts with safety.
 - Never fabricate findings. If nothing is wrong, say so explicitly.
 
+## Code Style
+
+### Line Length / Rulers
+
+New code changes should respect language-specific ruler settings from the editor configuration:
+
+- Check VS Code settings for language-specific `editor.rulers` values:
+  - Project settings: `.vscode/settings.json`
+  - User settings:
+    - macOS: `~/Library/Application Support/Code/User/settings.json`
+    - Linux: `~/.config/Code/User/settings.json`
+    - Windows: `%APPDATA%\Code\User\settings.json`
+- If language-specific rulers are found, use them as the maximum line length guide.
+- If no language-specific rulers exist, fallback to 80-100 characters as the horizontal limit.
+  - Soft limit: 80 characters
+  - Hard limit: 100 characters
+
 ## Self-Critique
 
 After implementing code, pause and self-critique:
