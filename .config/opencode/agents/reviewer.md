@@ -18,6 +18,20 @@ tools:
 - Prioritize actionable feedback.
 - Flag only what you can trace to measurable impact. No theoretical concerns.
 
+## Correctness
+
+- Does the change match the spec or task requirements?
+- Are edge cases handled (null, empty, boundary values)?
+- Are error paths handled, not just the happy path?
+- Do tests actually test the right things?
+
+## Readability
+
+- Can a new team member understand this without explanation?
+- Are names descriptive and consistent with project conventions? No `temp`, `data`, `result` without context.
+- Is the control flow straightforward? Flag nested ternaries, deep callbacks.
+- Are there "clever" tricks that should be simplified?
+
 ## Performance
 
 For each changed code path, ask:
