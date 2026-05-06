@@ -141,7 +141,7 @@ Both agents run in parallel. Wait for both to complete before proceeding.
 
 ## Synthesize findings
 
-Produce a unified review:
+Produce a unified review. Write like a teammate giving feedback in a chat thread, direct, no fluff, no emojis, no decorative formatting:
 
 ```
 ## PR Review: {pr_title}
@@ -150,8 +150,7 @@ Produce a unified review:
 One paragraph describing what the PR does and overall quality signal.
 
 ### 🔴 CRITICAL
-Findings rated CRITICAL or HIGH. Include sub-agent source, file path,
-and a concrete fix suggestion.
+Findings rated CRITICAL or HIGH. Include sub-agent source, file path, and a concrete fix suggestion.
 
 ### 🟡 MEDIUM
 Findings rated MEDIUM. Same format.
@@ -170,7 +169,7 @@ After presenting the review, ask the user:
 
 > Post review with inline comments to the PR?
 
-If yes, write each finding as a natural, human-like comment pointing to the exact line. Avoid robotic format — write like a teammate reviewing code. Then post as a review with inline comments:
+If yes, write each finding as a natural comment like a teammate reviewing code. Do not use emojis or markdown flourishes. Do not open with preambles. Just state the issue and suggestion directly. Then post as a review with inline comments:
 
 ```bash
 HEAD_SHA=$(gh pr view <pr_number> --repo <owner>/<repo> --json commits --jq '.commits[-1].oid')
