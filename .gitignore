@@ -1,1 +1,16 @@
 .DS_Store
+Thumbs.db
+.AppleDouble
+.LSOverride
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.Trashes
+*.swp
+*.swo
+*~
+._*
+*.tmp
+*.temp
+.tmp/
+.temp/
