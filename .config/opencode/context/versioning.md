@@ -55,6 +55,15 @@ Rules:
 - Uncertain mapping: stop and clarify
 - New work (no valid target): use regular commit
 - Push with `--force-with-lease`
+- Resolve target `SHA` from current branch history by path: `git log --format="%H %s" <base>..HEAD -- <path>`
+- Primary target is the latest original commit in range touching that path
+- If ambiguous, use line-level tie-breaker: `git blame -L <line>,<line> <path>`
+- Do not rely only on external metadata (e.g. PR `originalCommit.oid`)
+- Do not infer target by comment order
+- Exactly one fixup commit per target `SHA`
+- Multiple comments can share one fixup if they map to the same target `SHA`
+- Never mix files mapped to different target `SHA`s in one fixup commit
+- Before commit, verify staged files belong to a single target group: `git diff --cached --name-only`
 
 Wrong: `git commit --fixup <fixup_sha>`
 Right: `git commit --fixup <original_sha>`
