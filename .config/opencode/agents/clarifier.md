@@ -1,5 +1,5 @@
 ---
-model: "github-copilot/gpt-5.4"
+model: "opencode-go/deepseek-v4-pro"
 variant: "max"
 description: >-
   Subagent for transforming vague requests into clear requirements.
