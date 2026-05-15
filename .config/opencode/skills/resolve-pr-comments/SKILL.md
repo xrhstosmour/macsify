@@ -144,7 +144,7 @@ Create commits locally first. Do NOT push until user explicitly approves.
 Resolve target `SHA`s from current branch history.
 Group changes by target `SHA`.
 Never mix different target `SHA`s in one fixup commit.
-For further details see versioning.md.
+For further details see `~/.config/opencode/context/versioning.md`.
 
 ```bash
 # SHA group #1, all files mapped to sha1.

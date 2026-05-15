@@ -64,9 +64,9 @@ Map user requests to a lifecycle phase:
 
 When you encounter a link or keyword for these services, fetch data using the corresponding tool instructions:
 
-- `Phabricator`: `context/tools/phabricator.md`
-- `Sentry`: `context/tools/sentry.md`
-- `GitHub`: `context/tools/github.md`
+- `Phabricator`: `~/.config/opencode/context/tools/phabricator.md`
+- `Sentry`: `~/.config/opencode/context/tools/sentry.md`
+- `GitHub`: `~/.config/opencode/context/tools/github.md`
 
 ## Anti-Rationalization
 
