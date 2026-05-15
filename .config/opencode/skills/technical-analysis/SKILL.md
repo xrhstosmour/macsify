@@ -1,24 +1,29 @@
+---
+name: technical-analysis
+description: Produce a structured technical analysis, method-level change list, notes, and conservative time estimates.
+---
+
 # Technical Analysis Skill
 
 Analyze the user's feature request and produce a structured technical analysis document with method-level details, notes, and estimation.
 
-## Trigger
+## When to use
 
 When the user describes a feature or change, or provides a link to a task, and asks for a "technical analysis", "analysis", "estimation", or "breakdown", use this skill.
 
 ## Format
 
-Produce output in this exact structure.:
+Produce output in this exact structure:
 
 ```
 ### Technical Analysis:
 
 1. <Subtask title and changes grouped by logical change>:
-	- `<method_name>` at `<relative_file_path>`
-	- `<method_name>` at `<relative_file_path>`
+ - `<method_name>` at `<relative_file_path>`
+ - `<method_name>` at `<relative_file_path>`
 
 2. <Subtask title and changes grouped by logical change>:
-	- `<method_name>` at `<relative_file_path>`
+ - `<method_name>` at `<relative_file_path>`
 
 ...
 

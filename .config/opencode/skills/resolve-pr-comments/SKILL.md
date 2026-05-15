@@ -1,19 +1,21 @@
 ---
 name: resolve-pr-comments
-description: Review PR review comments, assess validity, make fixes, create fixup commits, push, reply with SHA links.
+description: Review PR review comments, assess validity, propose or make fixes, create fixup commits, push, and reply with SHA links.
 ---
+
+<!-- markdownlint-disable MD013 -->
 
 # Resolve PR Comments
 
 ## When to use
 
-"resolve pr comments" / "fix pr comments" / "/resolve-pr-comments <pr_url>"
+- Commands: "resolve pr comments", "fix pr comments", or "/resolve-pr-comments <pr_url>"
 
 ## 0. Resolve the PR
 
 If the user provides a GitHub PR URL, extract `owner`, `repo`, and `pr_number`:
 
-```
+```text
 # From URL: https://github.com/<owner>/<repo>/pull/<number>
 ```
 
@@ -29,8 +31,8 @@ If no URL or branch given, check if the current branch is a PR branch (not maste
 git branch --show-current
 ```
 
-If on master or main, abort and ask the user for a PR URL or branch name.
-Otherwise, use the current branch:
+If on `master` or `main`, stop and ask the user for a PR URL or branch name.
+Otherwise, proceed using the current branch:
 
 ```bash
 gh pr view --json number,title,body,headRepository,url
@@ -40,22 +42,29 @@ Store `owner/repo/pr_number`.
 
 ## 1. Prepare
 
-1. Fetch `PR`:
+1. Fetch `PR` metadata:
+
    ```bash
    gh pr view <pr_number> --repo <owner>/<repo> --json number,headRepository,url,title
    ```
+
 2. Extract `owner/repo/pr_number`
 3. Fetch review threads:
+
    ```bash
    gh api graphql --method POST -f query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$number){reviewThreads(first:100){nodes{id,isResolved,comments(first:50){nodes{databaseId,author{login},body,createdAt,path,line,originalCommit{oid}}}}}}}}' -F owner=<owner> -F repo=<repo> -F number=<pr_number>
    ```
+
 4. Fetch standalone PR comments:
+
    ```bash
    gh api repos/<owner>/<repo>/issues/<pr_number>/comments --jq '.[] | {id, user: .user.login, body, created_at, node_id}'
    ```
+
 5. Filter comments:
-   - Review threads: isResolved=false AND no reply from you (bot authors included, reply and resolve like any other)
-   - Standalone: no reply from you AND author is not bot (bot standalones are skipped — no reply, no resolve)
+   - Review threads: `isResolved == false` AND there is no reply from this agent (treat bot authors like any other author for review threads).
+   - Standalone comments: no reply from this agent AND the author is not a bot. Bot standalone comments are skipped: do not reply, react, or resolve.
+
    ```bash
    # Check replies to review comment.
    gh api "repos/<owner>/<repo>/pulls/<pr_number>/comments" --jq '.[] | select(.id==<databaseId>) | ._links.self.href' | xargs -I {} gh api "{}/replies" --jq '.[] | select(.user.login=="<user>")'
@@ -65,17 +74,16 @@ Store `owner/repo/pr_number`.
 
 ## 2. Assess
 
-For each comment, show (author, date, file:line, content) and assess:
+For each comment, present (author, date, `file:line`, content) and assess:
 
-- [VALID] + fix approach + target `SHA` (must be in `<base>..HEAD`)
-- [NOT VALID] + reason
+- VALID: Include a concise fix approach and the target `SHA` (the target commit must be within `<base>..HEAD`).
+- NOT VALID: Include a concise reason why no code change is required.
 
-Always map each VALID comment to a target `SHA` before coding.
-If mapping is unclear, stop and ask the user.
+Always map each VALID comment to a target `SHA` before making code changes. If mapping is unclear, pause and ask the user for clarification.
 
-Group results:
+Group results as follows:
 
-```
+```text
 VALID (N):
 #1: @author <file>:<line> -> fixup of `SHA`
 #2: @author <file>:<line> -> fixup of `SHA`
@@ -84,11 +92,11 @@ NOT VALID (N):
 #3: @author - <reason>
 ```
 
-Get user confirmation before proceeding.
+Get explicit user confirmation before proceeding with code changes.
 
 ## 3. Batch Reactions
 
-Add reactions to acknowledge:
+Add reactions to acknowledge comments:
 
 ```bash
 # Review comments.
@@ -100,11 +108,12 @@ echo '{"content":"+1"}' | gh api "repos/<owner>/<repo>/issues/comments/<id>/reac
 ```
 
 Reaction policy:
-- VALID review comments: must react with `+1`.
-- NOT VALID review comments: must react with `eyes`.
-- VALID standalone non-bot comments: must react with `+1`.
-- NOT VALID standalone non-bot comments: must react with `eyes`.
-- Bot standalone comments: skip reactions.
+
+- VALID review comments: React with `+1`.
+- NOT VALID review comments: React with `eyes`.
+- VALID standalone non-bot comments: React with `+1`.
+- NOT VALID standalone non-bot comments: React with `eyes`.
+- Bot standalone comments: Do not react.
 
 Verification (required before Step 7/8):
 
@@ -119,18 +128,18 @@ gh api repos/<owner>/<repo>/issues/comments/<id>/reactions --jq '.[] | select(.u
 ## 4. Make Changes
 
 Step 3 reactions must be applied and verified before making any code changes.
-If reactions have not been applied, STOP and return to Step 3.
+If reactions are not applied, stop and return to Step 3.
 
 For each VALID comment:
 
-1. Read relevant files, make changes for THIS comment only
-2. Run lint/syntax check, ensure code still works as before, fix any logic or indentation errors immediately
-3. Show changes: `file:line - preview`
-4. Get user approval before next
+1. Edit relevant files to address the single comment (one comment → one focused change where possible).
+2. Run lint/syntax checks and quick tests; address any failures immediately.
+3. Present the changes (`file:line - preview`) to the user for review.
+4. Obtain user approval before proceeding to the next change.
 
 After all approved, show final fixup plan:
 
-```
+```text
 #1: file1.ext -> fixup of abc123
 #2: file2.ext -> fixup of def456
 ```
@@ -140,17 +149,14 @@ Get user confirmation to commit.
 
 ## 5. Batch Commit
 
-Create commits locally first. Do NOT push until user explicitly approves.
-Resolve target `SHA`s from current branch history.
-Group changes by target `SHA`.
-Never mix different target `SHA`s in one fixup commit.
-For further details see `~/.config/opencode/context/versioning.md`.
+Create fixup commits locally first. Do NOT push until the user explicitly approves.
+Resolve target `SHA`s from the current branch history, and group changes by target `SHA`.
+Never mix different target `SHA`s in a single fixup commit.
+For further details see [~/.config/opencode/context/versioning.md](~/.config/opencode/context/versioning.md).
 
 ```bash
-# SHA group #1, all files mapped to sha1.
+# Example: create fixup commits grouped by target SHA
 git add <files_for_sha1> && git commit --fixup <sha1>
-
-# SHA group #2, all files mapped to sha2.
 git add <files_for_sha2> && git commit --fixup <sha2>
 ```
 
@@ -161,6 +167,7 @@ git diff --cached --name-only
 ```
 
 Verify:
+
 ```bash
 git status --short && git log --oneline <base>..HEAD
 ```
@@ -190,22 +197,18 @@ git branch -r --contains <fixup_sha> | grep "origin/<branch>"
 
 ## 7. Post Valid
 
-Before posting any valid-comment reply, Step 3 reactions must be applied and verified, and Step 6 push must be completed and verified. If push has not happened yet, stop and ask for push approval.
+Before posting any valid-comment reply, ensure Step 3 reactions were applied and verified, and Step 6 push was completed and verified. If the push has not occurred, stop and ask for push approval.
 
-Get all new `SHA`s and verify mapping before replying.
-Always map each comment to the fixup commit of its target `SHA`.
-Do not assume one comment == one fixup commit.
+Collect all new fixup `SHA`s and verify mapping before replying. Do not assume one comment equals one fixup commit.
 
 ```bash
 git log --format="%H %s" -n <fixup_commit_count>
 ```
 
-Reply and resolve for review thread comments (any author, bot or human). For standalone comments from non-bot authors: quote reply with fixup SHA(s). Bot standalones are skipped no reply, no resolve.
+Reply and resolve review thread comments (for both human and bot authors) by posting the fixup commit URL(s) and then resolving the thread. For standalone comments from non-bot authors, post a quoted reply including fixup SHA(s). Skip bot standalone comments (no reply, no resolve).
 
 ```bash
-# Review thread comment, reply with fixup SHA(s) + resolve, for both human and bot review comments.
 echo '{"body":"https://github.com/<owner>/<repo>/commit/<sha>"}' | gh api "repos/<owner>/<repo>/pulls/<pr_number>/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
-# Standalone comment, non-bot only, quote reply with fixup SHA(s), no resolve.
 echo '{"body":"> <original_comment_text>\n\nhttps://github.com/<owner>/<repo>/commit/<sha>"}' | gh api "repos/<owner>/<repo>/issues/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
 ```
 
@@ -217,7 +220,7 @@ gh api graphql -f query='mutation($threadId:ID!){resolveReviewThread(input:{thre
 
 ## 8. Post Not Valid
 
-Before posting or resolving any not-valid thread, Step 3 reactions must be applied and verified, and Step 6 push must be completed and verified. If push has not happened yet, stop and ask for push approval.
+Before posting or resolving any not-valid thread, ensure Step 3 reactions were applied and verified, and Step 6 push was completed and verified. If the push has not happened yet, stop and ask for push approval.
 
 For review thread comments from any author: Reply with concise reason + resolve.
 For standalone comments from non-bot authors only: Quote reply with reason. Bot standalones are skipped, no reply, no resolve.
@@ -233,6 +236,7 @@ echo '{"body":"> <original_comment_text>\n\n<reason>"}' | gh api "repos/<owner>/
 ## 9. Finish
 
 1. Re-request reviews (skip reviewers who already approved, and skip bots):
+
    ```bash
    # Get approved reviewers.
    gh pr view <pr_number> --json reviews \
@@ -255,16 +259,17 @@ echo '{"body":"> <original_comment_text>\n\n<reason>"}' | gh api "repos/<owner>/
 
    rm /tmp/approved.txt /tmp/reviewers.txt
    ```
+
 2. Summary: `PR` link, resolved `SHA`s, not-valid reasons
 
 ## Rules
 
-- No remote actions without user approval
-- Create fixup commits locally, show them to user first and get approval before pushing
-- Never reply/resolve PR comments before fixup commits are pushed and verified on remote branch
-- Reactions are mandatory: `+1` for valid, `eyes` for not valid, except bot standalone comments
-- Verify reactions exist before posting any reply/resolve actions
-- Reply to review comments, not `PR` body
-- On command failure: show error, stop, ask user
-- Reply with just the SHA URL(s), no extra text for valid comments
-- Reply with concise reason for not valid comments
+- No remote actions without user approval.
+- Create fixup commits locally, show them to the user first, and get approval before pushing.
+- Never reply/resolve PR comments before fixup commits are pushed and verified on the remote branch.
+- Reactions are mandatory: `+1` for valid, `eyes` for not valid, except for bot standalone comments.
+- Verify reactions exist before posting any reply or resolve actions.
+- Reply to review comments (not the PR body) when applicable.
+- On command failure: show the error, stop, and ask the user.
+- For valid comments: reply with just the SHA URL(s), no extra text.
+- For not-valid comments: reply with a concise reason.

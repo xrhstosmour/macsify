@@ -4,7 +4,7 @@ description: >
   Multi-agent PR code review orchestrator. Fetches a PR by URL or branch name,
   spawns specialist sub-agents for architecture and quality review, then
   synthesizes findings into a structured report. Activate with: "review my PR",
-  "review this PR", "/review-pr <url_or_branch>".
+  "review this PR", "/review-pr `<url_or_branch>`".
 ---
 
 # PR Review Orchestrator
@@ -15,12 +15,13 @@ Run a structured, multi-agent code review on a pull request by delegating
 architecture and quality concerns to specialist sub-agents and synthesizing
 their findings into a single actionable report.
 
-## Activation Triggers
+## When to use
 
 Activate when the user says any of:
+
 - "review my PR" / "review this PR" / "review the PR"
-- "review PR <url>" / "/review-pr <url>"
-- "code review <branch>" / "review branch <branch>"
+- "review PR `<url>`" / "/review-pr `<url>`"
+- "code review `<branch>`" / "review branch `<branch>`"
 
 ## Fetch the PR
 
@@ -64,14 +65,14 @@ Store the full diff and file list to pass to each sub-agent.
 
 Scan the changed file paths for signals:
 
-| Signal | Implication |
-|--------|-------------|
-| New database migrations, schema changes | Architecture review is high priority |
-| Auth, session, token, API key files | Security review is high priority |
-| Hot-path code (controllers, handlers, middleware) | Performance review is high priority |
-| Config, routes, infrastructure | Architecture review is high priority |
-| Tests only | Light review, focus on test quality |
-| Docs only | Light review, focus on clarity |
+| Signal                                            | Implication                          |
+| ------------------------------------------------- | ------------------------------------ |
+| New database migrations, schema changes           | Architecture review is high priority |
+| Auth, session, token, API key files               | Security review is high priority     |
+| Hot-path code (controllers, handlers, middleware) | Performance review is high priority  |
+| Config, routes, infrastructure                    | Architecture review is high priority |
+| Tests only                                        | Light review, focus on test quality  |
+| Docs only                                         | Light review, focus on clarity       |
 
 If the PR is large (>50 files), warn the user and ask if they want a
 focused review on specific files.
