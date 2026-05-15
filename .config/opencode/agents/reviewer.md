@@ -17,6 +17,7 @@ tools:
 - Suggest without blocking on minor issues.
 - Prioritize actionable feedback.
 - Flag only what you can trace to measurable impact. No theoretical concerns.
+- Do not restate what the diff does, focus on what is wrong or risky.
 
 ## Correctness
 
