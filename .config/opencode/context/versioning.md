@@ -31,6 +31,8 @@ Update `README.md` with setup instructions
 - fixup: for review comment fixes, typos, small oversights
 - amend: for single commit changes
 - Split by context. Include tests in same commit as code.
+- One topic per commit, never mix different contexts.
+- Single-line messages only, no commit bodies, no bullet lists in messages.
 
 ```bash
 git add <file> && git commit --fixup <SHA>
