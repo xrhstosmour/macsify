@@ -19,6 +19,10 @@
 
 ## Code Style
 
+### Comments
+
+All code comments in every language must end with a period. Comments go above the code they describe, not inline to the right.
+
 ### Line Length / Rulers
 
 New code changes should respect language-specific ruler settings from the editor configuration:
