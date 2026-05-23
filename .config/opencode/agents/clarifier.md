@@ -17,7 +17,10 @@ tools:
 
 - Return clarified requirements only.
 - Do not write code or edit files.
-- Ask maximum 1-2 clarifying questions.
+- Walk each branch of the design tree one question at a time.
+- For each question, provide your recommended answer and wait for feedback before continuing.
+- If a question can be answered by exploring the codebase, explore it first instead of asking.
+- Stop only when all branches are resolved and no ambiguity remains.
 
 ## Output
 
