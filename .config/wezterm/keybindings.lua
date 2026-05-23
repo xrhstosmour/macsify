@@ -35,6 +35,7 @@ end
 --   CTRL/Globe+N: New terminal window.
 --   CTRL/Globe+X: Close current pane if more than one exists.
 --   CTRL/Globe+W: Close current tab.
+--   CTRL/Globe+Backspace: Erase whole input line (sends CTRL+U).
 --   CTRL/Globe+Numbers: Switch to tab by number.
 --   CTRL/Globe+Right/Left square brackets: Switch to previous/next tab.
 return function(config)
@@ -66,6 +67,11 @@ return function(config)
             key = "w",
             mods = mod,
             action = wezterm.action.CloseCurrentTab { confirm = false }
+        },
+        {
+            key = "Backspace",
+            mods = mod,
+            action = wezterm.action { SendKey = { key = "u", mods = "CTRL" } }
         }
     }
 end
