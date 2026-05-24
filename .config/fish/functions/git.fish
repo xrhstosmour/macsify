@@ -511,24 +511,20 @@ function git_merge_to_default_branch
     set branch_to_be_merged "$remote/$upstream_branch"
     set local_branch (string replace "origin/" "" "$default_branch")
 
-    # Force push current branch.
-    log_info "Force pushing `$current_branch` to `$remote/$upstream_branch`..."
-    git push "$remote" "HEAD:$upstream_branch" --force-with-lease
-
     git checkout "$local_branch"
     git reset --hard "$default_branch"
-    git fetch "$remote" "$upstream_branch"
+    git fetch "$remote" "$current_branch"
 
     set new_commits_count (git rev-list --count "$default_branch..FETCH_HEAD")
-    if test "$new_commits_count" -gt 1
+    if test "$new_commits_count" -ge 1
         set no_ff_option "--no-ff"
-        set merge_commit_title "Merge branch `$upstream_branch`"
+        set merge_commit_title "Merge branch `$current_branch`"
         if test -n "$argv[2]"
             set merge_commit_body "Closes #$argv[2]"
         end
     end
 
-    log_info "The following commits will be merged from `$upstream_branch` to `$default_branch`:"
+    log_info "The following commits will be merged from `$current_branch` to `$default_branch`:"
     git --no-pager log --decorate --graph --oneline "$default_branch..FETCH_HEAD"
 
     log_warning "Do you want to merge and push these commits to `$default_branch`? (Y/N):"
