@@ -18,6 +18,8 @@ This is the skill. Everything else is mechanical. If you have a fast, determinis
 
 Spend disproportionate effort here. Be aggressive. Be creative. Refuse to give up.
 
+Before building a loop, check Sentry, if the project uses it (`~/.config/opencode/context/tools/sentry.md`). Sentry issues provide stack traces, request params, and breadcrumbs that shortcut the reproduction process. Use them to narrow the scope before constructing a loop.
+
 ### Ways to construct one, try them in roughly this order
 
 1. Failing test at whatever seam reaches the bug, unit, integration, or e2e.
@@ -40,7 +42,7 @@ The goal is a higher reproduction rate, not a clean repro. Loop the trigger 100x
 
 ### When you cannot build a loop
 
-Stop and say so explicitly. List what you tried. Ask the user for: access to the environment that reproduces it, a captured artifact (HAR file, log dump, core dump, screen recording with timestamps), or permission to add temporary instrumentation. Do not proceed to Phase 2 without a loop.
+Stop and say so explicitly. List what you tried. Ask the user for: access to the environment that reproduces it, a captured artifact (Sentry issue, HAR file, log dump, core dump, screen recording with timestamps), or permission to add temporary instrumentation. Do not proceed to Phase 2 without a loop.
 
 ## Phase 2: Reproduce
 
