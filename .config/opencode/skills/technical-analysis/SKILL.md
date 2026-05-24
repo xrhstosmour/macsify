@@ -1,6 +1,9 @@
 ---
 name: technical-analysis
-description: Produce a structured technical analysis, method-level change list, notes, and conservative time estimates.
+description: >
+  Produce a structured technical analysis with method-level change list, notes,
+  and conservative time estimates. Also find architectural deepening
+  opportunities when user asks for architecture review or refactoring candidates.
 ---
 
 # Technical Analysis Skill
@@ -19,11 +22,11 @@ Produce output in this exact structure:
 ### Technical Analysis:
 
 1. <Subtask title and changes grouped by logical change>:
- - `<method_name>` at `<relative_file_path>`
- - `<method_name>` at `<relative_file_path>`
+  - `<method_name>` at `<relative_file_path>`
+  - `<method_name>` at `<relative_file_path>`
 
 2. <Subtask title and changes grouped by logical change>:
- - `<method_name>` at `<relative_file_path>`
+  - `<method_name>` at `<relative_file_path>`
 
 ...
 
@@ -62,3 +65,27 @@ Total: <sum> workdays -> ~<weeks> weeks -> ~<sprints> sprints
 5. Group changes into logical numbered items.
 6. Estimate each item in workdays (be conservative), adding test coverage time.
 7. Present the result and iterate with the user until approved.
+
+## Architecture Improvement
+
+When the user asks for architecture review, refactoring candidates, or "find deepening opportunities", supplement the technical analysis with an architecture review. Use these concepts:
+
+### Core concepts
+
+- Module: Anything with an interface and an implementation (function, class, package, slice).
+- Interface: Everything a caller must know to use the module (types, invariants, error modes, ordering).
+- Deep module: A lot of behavior behind a small interface. High leverage.
+- Shallow module: Interface nearly as complex as the implementation. Low leverage.
+- Seam: Where an interface lives, a place behavior can be altered without editing in place.
+
+### Deletion test
+
+For any module you suspect is shallow, imagine deleting it. If complexity vanishes (was a pass-through), it was not earning its keep. If complexity reappears across N callers (they each reimplement the same logic), it was earning its keep.
+
+### Process
+
+1. Walk the codebase and note friction: Where does understanding one concept require bouncing between many small modules? Where are modules shallow? Where has code been extracted just for testability but the real bugs hide in how it is called?
+2. For each friction point, present: Files involved, the problem, a proposed deepening, and the benefits (locality, leverage, testability).
+3. Rank candidates by impact (Strong, Worth exploring, Speculative).
+4. Let the user pick which to explore, then drill into the design tree with them.
+

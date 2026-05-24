@@ -42,7 +42,7 @@ Minimal specialist setup for pragmatic software development.
 | `/caveman` | - | Toggle ultra-compressed caveman communication mode |
 | `/resolve-pr-comments` | - | Resolve `PR` review comments |
 | `/review-pr` | - | Multi-agent `PR` review, can post inline comments |
-| `/technical-analysis` | - | Produce a structured technical analysis with method-level changes, notes, and estimation |
+| `/technical-analysis` | - | Structured technical analysis with method-level changes, notes, estimation, and architecture improvement |
 
 ## Context Files
 
@@ -64,6 +64,7 @@ Skills are loaded by agents and triggered via commands.
 | ----- | ------ | ------- |
 | `resolve_pr_comments` | `/resolve-pr-comments` | Review `PR` comments, assess validity, make fixup commits, push, reply with `SHA` links |
 | `review_pr` | `/review-pr` | Multi-agent `PR` review, spawns agents in parallel, can post inline comments |
+| `technical_analysis` | `/technical-analysis` | Structured technical analysis with method-level changes, notes, estimation, and architecture deepening opportunities |
 | `caveman` | `/caveman` | Ultra-compressed communication mode, cuts token usage by dropping filler while keeping technical accuracy |
 
 ## Agents
