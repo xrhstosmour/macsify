@@ -49,7 +49,7 @@ Map user requests to a lifecycle phase:
 | Vague idea, need refinement | DEFINE → delegate to `clarifier` |
 | New feature, architecture decision | DEFINE → PLAN → `/plan` with `architect` |
 | Implementation after plan | BUILD → `/code` with `implementor` |
-| Bug, test failure, unexpected behavior | VERIFY → reproduce → localize → fix → guard |
+| Bug, test failure, unexpected behavior | VERIFY → reproduce → localize → fix → guard. For hard bugs use `/diagnose`. |
 | Refactor, simplify working code | BUILD → `/code` with `implementor` + simplicity checks |
 | Code review request | REVIEW → `/review` with `reviewer` |
 
