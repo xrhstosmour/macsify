@@ -41,6 +41,7 @@ Minimal specialist setup for pragmatic software development.
 | `/review` | `reviewer` | Review code quality |
 | `/caveman` | - | Toggle ultra-compressed caveman communication mode |
 | `/diagnose` | - | Structured 6-phase debugging loop for hard bugs and performance regressions |
+| `/handoff` | - | Compact conversation into a handoff doc for another agent session |
 | `/resolve-pr-comments` | - | Resolve `PR` review comments |
 | `/review-pr` | - | Multi-agent `PR` review, can post inline comments |
 | `/technical-analysis` | - | Structured technical analysis with method-level changes, notes, estimation, and architecture improvement |
@@ -68,6 +69,7 @@ Skills are loaded by agents and triggered via commands.
 | `technical_analysis` | `/technical-analysis` | Structured technical analysis with method-level changes, notes, estimation, and architecture deepening opportunities |
 | `caveman` | `/caveman` | Ultra-compressed communication mode, cuts token usage by dropping filler while keeping technical accuracy |
 | `diagnose` | `/diagnose` | Disciplined diagnosis loop: reproduce, minimise, hypothesise, instrument, fix, regression-test |
+| `handoff` | `/handoff` | Compact conversation into a handoff document for fresh agent sessions |
 
 ## Agents
 
