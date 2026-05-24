@@ -40,6 +40,7 @@ Minimal specialist setup for pragmatic software development.
 | `/test` | `tester` | Run tests and checks |
 | `/review` | `reviewer` | Review code quality |
 | `/caveman` | - | Toggle ultra-compressed caveman communication mode |
+| `/diagnose` | - | Structured 6-phase debugging loop for hard bugs and performance regressions |
 | `/resolve-pr-comments` | - | Resolve `PR` review comments |
 | `/review-pr` | - | Multi-agent `PR` review, can post inline comments |
 | `/technical-analysis` | - | Structured technical analysis with method-level changes, notes, estimation, and architecture improvement |
@@ -66,6 +67,7 @@ Skills are loaded by agents and triggered via commands.
 | `review_pr` | `/review-pr` | Multi-agent `PR` review, spawns agents in parallel, can post inline comments |
 | `technical_analysis` | `/technical-analysis` | Structured technical analysis with method-level changes, notes, estimation, and architecture deepening opportunities |
 | `caveman` | `/caveman` | Ultra-compressed communication mode, cuts token usage by dropping filler while keeping technical accuracy |
+| `diagnose` | `/diagnose` | Disciplined diagnosis loop: reproduce, minimise, hypothesise, instrument, fix, regression-test |
 
 ## Agents
 
