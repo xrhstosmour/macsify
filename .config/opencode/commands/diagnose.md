@@ -1,6 +1,5 @@
 ---
 description: Structured debugging loop for hard bugs and performance regressions
-agent: leader
 ---
 
 # Diagnose
