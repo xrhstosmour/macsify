@@ -36,7 +36,7 @@ Minimal specialist setup for pragmatic software development.
 | Command | Agent | Purpose |
 | ------ | ----- | ------- |
 | `/plan` | `leader` | Plan and scope task |
-| `/code` | `implementor` | Implement changes |
+| `/code` | `implementor` | Implement changes using TDD vertical slices |
 | `/test` | `tester` | Run tests and checks |
 | `/review` | `reviewer` | Review code quality |
 | `/caveman` | - | Toggle ultra-compressed caveman communication mode |
@@ -79,6 +79,6 @@ Skills are loaded by agents and triggered via commands.
 | `clarifier` | `github-copilot/grok-code-fast-1` | Requirements clarification with branch-by-branch grilling |
 | `architect` | `github-copilot/gpt-5.4-mini` | Architecture decisions |
 | `designer` | `github-copilot/gpt-5.4-mini` | `UI`/`UX` design (frontend only) |
-| `implementor` | `github-copilot/gpt-5.3-codex` | Bounded implementation |
+| `implementor` | `github-copilot/gpt-5.3-codex` | Bounded implementation with TDD vertical slices |
 | `tester` | `github-copilot/gpt-5.4-mini` | Tests and quality checks |
 | `reviewer` | `github-copilot/gpt-5.4-mini` | Code review, security, performance analysis |

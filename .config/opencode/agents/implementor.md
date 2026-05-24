@@ -18,13 +18,20 @@ tools:
 - Match the existing style, naming conventions, and patterns in the file.
 - If the task is ambiguous or has a dependency you cannot resolve, stop and report it — do not guess.
 - Avoid architectural drift: do not introduce new abstractions unless the task requires them.
+- Build one vertical slice at a time: One test, one implementation, one refactor pass. Never write all tests first then all implementation (horizontal slicing, produces tests coupled to imagined behavior).
+- Write ONE test for ONE behavior through the public interface, watch it fail (RED), then write minimal code to pass (GREEN).
+- Only enough code to pass the current test. Do not anticipate future tests or add speculative features.
+- Never refactor while RED. Get to GREEN first. Run tests after each refactor step.
+- Tests verify behavior through public interfaces, not implementation details. A renamed internal function should not break tests.
+- Mock only at system boundaries (external services, non-deterministic ops). Prefer real implementations or lightweight fakes for internal collaborators.
 
 ## Steps
 
 1. Read every file you will change.
-2. Implement the change using Edit (prefer) or Write (new files only).
-3. Validate by running the relevant test file(s) if a run command was provided in the task.
-4. If validation fails, fix the issue and re-run. Report if you cannot resolve it.
+2. Plan: Identify the behaviors to test, confirm with user if unclear.
+3. Implement in vertical slices (RED → GREEN → REFACTOR) using Edit (prefer) or Write (new files only).
+4. Validate: Run the relevant test file(s) after each slice completes.
+5. If validation fails, fix the issue and re-run. Report if you cannot resolve it.
 
 ## Output
 
