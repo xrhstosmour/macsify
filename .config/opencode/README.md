@@ -72,7 +72,7 @@ Skills are loaded by agents and triggered via commands.
 | Agent | Model | Purpose |
 | ----- | ----- | ------- |
 | `leader` | `github-copilot/gpt-5.4` | Orchestration, delegates only when needed |
-| `clarifier` | `github-copilot/grok-code-fast-1` | Requirements clarification |
+| `clarifier` | `github-copilot/grok-code-fast-1` | Requirements clarification with branch-by-branch grilling |
 | `architect` | `github-copilot/gpt-5.4-mini` | Architecture decisions |
 | `designer` | `github-copilot/gpt-5.4-mini` | `UI`/`UX` design (frontend only) |
 | `implementor` | `github-copilot/gpt-5.3-codex` | Bounded implementation |
