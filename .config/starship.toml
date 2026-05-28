@@ -84,10 +84,6 @@ style = "bold cyan"
 format = "|  $version "
 style = "bold purple"
 
-[kubernetes]
-format = "| 󱄄 $context "
-style = "bold blue"
-
 [docker_context]
 format = "|  $context "
 style = "blue bold"
@@ -124,4 +120,7 @@ style = "bold blue"
 disabled = true
 
 [gcloud]
+disabled = true
+
+[kubernetes]
 disabled = true
