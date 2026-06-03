@@ -12,14 +12,26 @@ abbr us "brew update && brew upgrade && brew upgrade --cask && brew cleanup && m
 abbr cs "mo clean && mo optimize"
 abbr pi "brew install"
 abbr pr "brew uninstall"
-abbr ip "printf 'IPv4 (en0): %s\n' $(ipconfig getifaddr en0)"
 abbr ks "sudo killall coreaudiod bluetoothd bluetoothaudiod"
-abbr wrip "witr --port"
-abbr wpi "witr --pid"
 abbr ado "defaults write com.apple.sharingd DiscoverableMode -string 'Everyone' && killall sharingd"
 abbr adc "defaults write com.apple.sharingd DiscoverableMode -string 'Off' && killall sharingd"
 abbr po "sudo shutdown -h now"
 abbr zzz "sudo pmset sleepnow"
+abbr sc "sudo launchctl"
+abbr scsts "sudo launchctl list"
+abbr sci "sudo launchctl print"
+abbr scstr "sudo launchctl load"
+abbr sce "sudo launchctl load -w"
+abbr scstp "sudo launchctl unload"
+abbr scd "sudo launchctl unload -w"
+abbr scrr "sudo launchctl kickstart -k"
+abbr des "disable_android_emulators_audio"
+abbr adbp "adb pair"
+
+# Network abbreviations.
+abbr ip "printf 'IPv4 (en0): %s\n' $(ipconfig getifaddr en0)"
+abbr wrip "witr --port"
+abbr wpi "witr --pid"
 
 # Terminal tools abbreviations.
 abbr cat "bat"
@@ -42,6 +54,9 @@ abbr fm "spf"
 abbr oc "opencode"
 abbr ocl "opencode_session_list"
 abbr c "code"
+abbr sprd "printf '\\033]1337;SetUserVar=%s=%s\\007' tab_color cmVk"
+abbr sstg "printf '\\033]1337;SetUserVar=%s=%s\\007' tab_color eWVsbG93"
+abbr sdvl "printf '\\033]1337;SetUserVar=%s=%s\\007' tab_color Z3JlZW4="
 
 # `Git` abbreviations.
 abbr egc "code ~/.gitconfig"
@@ -111,20 +126,4 @@ abbr dcd "docker compose down"
 abbr de "docker compose exec --it /bin/bash"
 abbr dcl "docker compose down -v --remove-orphans && echo y | docker system prune -a --volumes"
 
-# Services abbreviations.
-abbr sc "sudo launchctl"
-abbr scsts "sudo launchctl list"
-abbr sci "sudo launchctl print"
-abbr scstr "sudo launchctl load"
-abbr sce "sudo launchctl load -w"
-abbr scstp "sudo launchctl unload"
-abbr scd "sudo launchctl unload -w"
-abbr scrr "sudo launchctl kickstart -k"
 
-# Emulators abbreviations.
-abbr des "disable_android_emulators_audio"
-
-# `WezTerm` abbreviations.
-abbr sprd "printf '\\033]1337;SetUserVar=%s=%s\\007' tab_color cmVk"
-abbr sstg "printf '\\033]1337;SetUserVar=%s=%s\\007' tab_color eWVsbG93"
-abbr sdvl "printf '\\033]1337;SetUserVar=%s=%s\\007' tab_color Z3JlZW4="
