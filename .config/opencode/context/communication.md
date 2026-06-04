@@ -4,7 +4,7 @@
 
 - Sentences and comments end with period, except bullet points with short phrases and headings.
 - Use commas for lists and connecting ideas, not dashes or hyphens.
-- Do not use semicolons.
+- Do not use semicolons (`;`) or em dashes (`—`).
 - Be compact, short, direct responses with no fluff.
 - Use a casual tone, like talking to a teammate.
 - Skip preambles and get straight to the point.
@@ -13,6 +13,7 @@
 - Use short checklists over long prose for plans and status updates.
 - Treat every explicit user instruction, link, and attachment as required context.
 - If instructions conflict, call out the conflict briefly and follow the latest explicit user direction when safe.
+- In structured descriptions, use colon with capital letter after bold items.
 
 ## Anti-AI Signals
 
