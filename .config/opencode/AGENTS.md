@@ -60,13 +60,9 @@ Map user requests to a lifecycle phase:
 3. Only implement after DEFINE and PLAN are complete.
 4. Stop at REVIEW. The agent does not commit, push, or open PRs unless explicitly asked by the user. Use the corresponding skill for those actions.
 
-## External Links
+## Tool Constraints
 
-When you encounter a link or keyword for these services, fetch data using the corresponding tool instructions:
-
-- `Phabricator`: `~/.config/opencode/context/tools/phabricator.md`
-- `Sentry`: `~/.config/opencode/context/tools/sentry.md`
-- `GitHub`: `~/.config/opencode/context/tools/github.md`
+Hard tool usage rules are in `~/.config/opencode/context/rules.md` at "Tool Usage" section. Follow them strictly.
 
 ## Anti-Rationalization
 

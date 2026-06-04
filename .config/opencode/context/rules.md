@@ -117,6 +117,15 @@ After writing code:
 - Run relevant tests before moving on.
 - Review changes with `git diff` before presenting.
 
+## Tool Usage
+
+Hard rules, not suggestions:
+
+- `WebFetch`: NEVER use for `GitHub`, `Phabricator`, or `Sentry` URLs. Instead, use their respective CLIs or APIs as shown in their context files:
+  - `GitHub` URLs: Use `gh` CLI or `gh api`. See `~/.config/opencode/context/tools/github.md`.
+  - `Phabricator` URLs: Use the Phabricator API. See `~/.config/opencode/context/tools/phabricator.md`.
+  - `Sentry` URLs: Use `sentry-cli` or the Sentry API. See `~/.config/opencode/context/tools/sentry.md`.
+
 ## Safety
 
 - Confirm before destructive operations (`rm`, `DROP TABLE`, `DELETE FROM`, etc.).
