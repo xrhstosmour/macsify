@@ -44,6 +44,14 @@ gh release download <tag>
 gh api repos/<owner>/<repo>/contents/<path> --raw
 ```
 
+## PR title
+
+- Short, descriptive, natural language.
+- No type prefixes (`perf:`, `feat:`, `fix:`).
+- No semicolons.
+- Derive from the first commit message or branch name.
+- Example: `Replace single-column indexes with compound indexes` not `perf: Replace...; add outbox...`
+
 ## PR body format
 
 ```markdown
