@@ -47,21 +47,33 @@ gh api repos/<owner>/<repo>/contents/<path> --raw
 ## PR body format
 
 ```markdown
-## What
+**What**:
 
-One-line change summary.
+1. **<item>**: <Description with capital letter, no dashes>
+2. **<item>**: <Description>
 
-## Why
+**Why**:
 
-Problem being solved.
+Resolves [<issue_id>](<url>).
 
-## Link
+**Testing**:
 
-Resolves [issue_id](link/to/issue)
+1. <step>
+2. <step>
 
-## Testing
+**Monitoring**:
 
-Steps to verify (commands, UI flows, expected outcomes).
+Visit the following boards:
+
+1. <board>
+2. <board>
+
+Or use the above queries:
+
+<query block>
 ```
 
-No placeholders in final PR bodies.
+Rules:
+
+- Omit sections with no content.
+- Short, direct language per `~/.config/opencode/context/communication.md`.
