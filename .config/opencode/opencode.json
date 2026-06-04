@@ -1,6 +1,7 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "model": "opencode/big-pickle",
+  "default_agent": "plan",
   "agent": {
     "explore": {
       "mode": "subagent",
