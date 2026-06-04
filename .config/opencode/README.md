@@ -33,18 +33,27 @@ Minimal specialist setup for pragmatic software development.
 
 ## Commands
 
-| Command | Agent | Purpose |
-| ------ | ----- | ------- |
-| `/caveman` | - | Toggle ultra-compressed caveman communication mode |
-| `/code` | `implementor` | Implement changes using TDD vertical slices |
-| `/diagnose` | - | Structured 6-phase debugging loop for hard bugs and performance regressions |
-| `/handoff` | - | Compact conversation into a handoff doc for another agent session |
-| `/plan` | `leader` | Plan and scope task |
-| `/resolve-pr-comments` | - | Resolve `PR` review comments |
-| `/review` | `reviewer` | Review code quality |
-| `/review-pr` | - | Multi-agent `PR` review, can post inline comments |
-| `/technical-analysis` | - | Structured technical analysis with method-level changes, notes, estimation, and architecture improvement |
-| `/test` | `tester` | Run tests and checks |
+### PR Management
+
+| Command | Purpose |
+| ------- | ------- |
+| `/create-pr` | Create a `PR` with structured description, split commits, feature branch, auto-assign, and labels |
+| `/review-pr` | Multi-agent `PR` review, spawns agents in parallel, can post inline comments |
+| `/resolve-pr-comments` | Resolve `PR` review comments, make fixup commits, push, reply with `SHA` links |
+
+### Diagnosis & Analysis
+
+| Command | Purpose |
+| ------- | ------- |
+| `/diagnose` | Structured 6-phase debugging loop for hard bugs and performance regressions |
+| `/technical-analysis` | Structured technical analysis with method-level changes, notes, estimation, and architecture improvement |
+
+### Utility
+
+| Command | Purpose |
+| ------- | ------- |
+| `/caveman` | Toggle ultra-compressed caveman communication mode |
+| `/handoff` | Compact conversation into a handoff doc for another agent session |
 
 ## Context Files
 
@@ -62,14 +71,27 @@ Minimal specialist setup for pragmatic software development.
 
 Skills are loaded by agents and triggered via commands.
 
+### Workflow Skills
+
+| Skill | Command | Purpose |
+| ----- | ------ | ------- |
+| `create_pr` | `/create-pr` | Create a `PR` with structured description, split commits, feature branch, auto-assign, and labels |
+| `resolve_pr_comments` | `/resolve-pr-comments` | Review `PR` comments, assess validity, make fixup commits, push, reply with `SHA` links |
+| `review_pr` | `/review-pr` | Multi-agent `PR` review, spawns agents in parallel, can post inline comments |
+
+### Diagnostic Skills
+
+| Skill | Command | Purpose |
+| ----- | ------ | ------- |
+| `diagnose` | `/diagnose` | Disciplined diagnosis loop: reproduce, minimise, hypothesise, instrument, fix, regression-test |
+| `technical_analysis` | `/technical-analysis` | Structured technical analysis with method-level changes, notes, estimation, and architecture deepening opportunities |
+
+### Utility Skills
+
 | Skill | Command | Purpose |
 | ----- | ------ | ------- |
 | `caveman` | `/caveman` | Ultra-compressed communication mode, cuts token usage by dropping filler while keeping technical accuracy |
-| `diagnose` | `/diagnose` | Disciplined diagnosis loop: reproduce, minimise, hypothesise, instrument, fix, regression-test |
 | `handoff` | `/handoff` | Compact conversation into a handoff document for fresh agent sessions |
-| `resolve_pr_comments` | `/resolve-pr-comments` | Review `PR` comments, assess validity, make fixup commits, push, reply with `SHA` links |
-| `review_pr` | `/review-pr` | Multi-agent `PR` review, spawns agents in parallel, can post inline comments |
-| `technical_analysis` | `/technical-analysis` | Structured technical analysis with method-level changes, notes, estimation, and architecture deepening opportunities |
 
 ## Agents
 
