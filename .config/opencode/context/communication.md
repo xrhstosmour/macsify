@@ -3,7 +3,7 @@
 ## Style
 
 - Sentences and comments end with period, except bullet points with short phrases and headings.
-- Use commas for lists and connecting ideas, not dashes or hyphens.
+- Use commas for lists and connecting ideas, not dashes, hyphens, or parentheses.
 - Do not use semicolons (`;`) or em dashes (`—`).
 - Be compact, short, direct responses with no fluff.
 - Use a casual tone, like talking to a teammate.
