@@ -722,3 +722,299 @@ function git_blame_stats
 
     git blame --line-porcelain "$argv[1]" | grep "^author " | grep -v "^author-mail" | sed 's/^author //' | sort | uniq -c | sort -n | awk '{num=$1; $1=""; gsub(/^[[:space:]]+/, ""); printf "%s | %d\n", $0, num}'
 end
+
+# Function to add `Co-authored-by` trailers to all commits on a feature branch.
+# Fetches team members from `GitHub` org, resolves names/emails,
+# and lets the user select co-authors interactively.
+# Usage:
+#   git_set_coauthors
+function git_set_coauthors
+    set current_branch (git rev-parse --abbrev-ref HEAD)
+
+    set default_branch (git_get_default_branch)
+    if test $status -ne 0
+        return 1
+    end
+
+    set local_default (string replace "origin/" "" "$default_branch")
+
+    if test "$current_branch" = "main" -o "$current_branch" = "master" -o "$current_branch" = "$local_default"
+        log_error "You are on the default branch!"
+        log_warning "Switch to a feature branch first."
+        return 1
+    end
+
+    set working_tree_status (git status --porcelain)
+    if test -n "$working_tree_status"
+        log_error "Working tree is not clean!"
+        log_warning "Commit or stash local changes before running this function."
+        return 1
+    end
+
+    set all_commits (git log --reverse --no-merges --format="%h %s" "$default_branch..$current_branch" | string split '\n')
+    if test -z "$all_commits"
+        log_error "No commits found on this branch ahead of default!"
+        return 1
+    end
+
+    set merge_count (git rev-list --count --merges "$default_branch..$current_branch")
+    if test "$merge_count" -gt 0
+        log_warning "Found $merge_count merge commit(s) in this branch range."
+        log_warning "Merge commits are not selectable and will be left untouched."
+    end
+
+    set display_commits
+    for line in $all_commits
+        if not string match -qi '*fixup!*' "$line"
+            set display_commits $display_commits "$line"
+        end
+    end
+
+    if test (count $display_commits) -eq 0
+        log_error "No non-fixup commits found on this branch!"
+        return 1
+    end
+
+    set total_count (count $all_commits)
+    set display_count (count $display_commits)
+    log_info "Found $display_count commit(s)."
+
+    echo ""
+    read -P "Team name: " team_name
+    if test $status -ne 0; return 1; end
+    if test -z "$team_name"
+        log_error "Team name is required."
+        return 1
+    end
+    set team_name (string lower "$team_name")
+
+    echo ""
+    log_info "Deriving repository details..."
+    set repo_org (git remote get-url origin 2>/dev/null | sed -n 's/.*github.com[:\/]\([^\/]*\)\/.*/\1/p')
+    if test -z "$repo_org"
+        read -P "GitHub organization: " repo_org
+        if test $status -ne 0; return 1; end
+        if test -z "$repo_org"
+            log_error "Organization is required."
+            return 1
+        end
+    end
+    set repo_org (string lower "$repo_org")
+
+    set email_domain (git log --all --format="%ae" 2>/dev/null | sort -u | grep -v 'users.noreply.github.com' | sed 's/.*@//' | sort | uniq -c | sort -rn | head -1 | sed 's/^ *[0-9]* //')
+    if test -z "$email_domain"
+        read -P "Email domain: " email_domain
+        if test $status -ne 0; return 1; end
+        if test -z "$email_domain"
+            log_error "Email domain is required."
+            return 1
+        end
+    end
+
+    log_info "Fetching '$team_name' team members from '$repo_org'..."
+    set members_json (gh api /orgs/$repo_org/teams/$team_name/members 2>&1)
+    if test $status -ne 0
+        log_error "Failed to fetch team members: $members_json"
+        return 1
+    end
+
+    set my_login (gh api /user -q '.login' 2>/dev/null)
+    set logins (echo "$members_json" | jq -r '.[].login' | grep -v "^$my_login\$")
+    if test (count $logins) -eq 0
+        log_error "No team members found."
+        return 1
+    end
+
+    set coauthors
+    for login in $logins
+        if test -z "$login"; continue; end
+
+        set name (gh api /users/$login -q '.name // .login' 2>/dev/null)
+        if test -z "$name"
+            set name "$login"
+        end
+
+        set matched (git log --all --format="%an <%ae>" 2>/dev/null | sort -u | grep -i -F "$name <" | grep -im1 -F "@$email_domain")
+        set email ""
+        if test -n "$matched"
+            set email (echo "$matched" | sed 's/.*<\(.*\)>/\1/')
+        end
+
+        if test -z "$email"
+            set lastname (echo "$name" | awk '{print $NF}')
+            if test -n "$lastname"
+                set matched (git log --all --format="%an <%ae>" 2>/dev/null | sort -u | grep -i -F "$lastname <" | grep -im1 -F "@$email_domain")
+                if test -n "$matched"
+                    set email (echo "$matched" | sed 's/.*<\(.*\)>/\1/')
+                end
+            end
+        end
+
+        if test -z "$email"
+            set matched (git log --all --format="%an <%ae>" 2>/dev/null | sort -u | grep -i "$login" | grep -im1 -F "@$email_domain")
+            if test -n "$matched"
+                set email (echo "$matched" | sed 's/.*<\(.*\)>/\1/')
+            end
+        end
+
+        if test -z "$email"
+            echo ""
+            read -P "Email for $name ($login): " user_email
+            if test $status -ne 0; return 1; end
+            if test -z "$user_email"
+                log_warning "Skipping $name"
+                continue
+            end
+            set email "$user_email"
+        end
+
+        set coauthors $coauthors "$name <$email>"
+    end
+
+    if test (count $coauthors) -eq 0
+        log_error "No co-authors resolved."
+        return 1
+    end
+
+    log_info "Team members from '$team_name':"
+    for i in (seq (count $coauthors))
+        echo -e "  $BOLD_YELLOW$i)$NO_COLOR $coauthors[$i]"
+    end
+
+    echo ""
+    log_info "Select co-authors, use TAB to multi-select and ENTER to confirm:"
+    read -P "Press Enter to continue... "
+    if test $status -ne 0; return 1; end
+    echo ""
+    set fzf_input
+    for i in (seq (count $coauthors))
+        set fzf_input $fzf_input "$i|$coauthors[$i]"
+    end
+
+    set selected_raw (printf '%s\n' $fzf_input | fzf --multi -d'|' --with-nth 2.. 2>/dev/null)
+    set fzf_status $status
+    if test $fzf_status -ne 0; return 1; end
+    set selected_raw (string split '\n' -- $selected_raw)
+
+    set selected_coauthors
+    for line in $selected_raw
+        if test -n "$line"
+            set idx (echo "$line" | cut -d'|' -f1)
+            if test -n "$idx" -a "$idx" -ge 1 -a "$idx" -le (count $coauthors)
+                if not contains "$idx" $selected_coauthors
+                    set selected_coauthors $selected_coauthors $idx
+                end
+            end
+        end
+    end
+
+    if test (count $selected_coauthors) -eq 0
+        log_error "No co-authors selected."
+        return 1
+    end
+
+    echo ""
+    log_success "Selected co-authors:"
+    for idx in $selected_coauthors
+        echo "  - $coauthors[$idx]"
+    end
+
+    set exec_cmd "git log -1 --pretty=%B | sed '/^Co-authored-by:/d' | git interpret-trailers"
+    for idx in $selected_coauthors
+        set coauthor "$coauthors[$idx]"
+        set exec_cmd "$exec_cmd --trailer 'Co-authored-by: $coauthor'"
+    end
+    set exec_cmd "$exec_cmd | git commit --amend -F -"
+
+    echo ""
+    log_info "Select commits to add co-author(s) to, use TAB to multi-select and ENTER to confirm:"
+    set selection_commits
+    for idx in (seq (count $display_commits) -1 1)
+        set selection_commits $selection_commits "$display_commits[$idx]"
+    end
+
+    read -P "Press Enter to continue... "
+    if test $status -ne 0; return 1; end
+    echo ""
+    set selected_lines (for line in $selection_commits
+        set hash (echo "$line" | awk '{print $1}')
+        set subject (echo "$line" | cut -d' ' -f2-)
+        echo -e "$BOLD_YELLOW$hash$NO_COLOR $BOLD_GREEN|$NO_COLOR $subject"
+    end | fzf --multi --ansi --bind '?:toggle-preview' --preview '
+        set commit_hash {1}
+        git diff-tree --no-commit-id --name-only -r $commit_hash | while read -l f; echo -e "\e[1;32m-\e[0m $f"; end
+    ' --preview-window=right:50%:hidden:wrap)
+    set fzf_status $status
+    if test $fzf_status -ne 0; return 1; end
+    set selected_lines (string split '\n' -- $selected_lines)
+
+    set selected_hashes
+    for line in $selected_lines
+        if test -n "$line"
+            set hash (echo "$line" | string replace -ra '\e\[[0-9;]*m' '' | awk '{print $1}')
+            set selected_hashes $selected_hashes "$hash"
+        end
+    end
+
+    if test (count $selected_hashes) -eq 0
+        log_error "No commits selected."
+        return 1
+    end
+
+    echo ""
+    log_success "Selected commits:"
+    for line in $selection_commits
+        set hash (echo "$line" | awk '{print $1}')
+        set subject (echo "$line" | cut -d' ' -f2-)
+        if contains "$hash" $selected_hashes
+            echo -e "$BOLD_YELLOW$hash$NO_COLOR $BOLD_GREEN|$NO_COLOR $subject"
+        end
+    end
+
+    set final_count (count $selected_hashes)
+    log_warning "About to add co-author(s) to $final_count commit(s) on '$current_branch':"
+    for idx in $selected_coauthors
+        echo "  - $coauthors[$idx]"
+    end
+    echo ""
+    read -P "Continue? (y/N): " confirm
+    if test $status -ne 0; return 1; end
+    if test "$confirm" != "y" -a "$confirm" != "Y"
+        log_info "Aborted."
+        return 0
+    end
+
+    set backup_timestamp (date +'%Y%m%d_%H%M%S')
+    set backup_branch "backup/$current_branch-before-coauthors-$backup_timestamp"
+    log_info "Creating backup branch '$backup_branch'..."
+    git branch "$backup_branch"
+    if test $status -ne 0
+        log_error "Failed to create backup branch '$backup_branch'."
+        return 1
+    end
+
+    set base_commit (git merge-base "$default_branch" HEAD)
+    set todo_file (mktemp /tmp/opencode-rebase-todo.XXXXXXXXXX)
+
+    for line in $all_commits
+        set hash (echo "$line" | awk '{print $1}')
+        set subject (echo "$line" | cut -d' ' -f2-)
+        echo "pick $hash $subject" >> $todo_file
+        if contains "$hash" $selected_hashes
+            echo "exec $exec_cmd" >> $todo_file
+        end
+    end
+
+    log_info "Adding co-author(s) to the selected commits..."
+    GIT_SEQUENCE_EDITOR="cp $todo_file" git rebase -i "$base_commit" --committer-date-is-author-date
+    set rebase_status $status
+
+    rm -f "$todo_file"
+
+    if test $rebase_status -eq 0
+        log_success "Co-author(s) added to $final_count commit(s) on '$current_branch'."
+    else
+        log_error "Rebase failed. Run 'git rebase --abort' to revert."
+        return 1
+    end
+end
