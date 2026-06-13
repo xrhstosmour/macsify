@@ -105,15 +105,15 @@ Ask the user which variants/effort levels each model supports.
 
 ## Rank per role
 
-Use the capability data collected above to rank models. Do not guess or rely on general knowledge.
+Use the capability data collected above to rank models. Do not guess or rely on general knowledge when ranking. Use the capability data collected above.
 
 | Agent role | Priority | Data to use for ranking |
 | leader, architect | Reasoning strength, context window | Sort by `context_window` descending, then by `reasoning_options` complexity. Larger context + more effort levels = better for planning. |
 | implementor | Code generation quality | Prefer models tagged as code-optimized in models.dev metadata. Fallback: prefer OpenAI-compatible (codex-style) over Anthropic-compatible for code gen. |
 | reviewer | Critical reasoning, analysis | Same as leader/architect. Must be a different vendor than implementor. |
 | designer | Creative/UX reasoning | Prefer models with broader general knowledge. Context window is secondary. |
-| tester, clarifier | Speed, rate limits | Sort by rate limit descending (cheapest/fastest per call). |
-| default, explore, compaction | Speed, rate limits | Same as tester/clarifier. Cheapest models with highest rate limits. |
+| tester, clarifier | Speed, reliability | Prefer models with higher rate limits for uninterrupted work. Still use a capable model, not the absolute cheapest. |
+| default, explore, compaction | Speed, rate limits | Same as tester/clarifier. Prefer models with higher rate limits, but still capable enough for the task. |
 
 When building the proposal, show a table with:
 - Each role
@@ -156,10 +156,7 @@ After all edits, grep for `model:` across all agent files and `"model"` across o
 - The model ID matches the approved mapping
 - The variant (if present) is the correct highest variant for that model
 - No variant line exists for models that don't support variants
-
-# Update Documentation
-
-Update the README.md or other documentation files mentioning agents, agents table, and architecture diagram to reflect the new models.
+- Update the README.md or other documentation files mentioning agents, agents table, and architecture diagram to reflect the new models.
 
 ## Rules
 
