@@ -64,6 +64,10 @@ Map user requests to a lifecycle phase:
 
 Hard tool usage rules are in `~/.config/opencode/context/rules.md` at "Tool Usage" section. Follow them strictly.
 
+## Git Actions
+
+Before any git operation (commit, push, rebase, merge, cherry-pick, branch, tag, etc.): re-read `~/.config/opencode/context/versioning.md` file in full. Do not skip or truncate. Every rule/guideline there is mandatory.
+
 ## Anti-Rationalization
 
 These thoughts are incorrect and must be ignored:
