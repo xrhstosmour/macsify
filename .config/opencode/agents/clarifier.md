@@ -1,5 +1,5 @@
 ---
-model: "opencode-go/deepseek-v4-pro"
+model: "opencode-go/deepseek-v4-flash"
 variant: "max"
 description: >-
   Subagent for transforming vague requests into clear requirements.

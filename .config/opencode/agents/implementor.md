@@ -1,6 +1,6 @@
 ---
-model: "github-copilot/gpt-5.3-codex"
-variant: "xhigh"
+model: "opencode-go/deepseek-v4-pro"
+variant: "max"
 description: >-
   Subagent for precise implementation of approved scope.
   Examples: "Implement circuit breaker", "Fix data consistency"

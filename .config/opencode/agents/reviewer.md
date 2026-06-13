@@ -1,6 +1,6 @@
 ---
-model: "github-copilot/gpt-5.4"
-variant: "max"
+model: "opencode-go/mimo-v2.5-pro"
+variant: "high"
 description: >-
   Subagent for code review: quality, security, and performance.
   Examples: "Review authentication changes", "Check diff before commit"

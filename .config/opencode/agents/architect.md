@@ -1,5 +1,5 @@
 ---
-model: "github-copilot/gpt-5.3-codex"
+model: "opencode-go/deepseek-v4-pro"
 variant: "max"
 description: >-
   Subagent for architecture decisions and technical trade-offs only.

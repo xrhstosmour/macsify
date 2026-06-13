@@ -1,6 +1,6 @@
 ---
-model: "github-copilot/claude-sonnet-4.6"
-variant: "high"
+model: "opencode-go/deepseek-v4-pro"
+variant: "max"
 description: >-
   Primary orchestration agent for pragmatic software development.
   Examples:

@@ -1,6 +1,6 @@
 ---
-model: "github-copilot/gpt-5.4"
-variant: "max"
+model: "opencode-go/mimo-v2.5"
+variant: "high"
 description: >-
   Subagent for frontend UX and UI design decisions.
   Examples: "Design settings page", "Improve onboarding flow"

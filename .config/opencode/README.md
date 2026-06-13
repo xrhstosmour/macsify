@@ -96,12 +96,12 @@ Skills are loaded by agents and triggered via commands.
 
 ## Agents
 
-| Agent | Model | Purpose |
-| ----- | ----- | ------- |
-| `leader` | `github-copilot/gpt-5.4` | Orchestration, delegates only when needed |
-| `clarifier` | `github-copilot/grok-code-fast-1` | Requirements clarification with branch-by-branch grilling |
-| `architect` | `github-copilot/gpt-5.4-mini` | Architecture decisions |
-| `designer` | `github-copilot/gpt-5.4-mini` | `UI`/`UX` design (frontend only) |
-| `implementor` | `github-copilot/gpt-5.3-codex` | Bounded implementation with TDD vertical slices |
-| `tester` | `github-copilot/gpt-5.4-mini` | Tests and quality checks |
-| `reviewer` | `github-copilot/gpt-5.4-mini` | Code review, security, performance analysis |
+| Agent | Model | Variant | Purpose |
+| ----- | ----- | ------- | ------- |
+| `leader` | `opencode-go/deepseek-v4-pro` | `max` | Orchestration, delegates only when needed |
+| `clarifier` | `opencode-go/deepseek-v4-flash` | `max` | Requirements clarification |
+| `architect` | `opencode-go/deepseek-v4-pro` | `max` | Architecture decisions |
+| `designer` | `opencode-go/mimo-v2.5` | `high` | `UI`/`UX` design (frontend only) |
+| `implementor` | `opencode-go/deepseek-v4-pro` | `max` | Bounded implementation with TDD vertical slices |
+| `tester` | `opencode-go/deepseek-v4-flash` | `max` | Tests and quality checks |
+| `reviewer` | `opencode-go/mimo-v2.5-pro` | `high` | Code review, security, performance analysis |

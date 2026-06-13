@@ -1,5 +1,5 @@
 ---
-model: "github-copilot/gpt-5.3-codex"
+model: "opencode-go/deepseek-v4-flash"
 variant: "max"
 description: >-
   Subagent for test execution and quality checks.
