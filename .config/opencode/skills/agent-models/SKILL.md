@@ -37,6 +37,33 @@ If web fetch fails or data is incomplete, ask the user to paste the model table 
 
 For `custom`, ask user to paste a table with columns: Model, Provider, requests per 5h, requests per week, requests per month.
 
+## Determine variants
+
+After selecting models, determine the highest available variant per model. Do not guess, fetch the source of truth. The `variant:` field in agent YAML is OpenCode-specific; other tools (Claude Code, Codex) use their own internal systems.
+
+### Running Through OpenCode
+
+Fetch `https://models.dev/api.json`, filter by provider (`opencode-go`, `github-copilot`, `anthropic`, `openai`, etc.), and check each model's `reasoning_options` array:
+
+- Empty (`[]`) → no variants, then remove `variant:` line from agent YAML
+- Non-empty → use the highest/latest value from the array of strings. For example, `["max", "xhigh", "high"]` → use `max`. If the array is `["low", "medium", "high"]`, use `high`. If the array is `["none", "minimal", "low", "medium", "high"]`, use `high`.
+
+### Running Through Claude Code
+
+Claude Code uses the `effort` parameter as the equivalent of variants. Fetch available models and their effort levels from `https://docs.anthropic.com/en/docs/build-with-claude/effort`.
+
+Available levels: `low`, `medium`, `high` which is the default, `xhigh`, `max`. Not all models support all levels.
+
+### Running Through Codex
+
+Codex uses the `reasoning.effort` parameter as the equivalent of variants. Fetch available models and their reasoning effort levels from `https://platform.openai.com/docs/guides/reasoning`.
+
+Available levels: `none`, `minimal`, `low`, `medium`, `high`, `xhigh`. Model-dependent which are supported.
+
+### Other Environments And Custom Providers
+
+Ask the user which variants/effort levels each model supports.
+
 ## Rank per role
 
 Analyze each model on these criteria:
@@ -56,17 +83,37 @@ Important: Never assign the same model to adjacent pipeline roles (implementor +
 
 ## Apply
 
-Once the user approves, update all 8 files:
+Once the user approves, update the config files. The same agent `.md` files with YAML frontmatter can be shared across environments, the `variant:` field maps to each tool's equivalent concept.
 
-1. `.config/opencode/opencode.json` with three model fields: `model` (default), `agent.explore.model`, `agent.compaction.model`.
+### Mapping
 
-2. `.config/opencode/agents/` with 7 files: `leader.md`, `architect.md`, `implementor.md`, `reviewer.md`, `designer.md`, `tester.md`, `clarifier.md`.
+| YAML field | OpenCode | Claude Code | Codex |
+|------------|----------|-------------|-------|
+| `model:` | `model:` in agent YAML | `model:` in agent YAML | `model:` in agent YAML |
+| `variant:` | `variant:` (native) | `effort` parameter | `reasoning.effort` parameter |
 
-Edit the `model:` line in each YAML frontmatter block (agent files) or the `"model"` JSON key (opencode.json).
+### Apply to OpenCode
+
+Read the actual filesystem:
+
+1. Read `.config/opencode/opencode.json` and update three model fields: `model` (default), `agent.explore.model`, `agent.compaction.model`.
+
+2. List every `.md` file in `.config/opencode/agents/`. For each agent file, update the `model:` and `variant:` lines in its YAML frontmatter (determined above). If a model has no variants, remove the `variant:` line entirely.
+
+### Apply to Claude Code
+
+The same agent `.md` files work, `variant:` maps to `effort`. Ensure the files are placed where Claude Code reads them, and update the `variant:` values using the mapping above.
+
+### Apply to Codex
+
+The same agent `.md` files work, `variant:` maps to `reasoning.effort`. Ensure the files are placed where Codex reads them, and update the `variant:` values using the mapping above.
 
 ## Verify
 
-After all edits, grep for `model:` and `"model":` across `.config/opencode/` to confirm all references match the approved mapping.
+After all edits, grep for `model:` across all agent files and `"model"` across opencode.json. For each agent, verify:
+- The model ID matches the approved mapping
+- The variant (if present) is the correct highest variant for that model
+- No variant line exists for models that don't support variants
 
 Update the README.md agents table and architecture diagram to reflect the new models.
 
