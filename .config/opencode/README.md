@@ -92,6 +92,7 @@ Skills are loaded by agents and triggered via commands.
 | ----- | ------ | ------- |
 | `caveman` | `/caveman` | Ultra-compressed communication mode, cuts token usage by dropping filler while keeping technical accuracy |
 | `handoff` | `/handoff` | Compact conversation into a handoff document for fresh agent sessions |
+| `agent_models` | `/agent-models` | Research, rank, and apply model updates across all agents and opencode.json for any provider |
 
 ## Agents
 
