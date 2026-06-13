@@ -37,9 +37,48 @@ If web fetch fails or data is incomplete, ask the user to paste the model table 
 
 For `custom`, ask user to paste a table with columns: Model, Provider, requests per 5h, requests per week, requests per month.
 
+## Research capabilities
+
+After fetching models, collect objective capability data before ranking. Do not guess or use assumptions. The data source depends on which terminal tool you are configuring:
+
+### For OpenCode
+
+Fetch `https://models.dev/api.json` and filter by provider. Extract these fields per model:
+
+- `context_window` (context size in tokens)
+- `max_output` (max output tokens)
+- `reasoning_options` (variants or effort levels supported)
+- `pricing` (input cost per MTok, output cost per MTok)
+- `npi` (npm/package info, indicates API compatibility type)
+- `recommended` or `priority` tier if present
+
+For opencode-go specifically, also fetch `https://opencode.ai/go` for rate limit data (requests per 5h).
+
+### For Anthropic/Claude Code
+
+Fetch model capabilities from Anthropic's official docs:
+- Models overview: `https://docs.anthropic.com/en/docs/about-claude/models`
+- Effort levels: `https://docs.anthropic.com/en/docs/build-with-claude/effort`
+- Extract: context window, max output, effort levels supported, pricing
+
+### For OpenAI/Codex
+
+Fetch model capabilities from OpenAI's official docs:
+- Reasoning models: `https://platform.openai.com/docs/guides/reasoning`
+- Models list: `https://platform.openai.com/docs/models`
+- Extract: reasoning effort levels, context window, pricing
+
+### For other providers or when docs are unreachable
+
+Use the rate limit table from `https://opencode.ai/go` as a cheapness proxy: higher request limits imply lower cost per call, which suits high-frequency roles like tester and clarifier.
+
+### Presenting the proposal
+
+When presenting the ranking proposal, cite the data used for each assignment. Show a table with per-model capability evidence next to each role assignment.
+
 ## Determine variants
 
-After selecting models, determine the highest available variant per model. Do not guess, fetch the source of truth. The `variant:` field in agent YAML is OpenCode-specific; other tools (Claude Code, Codex) use their own internal systems.
+After selecting models, determine the highest available variant per model. Do not guess, fetch the source of truth. The `variant:` field in agent YAML is OpenCode-specific. Other tools (Claude Code, Codex) use their own internal systems.
 
 ### Running Through OpenCode
 
@@ -66,20 +105,23 @@ Ask the user which variants/effort levels each model supports.
 
 ## Rank per role
 
-Analyze each model on these criteria:
+Use the capability data collected above to rank models. Do not guess or rely on general knowledge.
 
-| Agent role | Priority |
-|------------|----------|
-| leader, architect | Reasoning strength, context window |
-| implementor | Code generation quality |
-| reviewer | Critical reasoning, analysis |
-| designer | Creative/UX reasoning |
-| tester, clarifier | Speed, rate limits (cheaper is fine) |
-| default, explore, compaction (in opencode.json) | Speed, rate limits |
+| Agent role | Priority | Data to use for ranking |
+| leader, architect | Reasoning strength, context window | Sort by `context_window` descending, then by `reasoning_options` complexity. Larger context + more effort levels = better for planning. |
+| implementor | Code generation quality | Prefer models tagged as code-optimized in models.dev metadata. Fallback: prefer OpenAI-compatible (codex-style) over Anthropic-compatible for code gen. |
+| reviewer | Critical reasoning, analysis | Same as leader/architect. Must be a different vendor than implementor. |
+| designer | Creative/UX reasoning | Prefer models with broader general knowledge. Context window is secondary. |
+| tester, clarifier | Speed, rate limits | Sort by rate limit descending (cheapest/fastest per call). |
+| default, explore, compaction | Speed, rate limits | Same as tester/clarifier. Cheapest models with highest rate limits. |
 
-Rank models from best to worst for each role. Show the proposed mapping to the user with a brief rationale for each assignment.
+When building the proposal, show a table with:
+- Each role
+- The proposed model
+- The capability evidence from `models.dev` or the Go rate table
+- A one-line reason (e.g. "largest context window", "highest rate limit", "different vendor from implementor")
 
-Important: Never assign the same model to adjacent pipeline roles (implementor + reviewer), use different vendors so the review catches blind spots.
+Important: Do not assign the same model to adjacent pipeline roles (implementor + reviewer). Use different vendors so the review catches blind spots.
 
 ## Apply
 
@@ -115,7 +157,9 @@ After all edits, grep for `model:` across all agent files and `"model"` across o
 - The variant (if present) is the correct highest variant for that model
 - No variant line exists for models that don't support variants
 
-Update the README.md agents table and architecture diagram to reflect the new models.
+# Update Documentation
+
+Update the README.md or other documentation files mentioning agents, agents table, and architecture diagram to reflect the new models.
 
 ## Rules
 
