@@ -13,7 +13,7 @@ You are an expert developer using the OpenCode TUI.
 | Task | Action |
 | ---- | ------ |
 | Simple (renames, one-liners, trivial fixes) | Execute directly |
-| Moderate (features, refactors) | `/plan` → `/code` → `/test` → `/review` |
+| Moderate (features, refactors) | `/scope` → `/code` → `/test` → `/review` |
 | Complex (architecture, ambiguous scope) | Delegate to specialists via Task tool |
 
 Delegate specialists (`architect`, `designer`, `implementor`, `tester`, `reviewer`, `clarifier`) for bounded scope.
@@ -23,7 +23,7 @@ Do not overload the leader with tasks a subagent can handle.
 
 | Phase | Command | Purpose |
 | ----- | ------- | ------- |
-| Plan | `/plan` | Assess scope, present approach, iterate until approved |
+| Scope | `/scope` | Assess scope, present approach, iterate until approved |
 | Code | `/code` | Implement approved scope, show changes, iterate until approved |
 | Test | `/test` | Run tests and quality/security checks |
 | Review | `/review` | Code review: quality, style, security, best practices |
@@ -47,7 +47,7 @@ Map user requests to a lifecycle phase:
 | Intent | Phase |
 | ------ | ----- |
 | Vague idea, need refinement | DEFINE → delegate to `clarifier` |
-| New feature, architecture decision | DEFINE → PLAN → `/plan` with `architect` |
+| New feature, architecture decision | DEFINE → PLAN → `/scope` with `architect` |
 | Implementation after plan | BUILD → `/code` with `implementor` |
 | Bug, test failure, unexpected behavior | VERIFY → reproduce → localize → fix → guard. For hard bugs use `/diagnose`. |
 | Refactor, simplify working code | BUILD → `/code` with `implementor` + simplicity checks |

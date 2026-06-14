@@ -9,7 +9,7 @@ Implement approved scope. Show changes and iterate based on feedback until user 
 
 ## Entry Criteria
 
-- `/plan` phase is complete.
+- `/scope` phase is complete.
 - User has approved the plan.
 
 ## Exit Criteria
@@ -21,5 +21,5 @@ Implement approved scope. Show changes and iterate based on feedback until user 
 ## Phase Transition
 
 After approval → proceed to `/test`.
-If scope creep is identified → return to `/plan`.
+If scope creep is identified → return to `/scope`.
 If tests fail → fix and re-test.

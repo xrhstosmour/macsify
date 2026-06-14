@@ -26,7 +26,7 @@ Minimal specialist setup for pragmatic software development.
 
 | Phase | Command | Agent | Purpose |
 | ----- | ------ | ----- | ------- |
-| Plan | `/plan` | `leader` | Assess scope, present approach, iterate until approved |
+| Scope | `/scope` | `leader` | Assess scope, present approach, iterate until approved |
 | Code | `/code` | `implementor` | Implement approved scope, show changes, iterate until approved |
 | Test | `/test` | `tester` | Run tests and quality checks |
 | Review | `/review` | `reviewer` | Code review for quality, security, best practices |
