@@ -10,6 +10,7 @@ Wrap in backticks:
 - technical identifiers
 - code elements
 - file names and paths
+- product/company/tool names
 
 while leaving unformatted:
 
