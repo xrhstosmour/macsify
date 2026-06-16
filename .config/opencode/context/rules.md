@@ -38,6 +38,20 @@ New code changes should respect language-specific ruler settings from the editor
   - Soft limit: 80 characters
   - Hard limit: 100 characters
 
+### Naming Conventions
+
+Use full, descriptive names for all variables, constants, functions, and parameters. Never abbreviate or use acronyms.
+
+- `reference` not `ref`
+- `temporary` not `tmp`
+- `previous` not `prev`
+- `error` not `err`
+- `message` not `msg`
+- `maximum` not `max`, `minimum` not `min`
+- `index` not `idx`, `count` not `cnt`
+- `button` not `btn`
+- `configuration` not `config`
+
 ## Self-Critique
 
 After implementing code, pause and self-critique:
