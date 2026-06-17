@@ -509,6 +509,9 @@ function git_merge_to_default_branch
         return 1
     end
 
+    # Push the auto-squashed history so FETCH_HEAD later is clean.
+    git push --force-with-lease "$remote" "$upstream_branch"
+
     # Get the base branch using the `git_get_default_branch` function.
     set default_branch (git_get_default_branch)
     set branch_to_be_merged "$remote/$upstream_branch"
