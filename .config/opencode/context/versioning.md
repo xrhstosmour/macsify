@@ -2,21 +2,21 @@
 
 ## Commits
 
-Descriptive commits, without agent co-authors.
-Use either general descriptions or project-scoped prefixes.
+### Format
 
-Wrap in backticks:
+- Single-line messages only with no body/description, no bullet lists in message.
+- Descriptive, without agent co-authors.
+- Use project-scoped prefixes or general descriptions.
 
-- technical identifiers
-- code elements
-- file names and paths
-- product/company/tool names
+### Style
 
-while leaving unformatted:
-
-- natural language words
-- headings
-- `YAML` frontmatter fields
+- Use imperative mood: "Add feature" not "Added feature" or "Adds feature".
+- Use present tense: "Fix bug" not "Fixed bug" or "Fixes bug".
+- Avoid punctuation at the end of the message.
+- Avoid generic messages like "Update README.md" or "Fix bug". Be specific about what was changed and why.
+- Avoid using the same commit message for multiple commits. Each commit should have a unique message that clearly describes the change made.
+- Wrap in backticks: technical identifiers, code elements, file names and paths, product/company/tool names.
+- Leave unformatted: natural language words, headings, `YAML` frontmatter fields.
 
 ```text
 Add `Sentry` integration
@@ -29,11 +29,13 @@ Update `README.md` with setup instructions
 `macsify`: Refactor `WindowManager` to use `NSScreen`
 ```
 
-- fixup: for review comment fixes, typos, small oversights
-- amend: for single commit changes
-- Split by context. Include tests in same commit as code.
-- One topic per commit, never mix different contexts.
-- Single-line messages only, no commit bodies, no bullet lists in messages.
+### Structure
+
+- One topic per commit. Never mix different contexts.
+- Split by context, include tests in same commit as code.
+- Target ~100 lines per commit. Split commits over ~300 lines.
+- Use `fixup` commits for review comment fixes, typos, small oversights.
+- Use `amend` for single-commit changes.
 
 ```bash
 git add <file> && git commit --fixup <SHA>
