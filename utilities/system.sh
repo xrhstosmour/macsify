@@ -114,6 +114,13 @@ apply_system_configuration() {
         fi
     done
 
+    # Disable hot corners.
+    log_info "Disabling hot corners..."
+    defaults write com.apple.dock wvous-tl-corner -int 0
+    defaults write com.apple.dock wvous-tr-corner -int 0
+    defaults write com.apple.dock wvous-bl-corner -int 0
+    defaults write com.apple.dock wvous-br-corner -int 0
+
     # Show all processes in `Activity Monitor`.
     log_info "Showing all processes in 'Activity Monitor'..."
     defaults write com.apple.ActivityMonitor ShowCategory -int 0
