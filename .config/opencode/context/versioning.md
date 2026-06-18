@@ -17,6 +17,7 @@
 - Avoid using the same commit message for multiple commits. Each commit should have a unique message that clearly describes the change made.
 - Wrap in backticks: technical identifiers, code elements, file names and paths, product/company/tool names.
 - Leave unformatted: natural language words, headings, `YAML` frontmatter fields.
+- For commit messages and Git platform text such as PR titles, PR bodies, and review comments, use short, direct language per `~/.config/opencode/context/communication.md`.
 
 ```text
 Add `Sentry` integration
@@ -47,6 +48,7 @@ git commit --amend --no-edit
 
 - Never force-push to `main` or `master`
 - Never commit `.env`, secrets, credentials. Warn immediately if staged.
+- Never commit, push, or open a PR unless explicitly asked by the user.
 
 ### Fixups
 
