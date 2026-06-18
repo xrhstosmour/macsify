@@ -1,10 +1,9 @@
-# Knowledge
-
-## Markdown Searching
+# QMD
 
 Use `qmd` for searching your markdown files.
 If not installed, use default search tools instead.
-Usage:
+
+## Usage
 
 ```bash
 # Add markdown files to qmd context.
