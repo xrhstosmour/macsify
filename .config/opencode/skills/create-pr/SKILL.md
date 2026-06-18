@@ -141,7 +141,7 @@ Get user approval.
 
 ## 5. PR Body Generation
 
-Use the template from `~/.config/opencode/context/tools/github.md` at "PR body format" section. Omit sections with no content.
+Use the template from `~/.config/opencode/tools/github.md` at "PR body format" section. Omit sections with no content.
 
 Follow style in `~/.config/opencode/context/communication.md` for tone and formatting.
 
@@ -151,7 +151,7 @@ Derive each section:
 - **Testing**: from how the user verified (commands, UI flows, expected outcomes).
 - **Monitoring**: from relevant dashboards, Sentry boards, or observability queries.
 
-For **PR title**, follow rules in `~/.config/opencode/context/tools/github.md` at "PR title" section.
+For **PR title**, follow rules in `~/.config/opencode/tools/github.md` at "PR title" section.
 
 ## 6. Preview + Approval
 

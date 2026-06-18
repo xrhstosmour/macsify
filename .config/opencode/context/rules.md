@@ -136,9 +136,9 @@ After writing code:
 Hard rules, not suggestions:
 
 - `WebFetch`: NEVER use for `GitHub`, `Phabricator`, or `Sentry` URLs. Instead, use their respective CLIs or APIs as shown in their context files:
-  - `GitHub` URLs: Use `gh` CLI or `gh api`. See `~/.config/opencode/context/tools/github.md`.
-  - `Phabricator` URLs: Use the Phabricator API. See `~/.config/opencode/context/tools/phabricator.md`.
-  - `Sentry` URLs: Use `sentry-cli` or the Sentry API. See `~/.config/opencode/context/tools/sentry.md`.
+  - `GitHub` URLs: Use `gh` CLI or `gh api`. See `~/.config/opencode/tools/github.md`.
+  - `Phabricator` URLs: Use the Phabricator API. See `~/.config/opencode/tools/phabricator.md`.
+  - `Sentry` URLs: Use `sentry-cli` or the Sentry API. See `~/.config/opencode/tools/sentry.md`.
 
 ## Safety
 

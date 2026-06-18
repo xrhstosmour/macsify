@@ -18,7 +18,7 @@ This is the skill. Everything else is mechanical. If you have a fast, determinis
 
 Spend disproportionate effort here. Be aggressive. Be creative. Refuse to give up.
 
-Before building a loop, check Sentry, if the project uses it (`~/.config/opencode/context/tools/sentry.md`). Sentry issues provide stack traces, request params, and breadcrumbs that shortcut the reproduction process. Use them to narrow the scope before constructing a loop.
+Before building a loop, check Sentry, if the project uses it (`~/.config/opencode/tools/sentry.md`). Sentry issues provide stack traces, request params, and breadcrumbs that shortcut the reproduction process. Use them to narrow the scope before constructing a loop.
 
 ### Ways to construct one, try them in roughly this order
 
