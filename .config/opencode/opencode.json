@@ -14,7 +14,13 @@
   },
   "autoupdate": true,
   "instructions": [
-    "~/.config/opencode/context/**/*.md"
+    "~/.config/opencode/context/rules.md",
+    "~/.config/opencode/context/versioning.md",
+    "~/.config/opencode/context/communication.md",
+    "~/.config/opencode/tools/github.md",
+    "~/.config/opencode/tools/phabricator.md",
+    "~/.config/opencode/tools/sentry.md",
+    "~/.config/opencode/tools/qmd.md"
   ],
   "watcher": {
     "ignore": [
