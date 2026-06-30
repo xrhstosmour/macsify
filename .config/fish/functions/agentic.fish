@@ -11,11 +11,12 @@ function claude_session_list
         return 1
     end
 
-    set -l session_files (ls -t "$sessions_dir"/*.json 2>/dev/null)
-    if test (count $session_files) -eq 0
+    set -l session_files "$sessions_dir"/*.json
+    if test "$session_files" = "$sessions_dir/*.json"
         log_error "No sessions found!"
         return 1
     end
+    set -l session_files (ls -t $session_files 2>/dev/null)
 
     set -l output (for session_file in $session_files
         set -l session_id (jq -r '.sessionId // ""' "$session_file" 2>/dev/null)
