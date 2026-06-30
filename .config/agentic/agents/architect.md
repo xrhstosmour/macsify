@@ -1,13 +1,9 @@
 ---
-model: "opencode-go/deepseek-v4-pro"
-variant: "max"
+name: architect
 description: >-
   Subagent for architecture decisions and technical trade-offs only.
   Examples: "Design a notification system", "Push or pull sync?"
-mode: subagent
-tools:
-  edit: false
-  task: false
+tools: Read, Glob, Grep
 ---
 
 # Architect

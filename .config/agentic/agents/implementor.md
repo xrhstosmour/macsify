@@ -1,12 +1,9 @@
 ---
-model: "opencode-go/deepseek-v4-pro"
-variant: "max"
+name: implementor
 description: >-
   Subagent for precise implementation of approved scope.
   Examples: "Implement circuit breaker", "Fix data consistency"
-mode: subagent
-tools:
-  task: false
+disallowedTools: Task
 ---
 
 # Implementor

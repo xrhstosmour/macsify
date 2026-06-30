@@ -1,25 +1,43 @@
-# OpenCode Configuration
+# Agentic Configuration
 
-Minimal specialist setup for pragmatic software development.
+Shared AI configuration for OpenCode and Claude Code. Model assignments live in `models.txt`. Run `setup/agentic.sh` to apply.
 
 ## Architecture
 
 ```text
-~/.config/opencode/           # BASE CONFIG
-├── opencode.json             # Main configuration
-├── AGENTS.md                 # Startup instructions
-├── context/                  # Base context (loaded always)
+~/.config/agentic/              # Shared (symlinked into both tools)
+├── AGENTS.md                   # Startup instructions (CLAUDE.md symlinks to this)
+├── agents/                     # Agent definitions (no model fields, injected at install)
+│   ├── leader.md
+│   ├── architect.md
+│   ├── implementor.md
+│   ├── clarifier.md
+│   ├── tester.md
+│   ├── designer.md
+│   └── reviewer.md
+├── instructions/               # Core instructions (loaded always)
 │   ├── communication.md
-│   ├── rules.md
+│   ├── standards.md
 │   └── versioning.md
-├── tools/                    # Tool-specific usage guides
+├── tools/                      # Tool-specific usage guides
 │   ├── github.md
 │   ├── phabricator.md
 │   ├── sentry.md
 │   └── qmd.md
-├── commands/                 # Workflow commands
-├── agents/                   # Agent definitions
-└── skills/                   # Reusable skills
+├── commands/                   # Workflow commands
+├── skills/                     # Reusable skills
+└── models.txt                  # Single source of truth for model assignments
+
+~/.config/opencode/             # OpenCode-specific
+├── opencode.json               # Config + agent models (injected by setup/agentic.sh)
+└── tui.json                    # TUI keybinds
+
+~/.claude/                      # Claude Code-specific
+├── CLAUDE.md -> ~/.config/agentic/AGENTS.md
+├── settings.json               # Claude Code settings
+├── agents/                     # Agent files with injected model/effort
+├── rules/instructions/ -> ~/.config/agentic/instructions/
+└── rules/tools/ -> ~/.config/agentic/tools/
 ```
 
 ## Workflow
@@ -55,12 +73,12 @@ Minimal specialist setup for pragmatic software development.
 | `/caveman` | Toggle ultra-compressed caveman communication mode |
 | `/handoff` | Compact conversation into a handoff doc for another agent session |
 
-## Context
+## Instructions
 
 | File | Purpose |
 | ---- | ------- |
 | `communication.md` | Communication style guidelines |
-| `rules.md` | Core implementation rules, safety, error handling, debugging |
+| `standards.md` | Core implementation rules, safety, error handling, debugging |
 | `versioning.md` | `Git` conventions and commit rules |
 
 ## Tools
@@ -97,16 +115,15 @@ Skills are loaded by agents and triggered via commands.
 | ----- | ------ | ------- |
 | `caveman` | `/caveman` | Ultra-compressed communication mode, cuts token usage by dropping filler while keeping technical accuracy |
 | `handoff` | `/handoff` | Compact conversation into a handoff document for fresh agent sessions |
-| `agent_models` | `/agent-models` | Research, rank, and apply model updates across all agents and opencode.json for any provider |
+| `agent_models` | `/agent-models` | Research, rank, and apply model updates across all agents and configs for any provider |
 
 ## Agents
 
-| Agent | Model | Variant | Purpose |
-| ----- | ----- | ------- | ------- |
-| `leader` | `opencode-go/deepseek-v4-pro` | `max` | Orchestration, delegates only when needed |
-| `clarifier` | `opencode-go/deepseek-v4-flash` | `max` | Requirements clarification |
-| `architect` | `opencode-go/deepseek-v4-pro` | `max` | Architecture decisions |
-| `designer` | `opencode-go/mimo-v2.5` | `high` | `UI`/`UX` design (frontend only) |
-| `implementor` | `opencode-go/deepseek-v4-pro` | `max` | Bounded implementation with TDD vertical slices |
-| `tester` | `opencode-go/deepseek-v4-flash` | `max` | Tests and quality checks |
-| `reviewer` | `opencode-go/mimo-v2.5-pro` | `high` | Code review, security, performance analysis |
+Agent system prompts live in `agents/`. Model assignments are in `models.txt` as the single source of truth. `setup/agentic.sh` injects them into each tool:
+
+- **OpenCode**: built into `opencode.json` via the `agent` section.
+- **Claude Code**: injected into each agent YAML frontmatter under `~/.claude/agents/`.
+
+Built-in agents: `explore` and `compaction` use lowest-cost capable models (`opencode/big-pickle` for OpenCode, `haiku` for Claude Code's built-in explore, compaction is system-managed).
+
+Refer to `models.txt` for current assignments.

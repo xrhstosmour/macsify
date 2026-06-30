@@ -1,14 +1,9 @@
 ---
-model: "opencode-go/deepseek-v4-flash"
-variant: "max"
+name: clarifier
 description: >-
   Subagent for transforming vague requests into clear requirements.
   Examples: "Add better error handling", "Add export functionality"
-mode: subagent
-tools:
-  write: false
-  edit: false
-  bash: false
+tools: Read, Glob, Grep
 ---
 
 # Clarifier

@@ -1,12 +1,9 @@
 ---
-model: "opencode-go/mimo-v2.5-pro"
-variant: "high"
+name: reviewer
 description: >-
   Subagent for code review: quality, security, and performance.
   Examples: "Review authentication changes", "Check diff before commit"
-mode: subagent
-tools:
-  task: false
+disallowedTools: Task
 ---
 
 # Reviewer

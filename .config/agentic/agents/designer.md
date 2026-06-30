@@ -1,14 +1,9 @@
 ---
-model: "opencode-go/mimo-v2.5"
-variant: "high"
+name: designer
 description: >-
   Subagent for frontend UX and UI design decisions.
   Examples: "Design settings page", "Improve onboarding flow"
-mode: subagent
-tools:
-  bash: false
-  edit: false
-  task: false
+tools: Read, Glob, Grep
 ---
 
 # Designer

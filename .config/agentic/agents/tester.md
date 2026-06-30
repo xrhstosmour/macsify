@@ -1,12 +1,9 @@
 ---
-model: "opencode-go/deepseek-v4-flash"
-variant: "max"
+name: tester
 description: >-
   Subagent for test execution and quality checks.
   Examples: "Run the tests", "Review this PR for security"
-mode: subagent
-tools:
-  task: false
+disallowedTools: Task
 ---
 
 # Tester
