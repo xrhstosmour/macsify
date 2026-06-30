@@ -12,7 +12,12 @@ When you encounter a `https://phabricator.<sub>.<domain>/T<id>` link, use `curl`
 ## Authentication
 
 1. Look for an environment variable named `$PHABRICATOR_TOKEN` or `$CONDUIT_TOKEN`.
-2. Look for a token in `~/.arcrc` (`jq -r '.hosts' ~/.arcrc`).
+2. Look for a token in `~/.arcrc`:
+
+   ```bash
+   jq -r '.hosts | to_entries[] | select(.key | test("phabricator")) | .value.token // empty' ~/.arcrc
+   ```
+
 3. Look for a token in 1Password (`op item get "Phabricator Token" --fields label=credential --reveal`).
 4. Ask the user to provide a token.
 
@@ -20,7 +25,7 @@ After finding a token, verify it before task calls:
 
 ```bash
 curl -s -X POST "$PHAB/api/user.whoami" \
-  -d api.token="$TOKEN" | python3 -m json.tool
+  -d api.token="$TOKEN" | jq .
 ```
 
 If `error_code` is not null, token/auth is invalid and must be fixed first.
@@ -40,36 +45,13 @@ Use this when starting from a task link and you need a robust path that avoids S
 ```bash
 PHAB_LINK="https://phabricator.skroutz.gr/T241638"
 PHAB="${PHAB_LINK%%/T*}"
-ID="$(python3 - <<'PY'
-import re
-url = "https://phabricator.skroutz.gr/T241638"
-m = re.search(r"/T(\d+)", url)
-print(m.group(1) if m else "")
-PY
-)"
+ID="${PHAB_LINK#${PHAB}/T}"
+ID="${ID%%/}"
 
 TOKEN="${PHABRICATOR_TOKEN:-${CONDUIT_TOKEN:-}}"
 
 if [ -z "$TOKEN" ] && [ -f "$HOME/.arcrc" ]; then
-  TOKEN="$(python3 - <<'PY'
-import json, os
-path = os.path.expanduser('~/.arcrc')
-token = ''
-try:
-    data = json.load(open(path))
-    hosts = data.get('hosts', {})
-    for host, info in hosts.items():
-        if 'phabricator' in host:
-            token = info.get('token', '')
-            if token:
-                break
-    if not token and hosts:
-        token = next(iter(hosts.values())).get('token', '')
-except Exception:
-    pass
-print(token)
-PY
-)"
+  TOKEN="$(jq -r '.hosts | to_entries[] | select(.key | test("phabricator")) | .value.token // empty' ~/.arcrc)"
 fi
 
 if [ -z "$TOKEN" ] && command -v op >/dev/null 2>&1; then
@@ -83,23 +65,19 @@ curl -s -X POST "$PHAB/api/maniphest.search" \
   -d "constraints[ids][0]=$ID" \
   -d "attachments[projects]=1" \
   -d "attachments[subscribers]=1" \
-  -d limit=1 | python3 -c "
-import json, sys
-payload = json.load(sys.stdin)
-if payload.get('error_code'):
-    print('ERROR:', payload.get('error_code'), payload.get('error_info'))
-    raise SystemExit(1)
-items = payload.get('result', {}).get('data', [])
-if not items:
-    print('Task not found')
-    raise SystemExit(1)
-t = items[0]
-f = t.get('fields', {})
-print(f'T{t["id"]}: {f.get("name", "")}')
-print(f'Status: {f.get("status", {}).get("name", "")} | Priority: {f.get("priority", {}).get("name", "")}')
-print()
-print((f.get('description', {}) or {}).get('raw', ''))
-"
+  -d limit=1 | jq -r '
+if .error_code then
+  "ERROR: \(.error_code) \(.error_info // "")" | halt_error(1)
+elif (.result.data | length) == 0 then
+  "Task not found" | halt_error(1)
+else
+  .result.data[0] |
+  "T\(.id): \(.fields.name // "")",
+  "Status: \(.fields.status.name // "") | Priority: \(.fields.priority.name // "")",
+  "",
+  (.fields.description.raw // "")
+end
+'
 ```
 
 ## Fetch a task by ID (T\<id\>)
@@ -114,7 +92,7 @@ curl -s -X POST "$PHAB/api/maniphest.search" \
   -d "constraints[ids][0]=<id>" \
   -d "attachments[projects]=1" \
   -d "attachments[subscribers]=1" \
-  -d limit=1 | python3 -m json.tool
+  -d limit=1 | jq .
 ```
 
 Response fields of interest:
@@ -137,17 +115,14 @@ PHAB="<base-url>" TOKEN="<token>" ID="<id>"
 curl -s -X POST "$PHAB/api/maniphest.search" \
   -d api.token="$TOKEN" \
   -d "constraints[ids][0]=$ID" \
-  -d limit=1 | python3 -c "
-import sys, json
-t = json.load(sys.stdin)['result']['data'][0]
-f = t['fields']
-print(f'T{t[\"id\"]}: {f[\"name\"]}')
-print(f'  Status: {f[\"status\"][\"name\"]} | Priority: {f[\"priority\"][\"name\"]}')
-print(f'  Created: {f[\"dateCreated\"]} | Modified: {f[\"dateModified\"]}')
-print(f'  Owner PHID: {f[\"ownerPHID\"]} | Author PHID: {f[\"authorPHID\"]}')
-print()
-print(f['description']['raw'][:3000])
-"
+  -d limit=1 | jq -r '
+.result.data[0] |
+"T\(.id): \(.fields.name // "")",
+"  Status: \(.fields.status.name // "") | Priority: \(.fields.priority.name // "")",
+"  Created: \(.fields.dateCreated // "") | Modified: \(.fields.dateModified // "")",
+"",
+(.fields.description.raw // "")[:3000]
+'
 ```
 
 ## Task transactions (history, comments)
@@ -156,7 +131,7 @@ print(f['description']['raw'][:3000])
 PHAB="<base-url>" TOKEN="<token>" ID="<id>"
 curl -s -X POST "$PHAB/api/maniphest.gettasktransactions" \
   -d api.token="$TOKEN" \
-  -d "ids[0]=$ID" | python3 -m json.tool
+  -d "ids[0]=$ID" | jq .
 ```
 
 Transaction types: `status`, `reassign`, `description`, `title`, `priority`, `core:edge`, `core:create`, `core:subscribers`, `core:space`.
@@ -168,12 +143,9 @@ PHAB="<base-url>" TOKEN="<token>"
 curl -s -X POST "$PHAB/api/phid.query" \
   -d api.token="$TOKEN" \
   -d "phids[0]=<phid1>" \
-  -d "phids[1]=<phid2>" | python3 -c "
-import sys, json
-data = json.load(sys.stdin)
-for phid, info in data['result'].items():
-    print(f'{phid}: {info[\"fullName\"]} ({info[\"typeName\"]})')
-"
+  -d "phids[1]=<phid2>" | jq -r '
+.result | to_entries[] | "\(.key): \(.value.fullName) (\(.value.typeName))"
+'
 ```
 
 ## Search users
@@ -183,19 +155,15 @@ for phid, info in data['result'].items():
 curl -s -X POST "$PHAB/api/user.search" \
   -d api.token="$TOKEN" \
   -d "constraints[usernames][0]=<username>" \
-  -d limit=5 | python3 -m json.tool
+  -d limit=5 | jq .
 
 # By display name (fuzzy).
 curl -s -X POST "$PHAB/api/user.search" \
   -d api.token="$TOKEN" \
   -d "constraints[query]=<name>" \
-  -d limit=5 | python3 -c "
-import sys, json
-data = json.load(sys.stdin)
-for u in data['result']['data']:
-    f = u['fields']
-    print(f'{f[\"username\"]} — {f[\"realName\"]} (PHID: {u[\"phid\"]})')
-"
+  -d limit=5 | jq -r '
+.result.data[] | "\(.fields.username // "-") — \(.fields.realName // "-") (PHID: \(.phid))"
+'
 ```
 
 ## Search projects
@@ -204,13 +172,9 @@ for u in data['result']['data']:
 curl -s -X POST "$PHAB/api/project.search" \
   -d api.token="$TOKEN" \
   -d "constraints[query]=<name>" \
-  -d limit=5 | python3 -c "
-import sys, json
-data = json.load(sys.stdin)
-for p in data['result']['data']:
-    f = p['fields']
-    print(f'{f[\"name\"]} ({f[\"slug\"]}) — PHID: {p[\"phid\"]}')
-"
+  -d limit=5 | jq -r '
+.result.data[] | "\(.fields.name // "-") (\(.fields.slug // "-")) — PHID: \(.phid)"
+'
 ```
 
 ## Search tasks
@@ -220,43 +184,34 @@ for p in data['result']['data']:
 curl -s -X POST "$PHAB/api/maniphest.search" \
   -d api.token="$TOKEN" \
   -d "constraints[query]=<search terms>" \
-  -d limit=10 | python3 -c "
-import sys, json
-for t in json.load(sys.stdin)['result']['data']:
-    f = t['fields']
-    print(f'T{t[\"id\"]}: {f[\"name\"]}')
-    print(f'  Status: {f[\"status\"][\"name\"]}, Owner PHID: {f[\"ownerPHID\"]}')
-    print()
-"
+  -d limit=10 | jq -r '
+.result.data[] | "T\(.id): \(.fields.name // "")",
+"  Status: \(.fields.status.name // ""), Owner PHID: \(.fields.ownerPHID // "null")",
+""
+'
 
 # By author PHID.
 curl -s -X POST "$PHAB/api/maniphest.search" \
   -d api.token="$TOKEN" \
   -d "constraints[authorPHIDs][0]=<phid>" \
-  -d limit=20 | python3 -c "
-import sys, json
-for t in json.load(sys.stdin)['result']['data']:
-    f = t['fields']
-    print(f'T{t[\"id\"]}: {f[\"name\"]} — {f[\"status\"][\"name\"]}')
-"
+  -d limit=20 | jq -r '
+.result.data[] | "T\(.id): \(.fields.name // "") — \(.fields.status.name // "")"
+'
 
 # By status (open, inprogress, resolved, etc.)
 curl -s -X POST "$PHAB/api/maniphest.search" \
   -d api.token="$TOKEN" \
   -d "constraints[statuses][0]=<status>" \
-  -d limit=20 | python3 -c "
-import sys, json
-for t in json.load(sys.stdin)['result']['data']:
-    f = t['fields']
-    print(f'T{t[\"id\"]}: {f[\"name\"]} — {f[\"status\"][\"name\"]}')
-"
+  -d limit=20 | jq -r '
+.result.data[] | "T\(.id): \(.fields.name // "") — \(.fields.status.name // "")"
+'
 ```
 
 ## Who am I?
 
 ```bash
 curl -s -X POST "$PHAB/api/user.whoami" \
-  -d api.token="$TOKEN" | python3 -m json.tool
+  -d api.token="$TOKEN" | jq .
 ```
 
 ## Task URL format
@@ -274,7 +229,7 @@ curl -s -X POST "$PHAB/api/maniphest.search" \
   -d api.token="$TOKEN" \
   -d "constraints[statuses][0]=resolved" \
   -d limit=100 > /tmp/page1.json
-AFTER=$(python3 -c "import sys,json; print(json.load(sys.stdin)['result']['cursor']['after'])" < /tmp/page1.json)
+AFTER=$(jq -r '.result.cursor.after // ""' /tmp/page1.json)
 
 # Page 2.
 curl -s -X POST "$PHAB/api/maniphest.search" \
@@ -291,4 +246,3 @@ curl -s -X POST "$PHAB/api/maniphest.search" \
 - PHIDs are opaque internal identifiers, use `phid.query` to resolve them.
 - If you cannot find a token, ask the user for one or to set `$PHABRICATOR_TOKEN`.
 - If you see Google sign-in HTML, you are not using Conduit API correctly, or token is missing/invalid.
-- Avoid `curl ... | python3 - <<'PY'` when parsing piped JSON, this pattern can consume stdin incorrectly. Prefer `python3 -c` for piped JSON, or save JSON to a file first.
