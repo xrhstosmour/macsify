@@ -61,7 +61,7 @@ If the branch already exists on remote, warn the user. Only force-push with expl
 
 ### 2.6 Branch naming
 
-Enforce pattern from `~/.config/opencode/context/versioning.md` at "Branch" section. Lowercase, kebab-case. Abort if name doesn't match.
+Enforce pattern from `~/.config/agentic/instructions/versioning.md` at "Branch" section. Lowercase, kebab-case. Abort if name doesn't match.
 
 ### 2.7 Commit audit
 
@@ -120,7 +120,7 @@ If a branch name already exists locally or remotely, suffix with a number (`-2`,
 
 ## 4. Commit Splitting
 
-Follow `~/.config/opencode/context/versioning.md` at "Commit Size" and "Commits" sections. Key rules for this skill:
+Follow `~/.config/agentic/instructions/versioning.md` at "Commit Size" and "Commits" sections. Key rules for this skill:
 
 - No type prefixes like `feat:` or `perf:`. Natural language only.
 - One topic per commit, never mix contexts.
@@ -141,9 +141,9 @@ Get user approval.
 
 ## 5. PR Body Generation
 
-Use the template from `~/.config/opencode/tools/github.md` at "PR body format" section. Omit sections with no content.
+Use the template from `~/.config/agentic/tools/github.md` at "PR body format" section. Omit sections with no content.
 
-Follow style in `~/.config/opencode/context/communication.md` for tone and formatting.
+Follow style in `~/.config/agentic/instructions/communication.md` for tone and formatting.
 
 Derive each section:
 - **What**: from commit messages and diffs. Each logical change gets one numbered item.
@@ -151,7 +151,7 @@ Derive each section:
 - **Testing**: from how the user verified (commands, UI flows, expected outcomes).
 - **Monitoring**: from relevant dashboards, Sentry boards, or observability queries.
 
-For **PR title**, follow rules in `~/.config/opencode/tools/github.md` at "PR title" section.
+For **PR title**, follow rules in `~/.config/agentic/tools/github.md` at "PR title" section.
 
 ## 6. Preview + Approval
 

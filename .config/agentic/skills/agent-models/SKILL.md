@@ -91,7 +91,18 @@ Fetch `https://models.dev/api.json`, filter by provider (`opencode-go`, `github-
 
 Claude Code uses the `effort` parameter as the equivalent of variants. Fetch available models and their effort levels from `https://docs.anthropic.com/en/docs/build-with-claude/effort`.
 
-Available levels: `low`, `medium`, `high` which is the default, `xhigh`, `max`. Not all models support all levels.
+Available levels: `low`, `medium`, `high` (default), `xhigh`, `max`. Not all models support all levels. Haiku models do not support effort at all, omit the `effort:` field for those.
+
+Effort comes first per agent role, then model selection:
+
+| Role | Effort recommendation |
+|------|----------------------|
+| leader | `high` for orchestration, `xhigh` only if the task involves long-horizon multi-step reasoning |
+| implementor | `high` for code generation quality |
+| reviewer | `high` for critical analysis |
+| architect, designer | `high` for design/analysis |
+| clarifier | `medium` for fast exploration |
+| tester | `medium` or omit (model default) for speed |
 
 ### Running Through Codex
 
@@ -110,10 +121,14 @@ Use the capability data collected above to rank models. Do not guess or rely on 
 | Agent role | Priority | Data to use for ranking |
 | leader, architect | Reasoning strength, context window | Sort by `context_window` descending, then by `reasoning_options` complexity. Larger context + more effort levels = better for planning. |
 | implementor | Code generation quality | Prefer models tagged as code-optimized in models.dev metadata. Fallback: prefer OpenAI-compatible (codex-style) over Anthropic-compatible for code gen. |
-| reviewer | Critical reasoning, analysis | Same as leader/architect. Must be a different vendor than implementor. |
+| reviewer | Critical reasoning, analysis | Must be a different vendor or tier than implementor so the review catches blind spots. In single-provider setups, use a higher tier model. |
 | designer | Creative/UX reasoning | Prefer models with broader general knowledge. Context window is secondary. |
-| tester, clarifier | Speed, reliability | Prefer models with higher rate limits for uninterrupted work. Still use a capable model, not the absolute cheapest. |
+| tester, clarifier | Speed, reliability | Prefer models with higher rate limits or lower cost for uninterrupted work. Still use a capable model, not the absolute cheapest. |
 | default, explore, compaction | Speed, rate limits | Same as tester/clarifier. Prefer models with higher rate limits, but still capable enough for the task. |
+
+### Cost consciousness
+
+Do not overuse expensive models. In a single-provider setup (e.g. Anthropic-only), assign the most expensive model (e.g. Opus) to at most one role, typically reviewer. Everything else uses the mid-tier model (e.g. Sonnet). Only use the cheapest model (e.g. Haiku) for roles where speed matters more than quality (tester, compaction).
 
 When building the proposal, show a table with:
 - Each role
@@ -125,38 +140,48 @@ Important: Do not assign the same model to adjacent pipeline roles (implementor 
 
 ## Apply
 
-Once the user approves, update the config files. The same agent `.md` files with YAML frontmatter can be shared across environments, the `variant:` field maps to each tool's equivalent concept.
+Once the user approves, update `.config/agentic/models.txt`. This is the single source of truth for all model assignments. `setup/agentic.sh` reads it and injects models into both tools.
 
-### Mapping
+### models.txt format
 
-| YAML field | OpenCode | Claude Code | Codex |
-|------------|----------|-------------|-------|
-| `model:` | `model:` in agent YAML | `model:` in agent YAML | `model:` in agent YAML |
-| `variant:` | `variant:` (native) | `effort` parameter | `reasoning.effort` parameter |
+```
+# Format: <tool>:<agent>:<field>:<value>
+# Use '-' as value when a field does not apply.
 
-### Apply to OpenCode
+# OpenCode
+opencode:leader:model:opencode-go/deepseek-v4-pro
+opencode:leader:variant:max
+opencode:explore:model:opencode/big-pickle
+opencode:explore:variant:-
 
-Read the actual filesystem:
+# Claude Code
+claude:leader:model:claude-sonnet-4-6
+claude:leader:effort:medium
+claude:tester:model:claude-haiku-4-5
+```
 
-1. Read `.config/opencode/opencode.json` and update three model fields: `model` (default), `agent.explore.model`, `agent.compaction.model`.
+### Fields per tool
 
-2. List every `.md` file in `.config/opencode/agents/`. For each agent file, update the `model:` and `variant:` lines in its YAML frontmatter (determined above). If a model has no variants, remove the `variant:` line entirely.
+| Tool | Fields | Lines per agent |
+|------|--------|----------------|
+| OpenCode | `model`, `variant` (use `-` if none) | `opencode:<agent>:model:...` + `opencode:<agent>:variant:...` |
+| Claude Code | `model`, `effort` (omit line entirely if not supported, e.g. Haiku) | `claude:<agent>:model:...` + optional `claude:<agent>:effort:...` |
 
-### Apply to Claude Code
+### Apply steps
 
-The same agent `.md` files work, `variant:` maps to `effort`. Ensure the files are placed where Claude Code reads them, and update the `variant:` values using the mapping above.
+1. Read `.config/agentic/models.txt`.
+2. Update the `opencode:` and `claude:` lines with the approved model assignments.
+3. Write the updated file.
+4. Run `setup/agentic.sh` to inject models into both tools. NOTHING else to edit.
 
-### Apply to Codex
+### Verify
 
-The same agent `.md` files work, `variant:` maps to `reasoning.effort`. Ensure the files are placed where Codex reads them, and update the `variant:` values using the mapping above.
+After all edits:
 
-## Verify
-
-After all edits, grep for `model:` across all agent files and `"model"` across opencode.json. For each agent, verify:
-- The model ID matches the approved mapping
-- The variant (if present) is the correct highest variant for that model
-- No variant line exists for models that don't support variants
-- Update the README.md or other documentation files mentioning agents, agents table, and architecture diagram to reflect the new models.
+- Read `.config/agentic/models.txt` and verify every agent has matching `opencode:<agent>:model:` and `claude:<agent>:model:` lines.
+- Verify the OpenCode `explore` and `compaction` entries are present.
+- Run `bash setup/agentic.sh` and confirm it completes without errors.
+- Update documentation files (README.md, architecture diagrams) to reflect the new models.
 
 ## Rules
 

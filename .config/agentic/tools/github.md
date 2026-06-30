@@ -84,4 +84,4 @@ Or use the above queries:
 Rules:
 
 - Omit sections with no content.
-- Short, direct language per `~/.config/opencode/context/communication.md`.
+- Short, direct language per `~/.config/agentic/instructions/communication.md`.
