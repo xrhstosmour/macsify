@@ -1,0 +1,39 @@
+# Per-agent model assignments for OpenCode and Claude Code.
+# Format: <tool>:<agent>:<field>:<value>
+# Use '-' as value placeholder when a field does not apply.
+# Updated by the agent-models skill. Read by setup/agentic.sh.
+
+# OpenCode
+opencode:leader:model:opencode-go/deepseek-v4-pro
+opencode:leader:variant:max
+opencode:architect:model:opencode-go/deepseek-v4-pro
+opencode:architect:variant:max
+opencode:implementor:model:opencode-go/deepseek-v4-pro
+opencode:implementor:variant:max
+opencode:clarifier:model:opencode-go/deepseek-v4-flash
+opencode:clarifier:variant:max
+opencode:tester:model:opencode-go/deepseek-v4-flash
+opencode:tester:variant:max
+opencode:designer:model:opencode-go/mimo-v2.5
+opencode:designer:variant:high
+opencode:reviewer:model:opencode-go/mimo-v2.5-pro
+opencode:reviewer:variant:high
+opencode:explore:model:opencode/big-pickle
+opencode:explore:variant:-
+opencode:compaction:model:opencode/big-pickle
+opencode:compaction:variant:-
+
+# Claude Code
+claude:leader:model:sonnet
+claude:leader:effort:high
+claude:architect:model:sonnet
+claude:architect:effort:high
+claude:implementor:model:sonnet
+claude:implementor:effort:high
+claude:clarifier:model:sonnet
+claude:clarifier:effort:medium
+claude:tester:model:haiku
+claude:designer:model:sonnet
+claude:designer:effort:high
+claude:reviewer:model:opus
+claude:reviewer:effort:high

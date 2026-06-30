@@ -2,21 +2,11 @@
   "$schema": "https://opencode.ai/config.json",
   "model": "opencode-go/deepseek-v4-flash",
   "default_agent": "plan",
-  "agent": {
-    "explore": {
-      "mode": "subagent",
-      "model": "opencode/big-pickle"
-    },
-    "compaction": {
-      "mode": "primary",
-      "model": "opencode/big-pickle"
-    }
-  },
   "autoupdate": true,
   "instructions": [
-    "~/.config/opencode/context/rules.md",
-    "~/.config/opencode/context/versioning.md",
-    "~/.config/opencode/context/communication.md",
+    "~/.config/opencode/instructions/standards.md",
+    "~/.config/opencode/instructions/versioning.md",
+    "~/.config/opencode/instructions/communication.md",
     "~/.config/opencode/tools/github.md",
     "~/.config/opencode/tools/phabricator.md",
     "~/.config/opencode/tools/sentry.md",
