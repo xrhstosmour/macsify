@@ -62,7 +62,7 @@ gh api repos/<owner>/<repo>/contents/<path> --raw
 
 **Why**:
 
-Resolves [<issue_id>](<url>).
+Resolves [<issue_or_task_id>](<url>). The link can point to a Sentry, Phabricator, Jira, or other task manager, ticketing system or monitoring tool.
 
 **Testing**:
 
