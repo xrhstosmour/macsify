@@ -33,6 +33,7 @@ claude:implementor:effort:high
 claude:clarifier:model:sonnet
 claude:clarifier:effort:medium
 claude:tester:model:haiku
+claude:tester:effort:low
 claude:designer:model:sonnet
 claude:designer:effort:high
 claude:reviewer:model:opus
