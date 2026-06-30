@@ -8,6 +8,9 @@
   "spinnerTipsEnabled": false,
   "autoUpdatesChannel": "stable",
   "cleanupPeriodDays": 90,
+  "enabledPlugins": {
+    "ruby-lsp@claude-plugins-official": true
+  },
   "permissions": {
     "deny": [
       "Read(**/.env)",
