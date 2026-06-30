@@ -84,6 +84,7 @@ done
 
 log_info "Copying Claude Code settings..."
 cp "$AGENTIC_SCRIPT_DIRECTORY/../claude/settings.json" "$HOME/.claude/"
+cp "$AGENTIC_SCRIPT_DIRECTORY/../claude/keybindings.json" "$HOME/.claude/"
 
 log_info "Creating symlinks..."
 
