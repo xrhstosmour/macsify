@@ -5,6 +5,9 @@
   "permissionMode": "plan",
   "includeCoAuthoredBy": false,
   "preferredNotifChannel": "terminal_bell",
+  "spinnerTipsEnabled": false,
+  "autoUpdatesChannel": "stable",
+  "cleanupPeriodDays": 90,
   "permissions": {
     "deny": [
       "Read(**/.env)",
