@@ -16,6 +16,10 @@ fi
 
 log_info "Injecting OpenCode agent models..."
 
+OPENCODE_CONFIGURATION_PATH="$HOME/.config/opencode/opencode.json"
+OPENCODE_CONFIGURATION_TEMPLATE="$AGENTIC_SCRIPT_DIRECTORY/../.config/opencode/opencode.json"
+cp "$OPENCODE_CONFIGURATION_TEMPLATE" "$OPENCODE_CONFIGURATION_PATH"
+
 agent_json_block=""
 for agent_file in "$AGENT_SOURCE_DIRECTORY"/*.md; do
     agent=$(basename "$agent_file" .md)
@@ -53,7 +57,7 @@ agent_json_block+="    \"explore\": {
 
 agent_section_file=$(mktemp)
 printf '  \"agent\": {\n%s\n  },\n' "${agent_json_block}" > "$agent_section_file"
-sed -i '' "/\"default_agent\": \"plan\",/r ${agent_section_file}" "$HOME/.config/opencode/opencode.json"
+sed -i '' "/\"default_agent\": \"plan\",/r ${agent_section_file}" "$OPENCODE_CONFIGURATION_PATH"
 rm -f "$agent_section_file"
 
 log_info "Injecting Claude Code agent models..."
