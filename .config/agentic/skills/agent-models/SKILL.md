@@ -155,9 +155,9 @@ opencode:explore:model:opencode/big-pickle
 opencode:explore:variant:-
 
 # Claude Code
-claude:leader:model:claude-sonnet-4-6
+claude:leader:model:sonnet
 claude:leader:effort:medium
-claude:tester:model:claude-haiku-4-5
+claude:tester:model:haiku
 ```
 
 ### Fields per tool
@@ -165,7 +165,7 @@ claude:tester:model:claude-haiku-4-5
 | Tool | Fields | Lines per agent |
 |------|--------|----------------|
 | OpenCode | `model`, `variant` (use `-` if none) | `opencode:<agent>:model:...` + `opencode:<agent>:variant:...` |
-| Claude Code | `model`, `effort` (omit line entirely if not supported, e.g. Haiku) | `claude:<agent>:model:...` + optional `claude:<agent>:effort:...` |
+| Claude Code | `model` (use aliases: `sonnet`, `opus`, `haiku`, not full IDs), `effort` (omit line entirely if not supported, e.g. Haiku) | `claude:<agent>:model:...` + optional `claude:<agent>:effort:...` |
 
 ### Apply steps
 
