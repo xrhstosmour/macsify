@@ -45,8 +45,7 @@ Opinionated `macOS` configuration via shell scripts.
 
 4. Configure `AI` models:
 
-    - Edit [.config/opencode/agents/*.md](.config/opencode/agents/) with your selected models.
-    - Edit [.config/opencode/opencode.json](.config/opencode/opencode.json) with your preferred agent assignments.
+    - Edit [.config/agentic/models.txt](.config/agentic/models.txt) for all `OpenCode` and `Claude Code` model assignments.
 
 ## Installation
 
