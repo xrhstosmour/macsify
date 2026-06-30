@@ -4,6 +4,7 @@
   "theme": "dark",
   "permissionMode": "plan",
   "includeCoAuthoredBy": false,
+  "preferredNotifChannel": "terminal_bell",
   "permissions": {
     "deny": [
       "Read(**/.env)",
