@@ -3,6 +3,7 @@
   "model": "sonnet",
   "theme": "dark",
   "permissionMode": "plan",
+  "includeCoAuthoredBy": false,
   "permissions": {
     "deny": [
       "Read(**/.env)",
