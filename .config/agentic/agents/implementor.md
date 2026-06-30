@@ -4,6 +4,8 @@ description: >-
   Subagent for precise implementation of approved scope.
   Examples: "Implement circuit breaker", "Fix data consistency"
 disallowedTools: Task
+permission:
+  task: deny
 ---
 
 # Implementor

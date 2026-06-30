@@ -3,7 +3,11 @@ name: clarifier
 description: >-
   Subagent for transforming vague requests into clear requirements.
   Examples: "Add better error handling", "Add export functionality"
-tools: Read, Glob, Grep
+disallowedTools: Write, Edit, Bash, Task
+permission:
+  edit: deny
+  bash: deny
+  task: deny
 ---
 
 # Clarifier

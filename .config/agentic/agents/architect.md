@@ -3,7 +3,11 @@ name: architect
 description: >-
   Subagent for architecture decisions and technical trade-offs only.
   Examples: "Design a notification system", "Push or pull sync?"
-tools: Read, Glob, Grep
+disallowedTools: Write, Edit, Bash, Task
+permission:
+  edit: deny
+  bash: deny
+  task: deny
 ---
 
 # Architect

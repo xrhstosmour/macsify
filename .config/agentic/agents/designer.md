@@ -3,7 +3,11 @@ name: designer
 description: >-
   Subagent for frontend UX and UI design decisions.
   Examples: "Design settings page", "Improve onboarding flow"
-tools: Read, Glob, Grep
+disallowedTools: Write, Edit, Bash, Task
+permission:
+  edit: deny
+  bash: deny
+  task: deny
 ---
 
 # Designer

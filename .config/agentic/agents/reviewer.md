@@ -4,6 +4,8 @@ description: >-
   Subagent for code review: quality, security, and performance.
   Examples: "Review authentication changes", "Check diff before commit"
 disallowedTools: Task
+permission:
+  task: deny
 ---
 
 # Reviewer
