@@ -107,6 +107,7 @@ function claude_session_list
     set -l selected_line $output[2]
     set -l jsonl_path (echo "$selected_line" | cut -f1)
     set -l session_id (echo "$selected_line" | cut -f2)
+    set -l project_dir (echo "$selected_line" | cut -f4)
 
     if test "$key" = delete -a -n "$session_id"
         test -f "$jsonl_path"; and rm -f "$jsonl_path"
@@ -118,7 +119,11 @@ function claude_session_list
     end
 
     if test -n "$session_id"
-        claude -r "$session_id"
+        if test -n "$project_dir" -a -d "$project_dir"
+            env -C "$project_dir" claude -r "$session_id"
+        else
+            claude -r "$session_id"
+        end
     end
 
     return 0
