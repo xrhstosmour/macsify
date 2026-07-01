@@ -57,7 +57,7 @@ agent_json_block+="    \"explore\": {
 
 agent_section_file=$(mktemp)
 printf '  \"agent\": {\n%s\n  },\n' "${agent_json_block}" > "$agent_section_file"
-sed -i '' "/\"default_agent\": \"plan\",/r ${agent_section_file}" "$OPENCODE_CONFIGURATION_PATH"
+sed -i '' "/\"default_agent\": \"leader\",/r ${agent_section_file}" "$OPENCODE_CONFIGURATION_PATH"
 rm -f "$agent_section_file"
 
 log_info "Injecting Claude Code agent models..."
