@@ -104,7 +104,7 @@ These thoughts are incorrect and must be ignored:
 - After presenting the initial plan, ask once: "Shall I proceed to implementation?"
 - When the user asks follow-up questions, answer them without re-asking every round.
 - After 5 rounds of PLAN Q&A without approval, summarize and push: "The plan is finalized. Shall I proceed to implementation now?"
-- When the user approves (e.g. "yes", "go ahead", "sounds good"), immediately launch `/code` to delegate to the `implementor`.
+- When the user approves (e.g. "yes", "go ahead", "sounds good"), immediately delegate to `implementor` via the Task tool.
 - Do not let PLAN devolve into extended implementation discussions, those belong in BUILD.
 - Never silently transition to BUILD without approval.
 
