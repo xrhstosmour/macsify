@@ -26,11 +26,19 @@ gh issue view <number>
 gh issue comment <number> --body "<comment>"
 
 # PRs.
-gh pr create --title "<title>" --body "<body>" --base <branch> --head <branch>
+gh pr create --title "<title>" --body "<body>" --base <branch> --head <branch> --assignee @me
 gh pr view <number>
 gh pr diff <number>
 gh pr review <number> --approve --body "<review>"
 gh pr comment <number> --body "<comment>"
+
+# Edit an existing PR (flags differ from create — note --add-assignee NOT --assignee).
+gh pr edit <number> --title "<title>" --body "<body>"
+gh pr edit <number> --add-assignee <login>
+gh pr edit <number> --remove-assignee <login>
+gh pr edit <number> --add-label <name> --remove-label <name>
+gh pr edit <number> --add-reviewer <login>
+gh pr edit <number> --base <branch>
 
 # Commits.
 gh api repos/<owner>/<repo>/commits/<sha>
