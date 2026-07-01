@@ -4,55 +4,98 @@
 #   - DELETE will delete the session
 #   - ? will toggle the preview
 function claude_session_list
-    set -l sessions_dir ~/.claude/sessions
+    set -l history_file ~/.claude/history.jsonl
 
-    if not test -d "$sessions_dir"
-        log_error "No Claude sessions directory found!"
+    if not test -f "$history_file"
+        log_error "No Claude history found!"
         return 1
     end
 
-    set -l session_files "$sessions_dir"/*.json
-    if test "$session_files" = "$sessions_dir/*.json"
+    set -l session_data (jq -rs '
+        map(select(.sessionId != null)) |
+        group_by(.sessionId) |
+        map(
+            (sort_by(.timestamp)) as $g |
+            {
+                sessionId:        ($g | first | .sessionId),
+                project:          ($g | last  | .project // ""),
+                max_ts:           ($g | last  | .timestamp),
+                min_ts:           ($g | first | .timestamp),
+                display_fallback: (($g | map(select((.display // "") | (. != "") and (startswith("/") | not))) | first | .display) // "")
+            }
+        ) |
+        sort_by(-.max_ts)[] |
+        [.sessionId, (.project // ""), (.max_ts | tostring), (.min_ts | tostring), (.display_fallback // "")] |
+        @tsv
+    ' "$history_file" 2>/dev/null)
+
+    if test (count $session_data) -eq 0
         log_error "No sessions found!"
         return 1
     end
-    set -l session_files (ls -t $session_files 2>/dev/null)
 
-    set -l output (for session_file in $session_files
-        set -l session_id (jq -r '.sessionId // ""' "$session_file" 2>/dev/null)
-        if test -z "$session_id" -o "$session_id" = "null"
+    set -l output (for line in $session_data
+        set -l fields (string split \t -- "$line")
+        set -l session_id $fields[1]
+        set -l project $fields[2]
+        set -l max_ts $fields[3]
+        set -l min_ts $fields[4]
+        set -l display_fallback $fields[5]
+
+        set -l enc (string replace -a '/' '-' -- "$project")
+        set -l jsonl "$HOME/.claude/projects/$enc/$session_id.jsonl"
+
+        if not test -f "$jsonl"
             continue
         end
-        set -l name (jq -r '.name // .cwd // ""' "$session_file" 2>/dev/null)
-        set -l short_id (string sub -l 8 "$session_id")
-        printf '%s\t%s\t\033[1;33m%s\033[0m \033[1;32m|\033[0m %s\n' "$session_file" "$session_id" "$short_id" "$name"
-    end | env SHELL=/bin/bash fzf --ansi --height=20 --delimiter='\t' --with-nth=3.. \
+        set -l short_id (string sub -l 8 -- "$session_id")
+        set -l updated (date -r (math --scale=0 "$max_ts / 1000") '+%Y-%m-%d %H:%M' 2>/dev/null)
+        set -l created (date -r (math --scale=0 "$min_ts / 1000") '+%Y-%m-%d %H:%M' 2>/dev/null)
+
+        set -l display (
+            if test -f "$jsonl"
+                head -50 "$jsonl" | jq -r '
+                    select(.type == "user") |
+                    .message.content |
+                    if type == "string" then .
+                    elif type == "array" then (map(select(.type == "text") | .text) | first // "")
+                    else "" end
+                ' 2>/dev/null | head -1
+            end
+        )
+        test -n "$display"; or set display $display_fallback
+        test -n "$display"; or set display $short_id
+        if test (string length -- "$display") -gt 60
+            set display (string sub -l 57 -- "$display")"..."
+        end
+
+        printf '%s\t%s\t\033[1;33m%s\033[0m \033[1;32m|\033[0m %s\t%s\t%s\t%s\n' \
+            "$jsonl" "$session_id" \
+            "$short_id" "$display" \
+            "$project" "$created" "$updated"
+    end | env SHELL=/bin/bash fzf --ansi --height=20 --delimiter='\t' --with-nth=3 \
         --expect=delete \
         --bind '?:toggle-preview' \
         --preview '
-            sf={1}
-            sid=$(jq -r ".sessionId // \"-\"" "$sf" 2>/dev/null)
-            cwd=$(jq -r ".cwd // \"-\"" "$sf" 2>/dev/null)
-            name=$(jq -r ".name // \"-\"" "$sf" 2>/dev/null)
-            sstat=$(jq -r ".status // \"-\"" "$sf" 2>/dev/null)
-            s_ms=$(jq -r ".startedAt // 0" "$sf" 2>/dev/null)
-            u_ms=$(jq -r ".updatedAt // 0" "$sf" 2>/dev/null)
-            started=-; updated=-
-            if [ "$s_ms" -gt 0 ] 2>/dev/null; then started=$(date -r $((s_ms / 1000)) "+%Y-%m-%d %H:%M:%S" 2>/dev/null); fi
-            if [ "$u_ms" -gt 0 ] 2>/dev/null; then updated=$(date -r $((u_ms / 1000)) "+%Y-%m-%d %H:%M:%S" 2>/dev/null); fi
-            enc_cwd=$(echo "$cwd" | tr "/" "-")
-            jsonl="$HOME/.claude/projects/$enc_cwd/$sid.jsonl"
+            sid={2}
+            directory={4}
+            created={5}
+            updated={6}
+            jsonl={1}
+            [ -z "$directory" ] && directory=-
+            model=-
             desc=-
             if [ -f "$jsonl" ]; then
-              desc=$(jq -r "select(.type == \"user\") | .message.content | if type == \"string\" then . elif type == \"array\" then (map(select(.type == \"text\") | .text) | first // \"-\") else \"-\" end" "$jsonl" 2>/dev/null | head -1 | head -c 200)
-              [ -z "$desc" ] && desc=-
+                model=$(jq -r "select(.type == \"assistant\") | .message.model // empty" "$jsonl" 2>/dev/null | grep -v "^$" | head -1)
+                [ -z "$model" ] && model=-
+                desc=$(jq -rn "first(inputs | select(.type == \"user\")) | .message.content | if type == \"string\" then . elif type == \"array\" then (map(select(.type == \"text\") | .text) | first // \"-\") else \"-\" end" "$jsonl" 2>/dev/null | head -c 500)
+                [ -z "$desc" ] && desc=-
             fi
             printf "\033[1;33mID:\033[0m %s\n" "$sid"
-            printf "\033[1;33mDirectory:\033[0m %s\n" "$cwd"
-            printf "\033[1;33mCreated:\033[0m %s\n" "$started"
+            printf "\033[1;33mDirectory:\033[0m %s\n" "$directory"
+            printf "\033[1;33mCreated:\033[0m %s\n" "$created"
             printf "\033[1;33mUpdated:\033[0m %s\n\n" "$updated"
-            printf "\033[1;34mName:\033[0m %s\n" "$name"
-            printf "\033[1;34mStatus:\033[0m %s\n\n" "$sstat"
+            printf "\033[1;34mModel:\033[0m %s\n\n" "$model"
             printf "\033[1;32mDescription:\033[0m %s\n" "$desc"
         ' --preview-window=right:50%:hidden:wrap)
 
@@ -61,16 +104,15 @@ function claude_session_list
     end
 
     set -l key $output[1]
-    set -l session_file (echo "$output[2]" | cut -f1)
-    set -l session_id (echo "$output[2]" | cut -f2)
+    set -l selected_line $output[2]
+    set -l jsonl_path (echo "$selected_line" | cut -f1)
+    set -l session_id (echo "$selected_line" | cut -f2)
 
-    if test "$key" = delete -a -n "$session_file"
-        set -l cwd (jq -r '.cwd // ""' "$session_file" 2>/dev/null)
-        set -l encoded_cwd (string replace -a '/' '-' "$cwd")
-        rm -f "$session_file"
-        if test -n "$session_id" -a -n "$encoded_cwd"
-            rm -rf "$HOME/.claude/projects/$encoded_cwd/$session_id"
-            rm -f "$HOME/.claude/projects/$encoded_cwd/$session_id.jsonl"
+    if test "$key" = delete -a -n "$session_id"
+        test -f "$jsonl_path"; and rm -f "$jsonl_path"
+        if test -f "$history_file"
+            grep -v "\"sessionId\":\"$session_id\"" "$history_file" > "$history_file.tmp" 2>/dev/null
+            mv "$history_file.tmp" "$history_file"
         end
         return 0
     end
