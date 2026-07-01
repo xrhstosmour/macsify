@@ -210,33 +210,18 @@ pr_number=$(echo "$pr_url" | grep -oE '/pull/[0-9]+$' | grep -oE '[0-9]+')
 
 ### Labels
 
-Detect existing labels that match the change type. Never create new labels.
+Fetch labels from the last 3 PRs created by the current user and apply any that appear in at least 2 of them. Never create new labels.
 
 ```bash
-# Fetch existing labels.
-gh label list --json name --jq '.[].name' > /tmp/labels.txt
-
-# Apply matching labels by scanning the title and branch for keywords.
-if echo "<title>" | grep -qiE 'fix|bug|hotfix'; then
-  if grep -q 'bug' /tmp/labels.txt; then
-    gh pr edit "$pr_number" --add-label bug
-  fi
-fi
-if echo "<title>" | grep -qiE 'enhancement|feature|feat'; then
-  if grep -q 'enhancement' /tmp/labels.txt; then
-    gh pr edit "$pr_number" --add-label enhancement
-  fi
-fi
-if echo "<title>" | grep -qiE 'refactor|cleanup|tech'; then
-  if grep -q 'refactor' /tmp/labels.txt; then
-    gh pr edit "$pr_number" --add-label refactor
-  fi
-fi
-
-rm /tmp/labels.txt
+# Find common labels across the last 3 PRs.
+gh pr list --author @me --limit 3 --json labels \
+  --jq '.[].labels[].name' | sort | uniq -c | sort -rn | awk '$1 >= 2 {print $2}' | \
+  while read label; do
+    gh pr edit "$pr_number" --add-label "$label"
+  done
 ```
 
-Only apply labels that already exist in the repository. If no match found, skip labels.
+If no labels appear in ≥ 2 recent PRs, skip labels entirely.
 
 ## 9. Summary
 
