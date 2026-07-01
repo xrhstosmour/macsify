@@ -2,7 +2,7 @@
 description: Create a GitHub pull request with structured description, split commits, feature branch, auto-assign, and labels.
 ---
 
-# Create
+# Create PR
 
 Create a `PR` using the `create_pr` skill instructions.
 
