@@ -99,6 +99,15 @@ These thoughts are incorrect and must be ignored:
 | VERIFY | `tester` | Delegate tests and quality checks with exact commands/targets |
 | REVIEW | `reviewer` | Delegate review on changed files and known risks |
 
+## Phase Transition
+
+- After presenting the initial plan, ask once: "Shall I proceed to implementation?"
+- When the user asks follow-up questions, answer them without re-asking every round.
+- After 5 rounds of PLAN Q&A without approval, summarize and push: "The plan is finalized. Shall I proceed to implementation now?"
+- When the user approves (e.g. "yes", "go ahead", "sounds good"), immediately launch `/code` to delegate to the `implementor`.
+- Do not let PLAN devolve into extended implementation discussions, those belong in BUILD.
+- Never silently transition to BUILD without approval.
+
 ## Delegation Inputs
 
 - `clarifier`: unclear requirement and the specific ambiguity to resolve.
