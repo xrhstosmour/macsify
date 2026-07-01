@@ -147,7 +147,7 @@ Follow style in `~/.config/agentic/instructions/communication.md` for tone and f
 
 Derive each section:
 - **What**: from commit messages and diffs. Each logical change gets one numbered item.
-- **Why**: from the problem being solved. Link the GitHub issue if one exists.
+- **Why**: If the user provides a task or issue link, write only `Resolves [<id>](<url>).` nothing else. Use the tracker's native ID format (e.g. `T247574`, `PROJ-123`, `#42`). If no link is provided, write a short explanation of the problem the change solves.
 - **Testing**: from how the user verified (commands, UI flows, expected outcomes).
 - **Monitoring**: from relevant dashboards, Sentry boards, or observability queries.
 
@@ -196,6 +196,8 @@ git rev-parse origin/<branch>
 
 ## 8. PR Creation
 
+Always include `--assignee @me`. Never omit it.
+
 ```bash
 pr_url=$(gh pr create \
   --title "<title>" \
@@ -242,6 +244,19 @@ Only apply labels that already exist in the repository. If no match found, skip 
 PR created: <url>
 Branch: feature/<name>
 Commits: <N>
+```
+
+## 10. Trigger CI
+
+After creating the PR, check if the project has CI/CD workflows that do not start automatically on PR creation. Look for:
+
+- `.github/workflows/` files with `on: push: branches: ["tests/**"]` or `workflow_dispatch` triggers.
+- Project docs (README, `copilot/dev-tools.md`, or equivalent) that mention manual CI trigger steps.
+
+If manual triggers exist, show the user the exact command and let them decide whether to run it. Do not trigger CI automatically. Example for projects using a `tests/` branch convention:
+
+```bash
+git push origin HEAD:tests/<branch-name>
 ```
 
 ## Rules
