@@ -18,6 +18,7 @@
 - Wrap in backticks: technical identifiers, code elements, file names and paths, product/company/tool names.
 - Leave unformatted: natural language words, headings, `YAML` frontmatter fields.
 - For commit messages and Git platform text such as PR titles, PR bodies, and review comments, use short, direct language per `~/.config/agentic/instructions/communication.md`.
+- Use single-word project scopes followed by a colon: "`DHL`: Add new endpoint for courier pickup capabilities".
 
 ```text
 Add `Sentry` integration
@@ -28,6 +29,9 @@ Update `README.md` with setup instructions
 `opencode`: Update `resolve-pr-comments` skill
 `DHL`: Add new endpoint for courier pickup capabilities
 `macsify`: Refactor `WindowManager` to use `NSScreen`
+Add CI detection and direct database fallback to setup.sh
+Delegate test job setup to Copier tasks via env block
+Remove redundant `alembic` and `initial_data` from `prestart.sh`
 ```
 
 ### Structure
