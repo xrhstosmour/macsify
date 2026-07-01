@@ -113,6 +113,6 @@ Agent system prompts live in `agents/`. Model assignments are in `models.txt` as
 - **OpenCode**: built into `opencode.json` via the `agent` section.
 - **Claude Code**: injected into each agent YAML frontmatter under `~/.claude/agents/`.
 
-Built-in agents: `explore` and `compaction` use lowest-cost capable models (`opencode/big-pickle` for OpenCode, `haiku` for Claude Code's built-in explore, compaction is system-managed).
+Built-in agents: `explore` and `compaction` use lowest-cost capable models.
 
 Refer to `models.txt` for current assignments.

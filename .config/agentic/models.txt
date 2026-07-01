@@ -14,14 +14,14 @@ opencode:clarifier:model:opencode-go/deepseek-v4-flash
 opencode:clarifier:variant:max
 opencode:tester:model:opencode-go/deepseek-v4-flash
 opencode:tester:variant:max
-opencode:designer:model:opencode-go/mimo-v2.5
-opencode:designer:variant:high
-opencode:reviewer:model:opencode-go/mimo-v2.5-pro
-opencode:reviewer:variant:high
-opencode:explore:model:opencode/big-pickle
-opencode:explore:variant:-
-opencode:compaction:model:opencode/big-pickle
-opencode:compaction:variant:-
+opencode:designer:model:opencode-go/qwen3.7-plus
+opencode:designer:variant:-
+opencode:reviewer:model:opencode-go/qwen3.7-max
+opencode:reviewer:variant:-
+opencode:explore:model:opencode-go/deepseek-v4-flash
+opencode:explore:variant:max
+opencode:compaction:model:opencode-go/deepseek-v4-flash
+opencode:compaction:variant:max
 
 # Claude Code
 claude:leader:model:sonnet
