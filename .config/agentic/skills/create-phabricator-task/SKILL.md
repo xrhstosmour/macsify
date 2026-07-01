@@ -28,7 +28,7 @@ Derive `$PHAB` in order:
 ### 1. Gather required fields
 
 - Tag (required): Phabricator project. Ask: "Which tag?"
-- Title (required): Short, imperative. Example: `[P2] Add dark mode toggle`.
+- Title (required): Short imperative phrase, max ~60 characters. No priority prefix (priority is a separate field). Example: `Add dark mode toggle`.
 
 ### 2. Gather optional fields
 
