@@ -6,7 +6,7 @@
 # OpenCode
 opencode:leader:model:opencode-go/deepseek-v4-pro
 opencode:leader:variant:max
-opencode:architect:model:opencode-go/deepseek-v4-pro
+opencode:architect:model:opencode-go/glm-5.2
 opencode:architect:variant:max
 opencode:implementor:model:opencode-go/deepseek-v4-pro
 opencode:implementor:variant:max
@@ -14,8 +14,8 @@ opencode:clarifier:model:opencode-go/deepseek-v4-flash
 opencode:clarifier:variant:max
 opencode:tester:model:opencode-go/deepseek-v4-flash
 opencode:tester:variant:max
-opencode:designer:model:opencode-go/qwen3.7-plus
-opencode:designer:variant:-
+opencode:designer:model:opencode-go/glm-5.2
+opencode:designer:variant:max
 opencode:reviewer:model:opencode-go/qwen3.7-max
 opencode:reviewer:variant:-
 opencode:explore:model:opencode-go/deepseek-v4-flash
