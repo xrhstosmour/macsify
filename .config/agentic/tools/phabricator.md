@@ -40,7 +40,7 @@ The API base is `$PHAB/api/`.
 
 ## Quick reliable flow (copy/paste)
 
-Use this when starting from a task link and you need a robust path that avoids SSO HTML pages.
+Use this when starting from a task link and you need a robust path that avoids SSO HTML pages. Always use this block verbatim for token lookup. Do not write your own token resolution — partial implementations silently drop the 1Password fallback.
 
 ```bash
 PHAB_LINK="https://phabricator.skroutz.gr/T241638"
