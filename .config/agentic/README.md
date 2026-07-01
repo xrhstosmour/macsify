@@ -28,6 +28,13 @@ Shared AI configuration for OpenCode and Claude Code. Model assignments live in 
 ├── skills/                     # Reusable skills
 └── models.txt                  # Single source of truth for model assignments
 
+.config/agentic/                # Project-local overrides and additions
+├── commands/
+│   └── create-phabricator-task.md
+└── skills/
+    └── create-phabricator-task/
+        └── SKILL.md
+
 ~/.config/opencode/             # OpenCode-specific
 ├── opencode.json               # Config + agent models (injected by setup/agentic.sh)
 └── tui.json                    # TUI keybinds
@@ -48,30 +55,6 @@ Shared AI configuration for OpenCode and Claude Code. Model assignments live in 
 | Code | `/code` | `implementor` | Implement approved scope, show changes, iterate until approved |
 | Test | `/test` | `tester` | Run tests and quality checks |
 | Review | `/review` | `reviewer` | Code review for quality, security, best practices |
-
-## Commands
-
-### PR Management
-
-| Command | Purpose |
-| ------- | ------- |
-| `/create-pr` | Create a `PR` with structured description, split commits, feature branch, auto-assign, and labels |
-| `/review-pr` | Multi-agent `PR` review, spawns agents in parallel, can post inline comments |
-| `/resolve-pr-comments` | Resolve `PR` review comments, make fixup commits, push, reply with `SHA` links |
-
-### Diagnosis & Analysis
-
-| Command | Purpose |
-| ------- | ------- |
-| `/diagnose` | Structured 6-phase debugging loop for hard bugs and performance regressions |
-| `/technical-analysis` | Structured technical analysis with method-level changes, notes, estimation, and architecture improvement |
-
-### Utility
-
-| Command | Purpose |
-| ------- | ------- |
-| `/caveman` | Toggle ultra-compressed caveman communication mode |
-| `/handoff` | Compact conversation into a handoff doc for another agent session |
 
 ## Instructions
 
@@ -116,6 +99,12 @@ Skills are loaded by agents and triggered via commands.
 | `caveman` | `/caveman` | Ultra-compressed communication mode, cuts token usage by dropping filler while keeping technical accuracy |
 | `handoff` | `/handoff` | Compact conversation into a handoff document for fresh agent sessions |
 | `agent_models` | `/agent-models` | Research, rank, and apply model updates across all agents and configs for any provider |
+
+### Task Management Skills
+
+| Skill | Command | Purpose |
+| ----- | ------- | ------- |
+| `create_phabricator_task` | `/create-phabricator-task` | Create and edit Phabricator tasks via the `Conduit` API |
 
 ## Agents
 
