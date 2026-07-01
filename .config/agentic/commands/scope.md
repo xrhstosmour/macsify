@@ -1,7 +1,6 @@
 ---
 description: Assess scope and define implementation approach
 agent: leader
-mode: primary
 ---
 
 # Scope
@@ -22,5 +21,6 @@ Assess scope, present approach, and iterate based on feedback until user approve
 
 ## Phase Transition
 
-After approval → proceed to `/code`.
+After approval → delegate to `implementor` via the Task tool with the approved scope, files, and acceptance criteria.
+If a plan is not needed (simple tasks), use `/code` to invoke `implementor` directly without scoping.
 If scope changes significantly during implementation → return to `/scope`.
