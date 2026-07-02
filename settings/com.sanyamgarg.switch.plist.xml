@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>SUHasLaunchedBefore</key>
+	<true/>
+	<key>SULastCheckTime</key>
+	<date>2026-07-02T11:51:01Z</date>
+	<key>SUUpdateGroupIdentifier</key>
+	<integer>520341237</integer>
+	<key>switch.accent</key>
+	<string>system</string>
+	<key>switch.appIconSize</key>
+	<real>40</real>
+	<key>switch.backgroundBlur</key>
+	<string>light</string>
+	<key>switch.gridColumns</key>
+	<integer>3</integer>
+	<key>switch.hideMenuBarIcon</key>
+	<false/>
+	<key>switch.hotkey.allWindows</key>
+	<data>
+	eyJtb2RpZmllcnNSYXciOjI2MjE0NCwia2V5Q29kZSI6NDh9
+	</data>
+	<key>switch.hotkey.seeded</key>
+	<true/>
+	<key>switch.includeWindowlessApps</key>
+	<false/>
+	<key>switch.showHintStrip</key>
+	<false/>
+	<key>switch.showStoplights</key>
+	<false/>
+	<key>switch.showTitleFirst</key>
+	<true/>
+	<key>switch.staticOrder</key>
+	<false/>
+	<key>switch.thumbnailHeight</key>
+	<real>120</real>
+	<key>switch.typeToFilter</key>
+	<false/>
+	<key>switch.verticalList</key>
+	<false/>
+	<key>switch.verticalShowHeader</key>
+	<true/>
+	<key>switch.verticalShowStoplights</key>
+	<false/>
+</dict>
+</plist>
