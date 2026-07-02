@@ -115,6 +115,14 @@ Don't leave dead code lying around, it confuses future readers and agents. Don't
 - Rollback-friendly: Each increment should be independently revertable. Prefer additive changes.
 - Keep it compilable: Project must build and tests pass after each increment.
 
+## Planning Protocol
+
+For any complex or multi-step task, follow this sequence before writing code:
+
+1. Context Discovery: Read all relevant files and environment first.
+2. Multi-Approach Proposal: Present 2-3 distinct conceptual approaches before writing a single line of code.
+3. Human Sign-off: Wait for explicit approval before executing.
+
 ## Verification Before Code
 
 Before writing any code:
@@ -130,6 +138,10 @@ After writing code:
 - Run lint/typecheck to catch style issues immediately.
 - Run relevant tests before moving on.
 - Review changes with `git diff` before presenting.
+
+## Skills Priority
+
+When a skill covers an operation, always invoke it. Never use ad-hoc commands for operations that have a skill. Skills encode safety guardrails, consistency, and quality gates that ad-hoc tool usage lacks.
 
 ## Tool Usage
 
@@ -250,6 +262,10 @@ PLAN:
 2. [second step]
 3. [third step]
 ```
+
+## Context Management
+
+Manage context actively. At major sub-task boundaries, or when a session grows very long, use `/clear` or open a fresh session to prevent attention dispersion and context rot.
 
 ## Context Anti-Patterns
 
