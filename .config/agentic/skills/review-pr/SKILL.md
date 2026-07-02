@@ -150,13 +150,13 @@ Produce a unified review. Write like a teammate giving feedback in a chat thread
 ### Summary
 One paragraph describing what the PR does and overall quality signal.
 
-### 🔴 CRITICAL
+### CRITICAL
 Findings rated CRITICAL or HIGH. Include sub-agent source, file path, and a concrete fix suggestion.
 
-### 🟡 MEDIUM
+### MEDIUM
 Findings rated MEDIUM. Same format.
 
-### 🟢 LOW
+### LOW
 Findings rated LOW or NIT. Brief, not exhaustive.
 
 ### Coverage
