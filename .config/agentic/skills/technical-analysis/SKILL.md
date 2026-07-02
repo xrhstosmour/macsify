@@ -12,7 +12,11 @@ Analyze the user's feature request and produce a structured technical analysis d
 
 ## When to use
 
-When the user describes a feature or change, or provides a link to a task, and asks for a "technical analysis", "analysis", "estimation", "breakdown", "architecture review", "refactoring candidates", or "find deepening opportunities", use this skill.
+- `/technical-analysis`
+- User says "technical analysis", "estimation", or "breakdown".
+- User provides a task link (Phabricator, Jira, GitHub issue) and asks for planning or analysis.
+- User asks "how long would this take", "what would need to change", or "where do I start".
+- User asks for an architecture review or refactoring candidates ("find deepening opportunities").
 
 ## Format
 

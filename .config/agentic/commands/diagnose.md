@@ -6,10 +6,14 @@ description: Structured debugging loop for hard bugs and performance regressions
 
 Run a disciplined 6-phase diagnosis loop against the reported bug or performance regression.
 
-## Entry Criteria
+## When to use
 
-- User reports a bug, failure, or performance regression.
-- Bug is not trivially obvious (skip for one-line fixes).
+- `/diagnose`
+- User says "diagnose this" or "debug this".
+- User reports a bug, error, or unexpected behavior.
+- Tests are failing and the root cause is not obvious.
+- Something is broken, throwing, or producing wrong output.
+- User describes a performance regression.
 
 ## Process
 

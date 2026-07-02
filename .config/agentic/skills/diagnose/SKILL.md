@@ -10,6 +10,15 @@ description: >
 
 # Diagnose
 
+## When to use
+
+- `/diagnose`
+- User says "diagnose this" or "debug this".
+- User reports a bug, error, or unexpected behavior.
+- Tests are failing and the root cause is not obvious.
+- Something is broken, throwing, or producing wrong output.
+- User describes a performance regression.
+
 A discipline for hard bugs. Skip phases only when explicitly justified.
 
 ## Phase 1: Build a feedback loop

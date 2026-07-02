@@ -10,7 +10,10 @@ description: >
 
 ## When to use
 
-User asks to update, refresh, or change models across all agent configs, or switch providers.
+- `/agent-models`
+- User says "update models", "new models", "switch models", or "change provider".
+- Models are outdated or a provider has released new options.
+- User wants to evaluate a different provider for one or more agent roles.
 
 ## Provider selection
 

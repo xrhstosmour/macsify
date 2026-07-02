@@ -8,6 +8,14 @@ description: >
 
 # Handoff
 
+## When to use
+
+- `/handoff`
+- User says "handoff", "save context", or "prepare handoff".
+- Context window is growing large and the user wants to continue in a fresh session.
+- User is pausing work and wants to preserve state for a later session.
+- User says "I need to switch context" or "summarize where we are".
+
 Write a handoff document summarizing the current conversation so a fresh agent can continue the work. Save to the temporary directory of the user's OS, not the current workspace.
 
 ## Process

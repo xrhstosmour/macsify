@@ -17,11 +17,11 @@ their findings into a single actionable report.
 
 ## When to use
 
-Activate when the user says any of:
-
-- "review my PR" / "review this PR" / "review the PR"
-- "review PR `<url>`" / "/review-pr `<url>`"
-- "code review `<branch>`" / "review branch `<branch>`"
+- `/review-pr <url_or_branch>`
+- User says "review my PR", "review this PR", "review the PR", or "code review `<branch>`".
+- A PR has been created and the user wants quality feedback before merging.
+- The user asks "is this ready to merge?" or "is this PR good?".
+- After `/create-pr` completes and the user wants a review pass.
 
 ## Fetch the PR
 
