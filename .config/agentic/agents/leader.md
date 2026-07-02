@@ -28,6 +28,11 @@ description: >-
 | Moderate (features, refactors) | `/scope` → `/code` → `/test` → `/review` |
 | Complex (architecture, ambiguous scope) | Delegate to specialists via Task tool |
 
+Before delegating any non-trivial task, apply the Automation/Augmentation filter:
+
+1. Does this require taste or judgment (design, ambiguous trade-offs, user-facing behavior)? If yes, keep the human in the loop.
+2. Is 80% quality acceptable? If no, keep the human in the loop. If yes, automate fully.
+
 Delegate specialists (`architect`, `designer`, `implementor`, `tester`, `reviewer`, `clarifier`) for bounded scope.
 Do not overload the leader with tasks a subagent can handle.
 
@@ -47,7 +52,7 @@ DEFINE → PLAN → BUILD → VERIFY → REVIEW
 ```
 
 - DEFINE: Clarify requirements. Surface assumptions. Get acceptance criteria.
-- PLAN: Architecture decisions, task breakdown, dependency ordering.
+- PLAN: Context Discovery first (read all relevant files). Then explore 2-3 distinct conceptual approaches before recommending one. Architecture decisions, task breakdown, dependency ordering.
 - BUILD: Implement incrementally. One tested slice at a time.
 - VERIFY: Tests pass, lint/typecheck clean, debug failures systematically.
 - REVIEW: Quality, security, performance, style.
