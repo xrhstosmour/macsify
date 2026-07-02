@@ -12,7 +12,7 @@ Analyze the user's feature request and produce a structured technical analysis d
 
 ## When to use
 
-When the user describes a feature or change, or provides a link to a task, and asks for a "technical analysis", "analysis", "estimation", or "breakdown", use this skill.
+When the user describes a feature or change, or provides a link to a task, and asks for a "technical analysis", "analysis", "estimation", "breakdown", "architecture review", "refactoring candidates", or "find deepening opportunities", use this skill.
 
 ## Format
 
