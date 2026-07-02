@@ -100,7 +100,7 @@ After refactoring, identify code that became unreachable or unused. List it expl
 
 ``` text
 DEAD CODE IDENTIFIED:
-- formatLegacyDate() in src/utils/date — replaced by formatDate()
+- formatLegacyDate() in src/utils/date: replaced by formatDate()
 - OldWidget in src/widgets/ replaced by Widget
 -> Safe to remove these?
 ```
@@ -212,6 +212,17 @@ Write a regression test that fails without the fix and passes with it.
 <test command> # Full suite or specific test.
 <build command> # Type/compilation.
 ```
+
+## Boundary Definition
+
+Vague "do not" rules fail under complex instructions. Use contrastive binary examples to define sharp, unbreakable boundaries:
+
+- If the error shows `Connection Refused` → infer a network configuration problem.
+- If the logs are entirely empty → do NOT assume it is working. Output that the root state is unknown.
+- If a function has tests → refactor safely.
+- If a function has no tests → do NOT delete or rename it without asking first.
+
+When writing rules for agents or yourself: Pair every prohibition with a concrete "do/don't" example so the boundary is unambiguous.
 
 ## Confusion Management
 
