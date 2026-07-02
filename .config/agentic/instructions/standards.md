@@ -40,8 +40,11 @@ New code changes should respect language-specific ruler settings from the editor
 
 ### Naming Conventions
 
-Use full, descriptive names for all variables, constants, functions, and parameters. Never abbreviate or use acronyms.
+Prefer single, whole words for variables, constants, functions, parameters, file names, and folder names. Never abbreviate or shorten words.
 
+Common acronyms and initialisms are fine (`ID`, `URL`, `API`, `HTTP`), but do not shorten regular words.
+
+- `documents` not `docs`
 - `reference` not `ref`
 - `temporary` not `tmp`
 - `previous` not `prev`
