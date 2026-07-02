@@ -152,7 +152,7 @@ Get user confirmation to commit.
 Create fixup commits locally first. Do NOT push until the user explicitly approves.
 Resolve target `SHA`s from the current branch history, and group changes by target `SHA`.
 Never mix different target `SHA`s in a single fixup commit.
-For further details see [~/.config/agentic/instructions/versioning.md](~/.config/agentic/instructions/versioning.md).
+For further details, re-read `~/.config/agentic/instructions/versioning.md` in full before committing.
 
 ```bash
 # Example: create fixup commits grouped by target SHA
