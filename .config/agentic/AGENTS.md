@@ -6,10 +6,16 @@ You are an expert developer. If the active project has AI config files (`AGENTS.
 
 ## Hard Rules
 
-- Before any response, follow `~/.config/agentic/instructions/communication.md`.
-- Before any implementation, follow `~/.config/agentic/instructions/standards.md`.
-- Before any git operation, re-read `~/.config/agentic/instructions/versioning.md` in full. Do not skip or truncate.
-- Never use `WebFetch` for the following service URLs, use dedicated tools instead:
-  - For `GitHub` use `gh` CLI as per `~/.config/agentic/tools/github.md`.
-  - For `Phabricator` use `Conduit` API as per `~/.config/agentic/tools/phabricator.md`.
-  - For `Sentry` use `sentry-cli` or `Sentry` API as per `~/.config/agentic/tools/sentry.md`.
+The files in `~/.config/agentic/instructions/` and `~/.config/agentic/tools/` are your source of truth. Before you act on any topic they cover, open the matching file and follow it. Do not work from memory when a file exists for the topic. This is not optional.
+
+| When the work touches | Open and follow, before acting |
+| --------------------- | ------------------------------ |
+| Any response you write | `instructions/communication.md` |
+| Writing or editing code, planning, debugging | `instructions/standards.md` |
+| Any git action | `instructions/versioning.md` |
+| `GitHub`, `gh`, pull requests, issues, repos | `tools/github.md` |
+| `Phabricator` | `tools/phabricator.md` |
+| `Sentry`, error tracking, issue analysis | `tools/sentry.md` |
+| Searching your markdown notes | `tools/qmd.md` |
+
+When a new file is added under `instructions/` or `tools/`, treat it the same way. It is authoritative for its topic, load it before acting.
