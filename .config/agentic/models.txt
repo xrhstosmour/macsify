@@ -26,7 +26,7 @@ opencode:compaction:variant:-
 # Claude Code
 claude:leader:model:sonnet
 claude:leader:effort:high
-claude:architect:model:sonnet
+claude:architect:model:opus
 claude:architect:effort:high
 claude:implementor:model:sonnet
 claude:implementor:effort:high
