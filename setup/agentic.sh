@@ -35,12 +35,20 @@ for agent_file in "$AGENT_SOURCE_DIRECTORY"/*.md; do
     mode="subagent"
     [ "$agent" = "leader" ] && mode="primary"
 
-    agent_json_block+="    \"${agent}\": {
+    if [ "$variant" != "-" ]; then
+        agent_json_block+="    \"${agent}\": {
       \"mode\": \"${mode}\",
       \"model\": \"${model}\",
       \"variant\": \"${variant}\"
     },
 "
+    else
+        agent_json_block+="    \"${agent}\": {
+      \"mode\": \"${mode}\",
+      \"model\": \"${model}\"
+    },
+"
+    fi
 done
 
 explore_model=$(grep '^opencode:explore:model:' "$MODELS_FILE_PATH" | cut -d: -f4-)
