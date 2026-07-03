@@ -82,6 +82,16 @@ return function(config)
             key = "RightArrow",
             mods = mod,
             action = wezterm.action { SendKey = { key = "e", mods = "CTRL" } },
+        },
+        {
+            key = "[",
+            mods = mod,
+            action = wezterm.action.ActivateTabRelative(-1)
+        },
+        {
+            key = "]",
+            mods = mod,
+            action = wezterm.action.ActivateTabRelative(1)
         }
     }
 
