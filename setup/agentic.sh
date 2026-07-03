@@ -109,3 +109,10 @@ ln -sfn "$AGENTIC_DIRECTORY/commands"     "$HOME/.claude/commands"
 ln -sfn "$AGENTIC_DIRECTORY/skills"       "$HOME/.claude/skills"
 ln -sfn "$AGENTIC_DIRECTORY/instructions" "$HOME/.claude/rules/instructions"
 ln -sfn "$AGENTIC_DIRECTORY/tools"        "$HOME/.claude/rules/tools"
+
+# OpenCode auto-loads plugins from its plugin directory. This plugin re-injects
+# the routing reminder each turn and blocks WebFetch on service hosts. Claude
+# Code does the same via the UserPromptSubmit hook and permissions.deny in
+# settings.json.
+mkdir -p "$HOME/.config/opencode/plugin"
+ln -sfn "$AGENTIC_DIRECTORY/hooks/opencode-reminder.js" "$HOME/.config/opencode/plugin/agentic-reminder.js"

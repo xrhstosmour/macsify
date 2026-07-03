@@ -15,7 +15,21 @@
     "deny": [
       "Read(**/.env)",
       "Read(**/.env.*)",
-      "Read(**/secrets/**)"
+      "Read(**/secrets/**)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:sentry.io)"
+    ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat ~/.config/agentic/hooks/reminders.md"
+          }
+        ]
+      }
     ]
   },
   "claudeMdExcludes": [
