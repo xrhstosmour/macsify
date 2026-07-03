@@ -38,6 +38,8 @@ end
 --   CTRL/Globe+Backspace: Erase whole input line (sends CTRL+U).
 --   CTRL/Globe+Numbers: Switch to tab by number.
 --   CTRL/Globe+Right/Left square brackets: Switch to previous/next tab.
+--   CTRL/Globe+Left/Right arrow: Move cursor to beginning/end of line (sends CTRL+A/E).
+--   Mouse left click: Copy selection to clipboard and primary selection.
 return function(config)
     local is_macos = wezterm.target_triple:find("apple") ~= nil
     local mod = is_macos and "CMD" or "CTRL"
