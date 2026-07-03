@@ -72,6 +72,16 @@ return function(config)
             key = "Backspace",
             mods = mod,
             action = wezterm.action { SendKey = { key = "u", mods = "CTRL" } }
+        },
+        {
+            key = "LeftArrow",
+            mods = mod,
+            action = wezterm.action { SendKey = { key = "a", mods = "CTRL" } },
+        },
+        {
+            key = "RightArrow",
+            mods = mod,
+            action = wezterm.action { SendKey = { key = "e", mods = "CTRL" } },
         }
     }
 end
