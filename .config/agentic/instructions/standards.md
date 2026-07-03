@@ -146,15 +146,6 @@ After writing code:
 
 When a skill covers an operation, always invoke it. Never use ad-hoc commands for operations that have a skill. Skills encode safety guardrails, consistency, and quality gates that ad-hoc tool usage lacks.
 
-## Tool Usage
-
-Hard rules, not suggestions:
-
-- `WebFetch`: NEVER use for `GitHub`, `Phabricator`, or `Sentry` URLs. Instead, use their respective CLIs or APIs as shown in their context files:
-  - `GitHub` URLs: Use `gh` CLI or `gh api`. See `~/.config/agentic/tools/github.md`.
-  - `Phabricator` URLs: Use the Phabricator API. See `~/.config/agentic/tools/phabricator.md`.
-  - `Sentry` URLs: Use `sentry-cli` or the Sentry API. See `~/.config/agentic/tools/sentry.md`.
-
 ## Safety
 
 - Confirm before destructive operations (`rm`, `DROP TABLE`, `DELETE FROM`, etc.).
