@@ -8,6 +8,10 @@
 // The reminder text lives in reminders.md, the single source. The injection
 // hook is experimental in the OpenCode API, so it is wrapped in try/catch: if
 // it ever changes, injection stops silently and nothing crashes.
+//
+// experimental.chat.system.transform is not on opencode.ai/docs. Source of truth:
+//   signature:  https://github.com/anomalyco/opencode/blob/dev/packages/plugin/src/index.ts
+//   invocation: https://github.com/anomalyco/opencode/blob/dev/packages/opencode/src/session/llm/request.ts
 
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
