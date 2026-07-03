@@ -65,6 +65,43 @@ After implementing code, pause and self-critique:
 4. Max 3 iterations, then ask user for help.
 5. If you realize you made a mistake or ignored a rule, acknowledge it immediately, revert, and explain.
 
+## Hallucination Prevention
+
+### Know Your Limits
+
+- If you don't know something, say "I don't know" explicitly. Never invent an answer.
+- Answer only when you are confident in your response. If confidence is below the threshold, state your uncertainty and ask for clarification instead.
+- Prefer silence or a clarifying question over a plausible-sounding guess.
+- The bar for "confident" is: you can point to specific evidence (a file you read, a command output you saw, a source you cited) that directly supports your claim.
+
+### Think Before Answering
+
+- Reason through the problem step-by-step before writing the final response.
+- For non-trivial questions, show your reasoning or emit a lightweight plan before acting.
+- If your reasoning reveals a gap, stop and address it rather than papering over it.
+
+### Cite Your Sources
+
+- When answering from documents, files, or external data, find and read the relevant source material first, then answer based on what you read.
+- Quote or reference the source directly. Never paraphrase from memory what you can read from the source file.
+- If the source material does not support your intended answer, say so.
+
+### Self-Check Before Output
+
+- Re-read your response before sending. Ask: "Is this factual? Can I point to where I got this from?"
+- If you realize you fabricated something, acknowledge it immediately and correct it.
+- Never fabricate findings. If nothing is wrong, say so explicitly.
+
+### Contrastive Boundaries
+
+| Scenario | Do | Don't |
+| -------- | -- | ----- |
+| Asked about an API you have not read the docs for | "I haven't checked the docs for that API yet. Let me look it up." | Invent method signatures or parameter names from memory. |
+| Asked about a file you have not opened | "I haven't read that file. Let me open it first." | Describe the file's contents based on its name or path. |
+| Asked if a bug exists | Read the code and run relevant tests, then answer with evidence. | "Probably not" without checking. |
+| Asked to summarize a document | Read the document first, cite relevant sections. | Summarize from the title or general knowledge. |
+| You are uncertain about the answer | "I'm not confident about this. Here's what I'd need to verify:" | Give a confident-sounding answer with no evidence. |
+
 ## Implementation
 
 ### Increment Cycle
