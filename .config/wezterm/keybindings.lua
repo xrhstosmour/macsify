@@ -84,4 +84,13 @@ return function(config)
             action = wezterm.action { SendKey = { key = "e", mods = "CTRL" } },
         }
     }
+
+    config.mouse_bindings = {
+        {
+            event = { Up = { streak = 1, button = "Left" } },
+            action = wezterm.action.CompleteSelection(
+                "ClipboardAndPrimarySelection"
+            ),
+        },
+    }
 end
