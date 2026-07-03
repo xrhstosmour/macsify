@@ -11,7 +11,7 @@ function claude_session_list
         return 1
     end
 
-    set -l session_data (jq -rs '
+    set -l session_data (jq -rs --arg pwd "$PWD" '
         map(select(.sessionId != null)) |
         group_by(.sessionId) |
         map(
@@ -24,7 +24,7 @@ function claude_session_list
                 display_fallback: (($g | map(select((.display // "") | (. != "") and (startswith("/") | not))) | first | .display) // "")
             }
         ) |
-        sort_by(-.max_ts)[] |
+        sort_by((.project != $pwd), -.max_ts)[] |
         [.sessionId, (.project // ""), (.max_ts | tostring), (.min_ts | tostring), (.display_fallback // "")] |
         @tsv
     ' "$history_file" 2>/dev/null)
@@ -69,10 +69,17 @@ function claude_session_list
             set display (string sub -l 57 -- "$display")"..."
         end
 
-        printf '%s\t%s\t\033[1;33m%s\033[0m \033[1;32m|\033[0m %s\t%s\t%s\t%s\n' \
-            "$jsonl" "$session_id" \
-            "$short_id" "$display" \
-            "$project" "$created" "$updated"
+        if test "$project" = "$PWD"
+            printf '%s\t%s\t\033[1;33m> %s\033[0m \033[1;32m|\033[0m %s\t%s\t%s\t%s\n' \
+                "$jsonl" "$session_id" \
+                "$short_id" "$display" \
+                "$project" "$created" "$updated"
+        else
+            printf '%s\t%s\t\033[0;33m  %s\033[0m \033[0;32m|\033[0m %s\t%s\t%s\t%s\n' \
+                "$jsonl" "$session_id" \
+                "$short_id" "$display" \
+                "$project" "$created" "$updated"
+        end
     end | env SHELL=/bin/bash fzf --ansi --height=20 --delimiter='\t' --with-nth=3 \
         --expect=delete \
         --bind '?:toggle-preview' \
@@ -130,22 +137,35 @@ function claude_session_list
 end
 
 function opencode_session_list
-    set -l lines (opencode session list | string split '\n')
-    if test (count $lines) -lt 3
+    set -l session_json (opencode session list --format json 2>/dev/null)
+    if test -z "$session_json"
         log_error "No sessions found!"
         return 1
     end
 
-    set -l output (for line in $lines[3..-1]
-        set -l sid (string match -r '^ses_[^[:space:]]+' -- "$line")
-        if test -z "$sid"
-            continue
+    set -l session_data (echo "$session_json" | jq -r --arg pwd "$PWD" '
+        sort_by((.directory != $pwd), -.updated) |
+        .[] |
+        [.id, (.title // ""), (.directory // "")] |
+        @tsv
+    ' 2>/dev/null)
+
+    if test (count $session_data) -eq 0
+        log_error "No sessions found!"
+        return 1
+    end
+
+    set -l output (for line in $session_data
+        set -l fields (string split \t -- "$line")
+        set -l sid $fields[1]
+        set -l title $fields[2]
+        set -l directory $fields[3]
+
+        if test "$directory" = "$PWD"
+            printf '%s\t\033[1;33m> %s\033[0m \033[1;32m|\033[0m %s\n' "$sid" "$sid" "$title"
+        else
+            printf '%s\t\033[0;33m  %s\033[0m \033[0;32m|\033[0m %s\n' "$sid" "$sid" "$title"
         end
-
-        set -l title_with_updated (string replace -r '^ses_[^[:space:]]+\s+' '' -- "$line")
-        set -l title (string replace -r '\s+[0-9]{1,2}:[0-9]{2}\s+[AP]M(\s+·\s+[0-9]{1,2}/[0-9]{1,2}/[0-9]{4})?$' '' -- "$title_with_updated")
-
-        printf '%s\t\033[1;33m%s\033[0m \033[1;32m|\033[0m %s\n' "$sid" "$sid" "$title"
     end | env SHELL=/bin/bash fzf --ansi --height=20 --delimiter='\t' --with-nth=2.. \
         --expect=delete \
         --bind '?:toggle-preview' \
