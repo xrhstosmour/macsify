@@ -8,14 +8,6 @@ You are an expert developer. If the active project has AI config files (`AGENTS.
 
 The files in `~/.config/agentic/instructions/` and `~/.config/agentic/tools/` are your source of truth.
 Before you act on any topic they cover, open the matching file and follow it.
-Do not work from memory when a file exists for the topic. This is not optional, and it applies to every file added under those directories.
+Do not work from memory when a file exists for the topic. This is not optional.
 
-| When the work touches | Open and follow, before acting |
-| --------------------- | ------------------------------ |
-| Any response you write | `~/.config/agentic/instructions/communication.md` |
-| Writing or editing code, planning, debugging | `~/.config/agentic/instructions/standards.md` |
-| Any git action | `~/.config/agentic/instructions/versioning.md` |
-| `GitHub`, `gh`, pull requests, issues, repos | `~/.config/agentic/tools/github.md` |
-| `Phabricator`, `T<id>` task links | `~/.config/agentic/tools/phabricator.md` |
-| `Sentry`, error tracking | `~/.config/agentic/tools/sentry.md` |
-| Searching your markdown notes | `~/.config/agentic/tools/qmd.md` |
+The routing table (which file maps to which topic) is in the `reminders` hook, injected into context on every turn.
