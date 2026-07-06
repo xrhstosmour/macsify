@@ -1,6 +1,6 @@
 # Reminders
 
-Before your first tool call, read the file matching what you are about to do:
+Match what you are about to do to this table:
 
 | When the work touches | Read this file first |
 | --------------------- | -------------------- |
@@ -12,7 +12,8 @@ Before your first tool call, read the file matching what you are about to do:
 | `Sentry`, error tracking | `~/.config/agentic/tools/sentry.md` |
 | Searching markdown notes | `~/.config/agentic/tools/qmd.md` |
 
-Binary rule:
+Rules, before and while you act:
 
-- Responding before reading the matching file: WRONG
-- Reading the matching file as the first tool call, then responding: CORRECT
+- Read the matching file as your first tool call. Responding before reading it is WRONG.
+- If an operation has a matching skill, run it, do not hand-roll the equivalent `gh`/`curl`/CLI commands.
+- When a skill or routed file defines a checklist, apply every item before finishing, never a subset.
