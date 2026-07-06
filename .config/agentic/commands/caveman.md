@@ -9,6 +9,6 @@ Activate caveman mode. Apply the caveman skill rules to all subsequent responses
 ## When to use
 
 - `/caveman`
-- User says "caveman mode", "talk like caveman", "use caveman", "less tokens", "save tokens", or "be brief".
+- User says "caveman", "caveman mode", "talk like caveman", "be brief", "be terse", "keep it short", "less tokens", or "save tokens".
 
 See `skills/caveman/SKILL.md` for the full rule set.
