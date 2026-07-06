@@ -126,7 +126,17 @@ NOTICED BUT NOT TOUCHING:
 
 ### Simplicity
 
-Before writing code, ask: "What is the simplest thing that could work?" After writing, review: can this be done in fewer lines? Are these abstractions earning their complexity? Am I building for hypothetical future requirements?
+Before writing code, ask: "What is the simplest thing that could work?" Understand the problem and read the code the change touches first, then stop at the first rung that holds:
+
+1. Does this need to exist at all? Speculative need, skip it and say so.
+2. Already in this codebase? Reuse the existing helper, utility, type, or pattern instead of re-implementing it.
+3. Does the standard library do it? Use it.
+4. Does a native platform feature cover it? Prefer it over a dependency, for example `<input type="date">` over a picker library, or a database constraint over application code.
+5. Does an already-installed dependency solve it? Use it. Never add a new one for what a few lines can do.
+6. Can it be one line? One line.
+7. Only then: the minimum code that works.
+
+Never simplify away input validation at trust boundaries, error handling that prevents data loss, security, accessibility, or anything the user explicitly requested. The ladder shortens the solution, never the understanding of the problem.
 
 Three similar lines of code is better than a premature abstraction. Implement the naive version first. Optimize after correctness is proven.
 
