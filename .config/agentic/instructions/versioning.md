@@ -15,7 +15,7 @@
 - Avoid punctuation at the end of the message.
 - Avoid generic messages like "Update README.md" or "Fix bug". Be specific about what was changed and why.
 - Avoid using the same commit message for multiple commits. Each commit should have a unique message that clearly describes the change made.
-- Wrap in backticks: technical identifiers, code elements, file names and paths, product/company/tool names. Use plain backtick characters, never escaped sequences. Verify with `git log -1 --format="%s"` after committing.
+- Wrap in backticks: technical identifiers, code elements, file names and paths, product/company/tool names. Use plain backtick characters, never escaped sequences. Pass the message with a single-quoted `-m` or `-F <file>` so the shell never turns `` ` `` into `` \` ``. Verify with `git log -1 --format="%s"` after committing.
 - Leave unformatted: natural language words, headings, `YAML` frontmatter fields.
 - For commit messages and Git platform text such as PR titles, PR bodies, and review comments, use short, direct language per `~/.config/agentic/instructions/communication.md`.
 - Use single-word project scopes followed by a colon, but only when the repo name does not already match that scope. Skip the prefix when committing inside the matching project's own repo. Keep backticks around sub-components, files, and tools within the project.
