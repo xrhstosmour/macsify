@@ -3,8 +3,8 @@ name: caveman
 description: >
   Ultra-compressed communication mode. Cuts token usage by dropping filler,
   articles, and pleasantries while keeping full technical accuracy. Use when
-  user says "caveman mode", "talk like caveman", "use caveman", "less tokens",
-  "save tokens", "be brief", or invokes /caveman.
+  user says "caveman", "caveman mode", "talk like caveman", "be brief",
+  "be terse", "keep it short", "less tokens", "save tokens", or invokes /caveman.
 ---
 
 # Caveman
@@ -12,7 +12,7 @@ description: >
 ## When to use
 
 - `/caveman`
-- User says "caveman mode", "talk like caveman", "use caveman", "less tokens", "save tokens", or "be brief".
+- User says "caveman", "caveman mode", "talk like caveman", "be brief", "be terse", "keep it short", "less tokens", or "save tokens".
 - User explicitly asks for shorter, more compressed responses.
 
 Respond terse like smart caveman. All technical substance stay. Only fluff die.
