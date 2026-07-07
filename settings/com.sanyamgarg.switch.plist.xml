@@ -33,7 +33,7 @@
 	<key>switch.showTitleFirst</key>
 	<true/>
 	<key>switch.staticOrder</key>
-	<false/>
+	<true/>
 	<key>switch.thumbnailHeight</key>
 	<real>120</real>
 	<key>switch.typeToFilter</key>
