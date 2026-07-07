@@ -150,10 +150,13 @@ Use the template from `~/.config/agentic/tools/github.md` at "PR body format" se
 Follow style in `~/.config/agentic/instructions/communication.md` for tone and formatting.
 
 Derive each section:
-- **What**: from commit messages and diffs. Each logical change gets one numbered item.
-- **Why**: If the user provides a task or issue link, write only `Resolves [<id>](<url>).` nothing else. Use the tracker's native ID format (e.g. `T247574`, `PROJ-123`, `#42`). If no link is provided, write a short explanation of the problem the change solves.
-- **Testing**: from how the user verified (commands, UI flows, expected outcomes).
-- **Monitoring**: from relevant dashboards, Sentry boards, or observability queries.
+- **What**: From commit messages and diffs. Each logical change gets one numbered item. Follow the style in `~/.config/agentic/instructions/communication.md`.
+- **Why**: If the user provides a task, issue or tracker link:
+  - CORRECT: `Resolves [1234](https://link.example.com/1234).`
+  - WRONG: `Resolves [1234](https://link.example.com/1234). After this change ...`
+  Nothing else — no explanation, no context, no extra sentences. Use the tracker's native ID format (e.g. `T247574`, `PROJ-123`, `#42`). If no link is provided, write one short sentence on the problem the change solves.
+- **Testing**: Only include when there is a non-obvious verification step: UI flow, manual query, staging check, etc. Do NOT include just to show that tests were run — that is assumed.
+- **Monitoring**: From relevant dashboards, Sentry boards, or observability queries.
 
 For **PR title**, follow rules in `~/.config/agentic/tools/github.md` at "PR title" section.
 
@@ -214,11 +217,11 @@ pr_number=$(echo "$pr_url" | grep -oE '/pull/[0-9]+$' | grep -oE '[0-9]+')
 
 ### Labels
 
-Fetch labels from the last 3 PRs created by the current user and apply any that appear in at least 2 of them. Never create new labels.
+Fetch labels from the last 10 PRs created by the current user and apply any that appear in at least 2 of them. Never create new labels.
 
 ```bash
-# Find common labels across the last 3 PRs.
-gh pr list --author @me --limit 3 --json labels \
+# Find common labels across the last 10 PRs.
+gh pr list --author @me --limit 10 --json labels \
   --jq '.[].labels[].name' | sort | uniq -c | sort -rn | awk '$1 >= 2 {print $2}' | \
   while read label; do
     gh pr edit "$pr_number" --add-label "$label"

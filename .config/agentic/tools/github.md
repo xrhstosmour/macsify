@@ -57,6 +57,7 @@ gh api repos/<owner>/<repo>/contents/<path> --raw
 - Short, descriptive, natural language.
 - No type prefixes (`perf:`, `feat:`, `fix:`).
 - No semicolons.
+- Keep under 60 characters. And follow the style in `~/.config/agentic/instructions/communication.md`.
 - Derive from the first commit message or branch name.
 - Example: `Replace single-column indexes with compound indexes` not `perf: Replace...; add outbox...`
 
@@ -65,7 +66,7 @@ gh api repos/<owner>/<repo>/contents/<path> --raw
 ```markdown
 **What**:
 
-1. **<item>**: <Description with capital letter, no dashes>
+1. **<item>**: <Description>
 2. **<item>**: <Description>
 
 **Why**:
@@ -93,3 +94,4 @@ Rules:
 
 - Omit sections with no content.
 - Short, direct language per `~/.config/agentic/instructions/communication.md`.
+- Extra details in `~/.config/agentic/skills/create-pr/SKILL.md`
