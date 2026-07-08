@@ -165,6 +165,17 @@ Don't leave dead code lying around, it confuses future readers and agents. Don't
 - Rollback-friendly: Each increment should be independently revertable. Prefer additive changes.
 - Keep it compilable: Project must build and tests pass after each increment.
 
+### Migration Timestamps
+
+Always use real, generated timestamps with millisecond precision when naming migration files. Never hardcode sequential or placeholder timestamps.
+
+```bash
+# Generate a real timestamp with milliseconds (UTC).
+date -u +"%Y%m%d%H%M%S%3N"
+```
+
+Do not use timestamps that look hand-typed or sequential, like `20260706120000`, `20260706120001`, `20260707120000`. These lack sub-second precision and can collide when migrations are generated in rapid succession. Better use the framework's built-in migration generator if it exists, or generate a timestamp programmatically.
+
 ## Planning Protocol
 
 For any complex or multi-step task, follow this sequence before writing code:
