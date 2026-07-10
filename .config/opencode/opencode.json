@@ -12,6 +12,27 @@
     "~/.config/opencode/tools/sentry.md",
     "~/.config/opencode/tools/qmd.md"
   ],
+  "permission": {
+    "bash": {
+      "*": "allow",
+      "git push*": "ask",
+      "git push*--force*": "deny",
+      "git push*-f*": "deny",
+      "git push*main*": "deny",
+      "git push*master*": "deny",
+      "git push*--mirror*": "deny",
+      "git reset*--hard*": "ask",
+      "git clean*-f*": "ask",
+      "git branch*-D*": "ask",
+      "git filter-branch*": "deny",
+      "rm -rf /*": "deny",
+      "rm -rf ~*": "deny",
+      "rm -rf $HOME*": "deny",
+      "sudo*": "deny",
+      "dd *": "deny",
+      "mkfs*": "deny"
+    }
+  },
   "watcher": {
     "ignore": [
       "**/.DS_Store",
