@@ -4,23 +4,23 @@
 # Updated by the agent-models skill. Read by setup/agentic.sh.
 
 # OpenCode
-opencode:leader:model:opencode-go/deepseek-v4-pro
-opencode:leader:variant:high
-opencode:architect:model:opencode-go/deepseek-v4-pro
+opencode:leader:model:opencode-go/glm-5.2
+opencode:leader:variant:max
+opencode:architect:model:opencode-go/glm-5.2
 opencode:architect:variant:max
-opencode:implementor:model:opencode-go/deepseek-v4-pro
-opencode:implementor:variant:high
-opencode:clarifier:model:opencode-go/deepseek-v4-flash
-opencode:clarifier:variant:-
+opencode:implementor:model:opencode-go/glm-5.2
+opencode:implementor:variant:max
+opencode:clarifier:model:opencode-go/glm-5.2
+opencode:clarifier:variant:max
 opencode:tester:model:opencode-go/deepseek-v4-flash
 opencode:tester:variant:-
-opencode:designer:model:opencode-go/mimo-v2.5
-opencode:designer:variant:high
-opencode:reviewer:model:opencode-go/kimi-k2.7-code
-opencode:reviewer:variant:-
-opencode:explore:model:opencode/big-pickle
+opencode:designer:model:opencode-go/glm-5.2
+opencode:designer:variant:max
+opencode:reviewer:model:opencode-go/deepseek-v4-pro
+opencode:reviewer:variant:max
+opencode:explore:model:opencode-go/deepseek-v4-flash
 opencode:explore:variant:-
-opencode:compaction:model:opencode/big-pickle
+opencode:compaction:model:opencode-go/deepseek-v4-flash
 opencode:compaction:variant:-
 
 # Claude Code
