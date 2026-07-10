@@ -17,7 +17,23 @@
       "Read(**/.env.*)",
       "Read(**/secrets/**)",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:sentry.io)"
+      "WebFetch(domain:sentry.io)",
+      "Bash(git push *--force*)",
+      "Bash(git push --force *)",
+      "Bash(git push -f *)",
+      "Bash(git push * -f)",
+      "Bash(git push * main)",
+      "Bash(git push * master)",
+      "Bash(git push --mirror *)",
+      "Bash(git filter-branch *)",
+      "Bash(sudo *)",
+      "Bash(dd *)",
+      "Bash(mkfs*)"
+    ],
+    "ask": [
+      "Bash(git reset --hard *)",
+      "Bash(git clean -f *)",
+      "Bash(git branch -D *)"
     ]
   },
   "hooks": {
