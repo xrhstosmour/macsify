@@ -53,6 +53,7 @@ git commit --amend --no-edit
 - Never force-push to `main` or `master`
 - Never commit `.env`, secrets, credentials. Warn immediately if staged.
 - Never commit, push, or open a PR unless explicitly asked by the user.
+- Prompt for confirmation when running `git reset --hard`, `git clean -f`, and `git branch -D`.
 
 ### Fixups
 
