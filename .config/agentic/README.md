@@ -5,9 +5,9 @@ Shared AI configuration for OpenCode and Claude Code. Model assignments live in 
 ## Architecture
 
 ```text
-~/.config/agentic/              # Shared (symlinked into both tools)
-├── AGENTS.md                   # Startup instructions (CLAUDE.md symlinks to this)
-├── agents/                     # Agent definitions (no model fields, injected at install)
+~/.config/agentic/                 # Shared symlinked into both tools
+├── AGENTS.md                      # Startup instructions, CLAUDE.md symlinks to this
+├── agents/                        # Agent definitions, no model fields, injected at install
 │   ├── leader.md
 │   ├── architect.md
 │   ├── implementor.md
@@ -15,34 +15,38 @@ Shared AI configuration for OpenCode and Claude Code. Model assignments live in 
 │   ├── tester.md
 │   ├── designer.md
 │   └── reviewer.md
-├── instructions/               # Core instructions (loaded always)
+├── instructions/                  # Core instructions (loaded always)
 │   ├── communication.md
 │   ├── standards.md
 │   └── versioning.md
-├── tools/                      # Tool-specific usage guides
+├── tools/                         # Tool-specific usage guides
 │   ├── github.md
 │   ├── phabricator.md
 │   ├── sentry.md
 │   └── qmd.md
-├── commands/                   # Workflow commands
-├── skills/                     # Reusable skills
-└── models.txt                  # Single source of truth for model assignments
+├── hooks/                         # Injected every turn/message
+│   ├── reminders.md               # Routing table, single source for both tools
+│   ├── context-guard.sh           # Claude Code UserPromptSubmit hook
+│   └── opencode-context-guard.js  # OpenCode plugin equivalent
+├── commands/                      # Workflow commands
+├── skills/                        # Reusable skills
+└── models.txt                     # Single source of truth for model assignments
 
-.config/agentic/                # Project-local overrides and additions
+.config/agentic/                   # Project-local overrides and additions
 ├── commands/
 │   └── create-phabricator-task.md
 └── skills/
     └── create-phabricator-task/
         └── SKILL.md
 
-~/.config/opencode/             # OpenCode-specific
-├── opencode.json               # Config + agent models (injected by setup/agentic.sh)
-└── tui.json                    # TUI keybinds
+~/.config/opencode/                # OpenCode-specific
+├── opencode.json                  # Config + agent models (injected by setup/agentic.sh)
+└── tui.json                       # TUI keybinds
 
-~/.claude/                      # Claude Code-specific
+~/.claude/                         # Claude Code-specific
 ├── CLAUDE.md -> ~/.config/agentic/AGENTS.md
-├── settings.json               # Claude Code settings
-├── agents/                     # Agent files with injected model/effort
+├── settings.json                  # Claude Code settings
+├── agents/                        # Agent files with injected model/effort
 ├── rules/instructions/ -> ~/.config/agentic/instructions/
 └── rules/tools/ -> ~/.config/agentic/tools/
 ```
@@ -72,6 +76,14 @@ Shared AI configuration for OpenCode and Claude Code. Model assignments live in 
 | `phabricator.md` | Phabricator `Conduit` API integration |
 | `sentry.md` | Sentry error tracking and issue analysis |
 | `qmd.md` | `qmd` markdown search and semantic query usage |
+
+## Hooks
+
+| File | Purpose |
+| ---- | ------- |
+| `reminders.md` | Routing table mapping topics to instruction/tool files, injected every turn |
+| `context-guard.sh` | Claude Code `UserPromptSubmit` hook. Prints `reminders.md`, then warns if the session's transcript is large or idle (risk of an expensive prompt-cache rebuild) |
+| `opencode-context-guard.js` | OpenCode plugin equivalent, same thresholds using the session API's exact token counts instead of a byte-size estimate. Also blocks `WebFetch` on hosts with a dedicated CLI |
 
 ## Skills
 
