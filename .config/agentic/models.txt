@@ -5,15 +5,15 @@
 
 # OpenCode
 opencode:leader:model:opencode-go/deepseek-v4-pro
-opencode:leader:variant:max
+opencode:leader:variant:high
 opencode:architect:model:opencode-go/deepseek-v4-pro
 opencode:architect:variant:max
 opencode:implementor:model:opencode-go/deepseek-v4-pro
-opencode:implementor:variant:max
+opencode:implementor:variant:high
 opencode:clarifier:model:opencode-go/deepseek-v4-flash
-opencode:clarifier:variant:max
+opencode:clarifier:variant:-
 opencode:tester:model:opencode-go/deepseek-v4-flash
-opencode:tester:variant:max
+opencode:tester:variant:-
 opencode:designer:model:opencode-go/mimo-v2.5
 opencode:designer:variant:high
 opencode:reviewer:model:opencode-go/kimi-k2.7-code
@@ -29,7 +29,7 @@ claude:leader:effort:high
 claude:architect:model:opus
 claude:architect:effort:high
 claude:implementor:model:sonnet
-claude:implementor:effort:high
+claude:implementor:effort:medium
 claude:clarifier:model:sonnet
 claude:clarifier:effort:medium
 claude:tester:model:haiku
