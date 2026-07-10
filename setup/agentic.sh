@@ -85,7 +85,7 @@ if brewfile_declares opencode; then
     # each turn and blocks `WebFetch` on service hosts. `Claude Code` does the same via the `UserPromptSubmit`
     # hook and permissions.deny in `settings.json`.
     mkdir -p "$HOME/.config/opencode/plugin"
-    ln -sfn "$AGENTIC_DIRECTORY/hooks/opencode-reminder.js" "$HOME/.config/opencode/plugin/agentic-reminder.js"
+    ln -sfn "$AGENTIC_DIRECTORY/hooks/opencode-context-guard.js" "$HOME/.config/opencode/plugin/agentic-reminder.js"
 fi
 
 if brewfile_declares claude-code; then
