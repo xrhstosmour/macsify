@@ -25,9 +25,9 @@ opencode:compaction:variant:-
 
 # Claude Code
 claude:leader:model:sonnet
-claude:leader:effort:high
+claude:leader:effort:medium
 claude:architect:model:opus
-claude:architect:effort:high
+claude:architect:effort:medium
 claude:implementor:model:sonnet
 claude:implementor:effort:medium
 claude:clarifier:model:sonnet
@@ -35,6 +35,6 @@ claude:clarifier:effort:medium
 claude:tester:model:haiku
 claude:tester:effort:-
 claude:designer:model:sonnet
-claude:designer:effort:high
+claude:designer:effort:medium
 claude:reviewer:model:opus
-claude:reviewer:effort:high
+claude:reviewer:effort:medium
