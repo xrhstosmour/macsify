@@ -4,20 +4,20 @@
 # Updated by the agent-models skill. Read by setup/agentic.sh.
 
 # OpenCode
-opencode:leader:model:opencode-go/glm-5.2
-opencode:leader:variant:max
+opencode:leader:model:opencode-go/deepseek-v4-flash
+opencode:leader:variant:high
 opencode:architect:model:opencode-go/glm-5.2
 opencode:architect:variant:max
 opencode:implementor:model:opencode-go/deepseek-v4-pro
-opencode:implementor:variant:max
+opencode:implementor:variant:high
 opencode:clarifier:model:opencode-go/deepseek-v4-flash
-opencode:clarifier:variant:-
+opencode:clarifier:variant:high
 opencode:tester:model:opencode-go/deepseek-v4-flash
-opencode:tester:variant:-
+opencode:tester:variant:high
 opencode:designer:model:opencode-go/deepseek-v4-flash
-opencode:designer:variant:-
+opencode:designer:variant:high
 opencode:reviewer:model:opencode-go/deepseek-v4-pro
-opencode:reviewer:variant:max
+opencode:reviewer:variant:high
 opencode:explore:model:opencode/big-pickle
 opencode:explore:variant:-
 opencode:compaction:model:opencode-go/deepseek-v4-flash
