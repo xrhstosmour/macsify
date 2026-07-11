@@ -320,6 +320,15 @@ PLAN:
 
 Manage context actively. At major sub-task boundaries, or when a session grows very long, use `/clear` or open a fresh session to prevent attention dispersion and context rot.
 
+### Token-Saving Best Practices
+
+- Run compaction at major milestones, after merging a `PR`, finishing a phase/task, to collapse conversation history into a summary while keeping essential state.
+- Start fresh sessions, after each major milestone rather than continuing one long session across phases.
+- Use the `explore` subagent for code discovery instead of reading large files directly in the main context. The subagent returns only the answer, not the full file content.
+- Read files with `offset`/`limit` when you only need a specific section, not the entire file.
+- Prefer `grep`/`glob` over `read` for searching patterns. Read only the matching files/sections.
+- Avoid re-reading the same files across turns, cache findings in your mental model or notes.
+
 ## Context Anti-Patterns
 
 | Anti-Pattern | Fix |
