@@ -18,7 +18,7 @@ opencode:designer:model:opencode-go/deepseek-v4-flash
 opencode:designer:variant:-
 opencode:reviewer:model:opencode-go/deepseek-v4-pro
 opencode:reviewer:variant:max
-opencode:explore:model:opencode-go/deepseek-v4-flash
+opencode:explore:model:opencode/big-pickle
 opencode:explore:variant:-
 opencode:compaction:model:opencode-go/deepseek-v4-flash
 opencode:compaction:variant:-
