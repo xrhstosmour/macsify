@@ -7,6 +7,8 @@
 //   - Warns once a session's token usage or idle time gets large, mirroring
 //     Claude Code's context-guard.sh (same thresholds, exact token counts here
 //     instead of a byte-size estimate, since the session API reports them).
+//     Thresholds are intentionally aggressive (50K tokens, 30 min idle) to
+//     force compaction before context bloat becomes irreversible.
 //
 // The reminder text lives in reminders.md, the single source. The injection
 // hook is experimental in the OpenCode API, so it is wrapped in try/catch: if
@@ -30,9 +32,10 @@ const blockedHosts = [
   { pattern: /sentry\.io/i, use: "`sentry-cli` per ~/.config/agentic/tools/sentry.md" },
 ];
 
-// Same balanced thresholds as context-guard.sh (Claude Code side).
-const SIZE_WARN_TOKENS = 180000;
-const IDLE_WARN_SECONDS = 2700;
+// Warn early. 50K tokens is roughly 2-3 API calls with a full context window.
+// At 180K the context is already bloated and compaction cannot recover lost cache.
+const SIZE_WARN_TOKENS = 50000;
+const IDLE_WARN_SECONDS = 1800;
 
 export const AgenticReminderPlugin = async ({ client }) => {
   return {
@@ -57,7 +60,7 @@ export const AgenticReminderPlugin = async ({ client }) => {
         if (totalTokens > SIZE_WARN_TOKENS || idleSeconds > IDLE_WARN_SECONDS) {
           const idleMinutes = Math.round(idleSeconds / 60);
           output.system.push(
-            `# Context Health Warning\n\nThis session has used ~${totalTokens} tokens, last active ${idleMinutes} minutes ago.\nLong idle gaps on large contexts force an expensive full cache rebuild on the next turn.\nTell the user their context is large or stale and recommend running /compact or starting a new session before continuing with heavy tool use.`,
+            `# Context Health Warning\n\nThis session has used ~${totalTokens} tokens, last active ${idleMinutes} minutes ago.\nYOU MUST compact now or start a fresh session. Long sessions burn tokens because every API call re-sends the full conversation history.\nDo not defer compaction. Do not start new delegations until context is compacted.`,
           );
         }
       } catch {
