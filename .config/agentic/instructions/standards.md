@@ -318,16 +318,25 @@ PLAN:
 
 ## Context Management
 
-Manage context actively. At major sub-task boundaries, or when a session grows very long, use `/clear` or open a fresh session to prevent attention dispersion and context rot.
+Manage context actively. Long sessions burn tokens because every API call
+re-sends the full conversation history. A session that runs for days with
+hundreds of messages will always balloon.
+
+### Compaction Triggers
+
+- Compact after every 2-3 completed subtasks. Do not batch more work into a bloated context.
+- Compact after every PR merge or major phase transition.
+- Compact before any idle gap longer than 30 minutes. Idle gaps force expensive cache rebuilds on the next turn.
+- Never continue a session across calendar days. Start a fresh session instead. The previous session's summary carries forward.
+- If the context health warning fires, compact immediately. Do not defer, do not start new work, do not rationalize one more small task first.
 
 ### Token-Saving Best Practices
 
-- Run compaction at major milestones, after merging a `PR`, finishing a phase/task, to collapse conversation history into a summary while keeping essential state.
-- Start fresh sessions, after each major milestone rather than continuing one long session across phases.
-- Use the `explore` subagent for code discovery instead of reading large files directly in the main context. The subagent returns only the answer, not the full file content.
+- Use the `explore` subagent for code discovery instead of reading large files
+directly in the main context. The subagent returns only the answer, not the full file content.
 - Read files with `offset`/`limit` when you only need a specific section, not the entire file.
 - Prefer `grep`/`glob` over `read` for searching patterns. Read only the matching files/sections.
-- Avoid re-reading the same files across turns, cache findings in your mental model or notes.
+- Avoid re-reading the same files across turns. Cache findings in your mental model or notes.
 
 ## Context Anti-Patterns
 
