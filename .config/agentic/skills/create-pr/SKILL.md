@@ -221,7 +221,7 @@ Fetch labels from the last 10 PRs created by the current user and apply any that
 
 ```bash
 # Find common labels across the last 10 PRs.
-gh pr list --author @me --limit 10 --json labels \
+gh pr list --author @me --state all --limit 10 --json labels \
   --jq '.[].labels[].name' | sort | uniq -c | sort -rn | awk '$1 >= 2 {print $2}' | \
   while read label; do
     gh pr edit "$pr_number" --add-label "$label"
