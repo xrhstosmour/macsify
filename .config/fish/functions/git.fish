@@ -714,6 +714,41 @@ Resolves [task_id](https://link/to/task_id).
     end
 end
 
+# Function to fetch all, ensure correct upstream, and pull.
+# Handles the common case where a local branch tracks the wrong upstream while a matching remote branch exists.
+# Prints a warning if local and remote have diverged.
+# Usage:
+#   git_fetch_pull_upstream
+function git_fetch_pull_upstream
+    git fetch --all --prune; or return 1
+
+    set -l branch (git rev-parse --abbrev-ref HEAD 2>/dev/null)
+
+    if test "$branch" = "HEAD"
+        log_warning "Detached HEAD, skipping upstream check."
+    else if git rev-parse --verify -q "origin/$branch" >/dev/null 2>&1
+        set -l expected "refs/remotes/origin/$branch"
+        set -l actual (git rev-parse --abbrev-ref --symbolic-full-name "@{upstream}" 2>/dev/null; or echo "")
+
+        if test "$actual" != "$expected"
+            set -l divergence (git rev-list --left-right --count "HEAD...origin/$branch" 2>/dev/null)
+            if test "$status" -eq 0
+                set -l ahead (echo "$divergence" | awk '{print $1}')
+                set -l behind (echo "$divergence" | awk '{print $2}')
+                if test "$ahead" -gt 0 -a "$behind" -gt 0
+                    log_warning "Local and remote '$branch' have diverged ($ahead ahead, $behind behind)."
+                    log_info "Setting upstream to 'origin/$branch'..."
+                end
+            end
+
+            log_info "Setting upstream to 'origin/$branch'..."
+            git branch -u "origin/$branch"; or return 1
+        end
+    end
+
+    git pull
+end
+
 # Function to see lines of code per author for a file.
 # Usage:
 #   git_blame_stats <filename>

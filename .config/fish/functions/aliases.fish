@@ -85,7 +85,7 @@ function aliases_cheat_sheet --description "Display all command abbreviations an
     echo "  - gpsf             Force push"
     echo "  - gpl              Pull"
     echo "  - gft              Fetch"
-    echo "  - gftpl            Fetch & pull"
+    echo "  - gftpl            Fetch, ensure upstream & pull"
     echo "  - gl               Show log"
     echo "  - gls              Show branch log"
     echo "  - gd               Show diff"
