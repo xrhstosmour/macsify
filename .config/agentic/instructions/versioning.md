@@ -27,7 +27,7 @@ Rename `utils` file to `utilities`
 Add tests for `User` model
 Update `README.md` with setup instructions
 `opencode`: Update `resolve-pr-comments` skill
-`DHL`: Add new endpoint for courier pickup capabilities
+`billing`: Add new endpoint for invoice export
 `macsify`: Refactor `WindowManager` to use `NSScreen`
 Add CI detection and direct database fallback to setup.sh
 Delegate test job setup to Copier tasks via env block
