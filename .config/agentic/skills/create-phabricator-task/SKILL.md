@@ -66,34 +66,48 @@ Tone rules:
 - Short sentences. One idea each.
 - Describe user-facing problem and impact, not code changes.
 
+Remarkup formatting rule (Phabricator's markup dialect, not GitHub-flavored Markdown): always leave a
+blank line after a `##` header before its content, and a blank line after any line ending in `:` before
+a following list. Remarkup does not reliably render headers or lists without that spacing, headers can
+merge into the paragraph below them, and lists can render as plain text. Apply this to every description
+you generate, not just the examples below.
+
 Feature example:
 ```
 ## Why
+
 Users could not find the settings they needed because options were scattered across multiple screens.
 
 ## What
+
 Settings now live on a single page accessible from the sidebar with a search bar.
 
 ## References
+
 - [[https://github.com/org/repo/pull/123 | PR #123]]
 ```
 
 Bug example:
 ```
 ## How to reproduce
+
 1. Open the app and go to the dashboard.
 2. Click Export. Nothing happens.
 
 ## What we found
+
 The export endpoint failed when the server session expired. Refreshing the session before export fixed it.
 
 ## References
+
 - [[https://github.com/org/repo/pull/456 | PR #456]]
 ```
 
 If no code context exists, ask: "What should the description say? I can help draft it."
 
-Always end with a `## References` section. Format every URL as a Remarkup hyperlink: `[[https://example.com | Label]]`. Never use bare URLs. Include:
+Always end with a `## References` section, followed by a blank line and then the list. Format every URL
+as a Remarkup hyperlink: `[[https://example.com | Label]]`. Never use bare URLs. Include:
+
 - If a PR exists: `[[<pr_url> | PR #<number>]]` — omit the branch (the PR implies it)
 - If no PR exists: Branch `` `<branch-name>` ``
 - Any extra links the user provided
