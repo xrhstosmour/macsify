@@ -19,6 +19,7 @@ APPLICATIONS_SOURCES=(
   "$APPLICATIONS_SCRIPT_DIRECTORY/../settings/com.if.Amphetamine.plist.xml"
   "$APPLICATIONS_SCRIPT_DIRECTORY/../settings/com.sanyamgarg.switch.plist.xml"
   "$APPLICATIONS_SCRIPT_DIRECTORY/../settings/org.p0deje.Maccy.plist.xml"
+  "$APPLICATIONS_SCRIPT_DIRECTORY/../settings/pl.maketheweb.TopNotch.plist.xml"
   "$APPLICATIONS_SCRIPT_DIRECTORY/../settings/flameshot.ini"
 )
 
@@ -27,6 +28,7 @@ APPLICATIONS_DESTINATIONS=(
   "$HOME/Library/Containers/com.if.Amphetamine/Data/Library/Preferences/com.if.Amphetamine.plist"
   "$HOME/Library/Preferences/com.sanyamgarg.switch.plist"
   "$HOME/Library/Containers/org.p0deje.Maccy/Data/Library/Preferences/org.p0deje.Maccy.plist"
+  "$HOME/Library/Preferences/pl.maketheweb.TopNotch.plist"
   "$HOME/.config/flameshot/flameshot.ini"
 )
 
@@ -35,6 +37,7 @@ APPLICATIONS_NAMES=(
   "Amphetamine"
   "Switch"
   "Maccy"
+  "TopNotch"
   "Flameshot"
 )
 

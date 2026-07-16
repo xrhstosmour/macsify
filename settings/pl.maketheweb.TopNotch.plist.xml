@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>LaunchAtLogin__hasMigrated</key>
+	<true/>
+	<key>SULastCheckTime</key>
+	<date>2026-07-16T07:57:55Z</date>
+	<key>SUUpdateGroupIdentifier</key>
+	<integer>227059201</integer>
+	<key>firstLaunch</key>
+	<false/>
+	<key>isEnabled</key>
+	<true/>
+	<key>lastAcceptedEulaVersion</key>
+	<integer>1</integer>
+	<key>processedWallpapers</key>
+	<data>
+	W3sic3BhY2VJRCI6IiIsInByb2Nlc3NlZFVSTCI6ImZpbGU6XC9cL1wvVXNlcnNcL3hy
+	aHN0b3Ntb3VyXC9MaWJyYXJ5XC9BcHBsaWNhdGlvbiUyMFN1cHBvcnRcL1RvcE5vdGNo
+	XC9wcm9jZXNzZWRcL0Q4U1o5QVhjTUEucG5nIiwib3JpZ2luYWxVUkwiOiJmaWxlOlwv
+	XC9cL1VzZXJzXC94cmhzdG9zbW91clwvTGlicmFyeVwvQXBwbGljYXRpb24lMjBTdXBw
+	b3J0XC9Ub3BOb3RjaFwvb3JpZ2luYWxcL0Q4U1o5QVhjTUEucG5nIiwicmVzb2x1dGlv
+	biI6WzI5NDAsMTkxMl0sImhhc1JvdW5kZWRDb3JuZXJzIjpmYWxzZSwib3JpZ2luVVJM
+	IjoiZmlsZTpcL1wvXC9Vc2Vyc1wveHJoc3Rvc21vdXJcL1BpY3R1cmVzXC93YWxscGFw
+	ZXJzXC9yb2Nrc19taWxreV9zdHJlYW0ucG5nIiwiY29ybmVyUmFkaXVzIjoxfV0=
+	</data>
+	<key>useDynamicWallpapers</key>
+	<true/>
+	<key>wallpapersUsage</key>
+	<data>
+	W3sic3BhY2VJRCI6IiIsImxhc3RVc2VkVGltZXN0YW1wIjoxNzg0MTg4Njc4fV0=
+	</data>
+</dict>
+</plist>
