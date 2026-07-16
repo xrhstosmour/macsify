@@ -13,6 +13,11 @@
     "~/.config/opencode/tools/qmd.md"
   ],
   "permission": {
+    "external_directory": {
+      "~/.config/agentic/**": "allow",
+      "~/.config/opencode/**": "allow",
+      "~/.claude/**": "allow"
+    },
     "bash": {
       "*": "allow",
       "git push*": "allow",
