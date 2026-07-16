@@ -3,7 +3,7 @@
 ## Core
 
 - Think first, then implement in small steps and validate incrementally.
-- Before any user-facing operation, check `available_skills` in the system prompt. If a matching skill exists, load it via the `skill` tool as your first action. Do not hand-roll what a skill covers.
+- Before any user-facing operation, check the skills your harness exposes (Claude Code lists them as `available_skills` and loads them via the `skill` tool, OpenCode auto-discovers `SKILL.md` files and surfaces them the same way). If a matching skill exists, invoke it as your first action. Do not hand-roll what a skill covers.
 - Prefer existing patterns over new abstractions.
 - Tests required for behavior changes.
 - Prioritize security and performance risks.
