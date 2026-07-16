@@ -10,6 +10,7 @@
     "~/.config/opencode/tools/github.md",
     "~/.config/opencode/tools/phabricator.md",
     "~/.config/opencode/tools/sentry.md",
+    "~/.config/opencode/tools/grafana.md",
     "~/.config/opencode/tools/qmd.md"
   ],
   "permission": {

@@ -4,8 +4,9 @@ description: >
   Disciplined diagnosis loop for hard bugs and performance regressions.
   Reproduce → minimise → hypothesise → instrument → fix → regression-test.
   Use when user says "diagnose this", "debug this", reports a bug, says
-  something is broken or throwing or failing, or describes a performance
-  regression.
+  something is broken or throwing or failing, describes a performance
+  regression, or shares a Grafana/Loki link or asks to search logs
+  for a problem.
 ---
 
 # Diagnose
@@ -18,6 +19,7 @@ description: >
 - Tests are failing and the root cause is not obvious.
 - Something is broken, throwing, or producing wrong output.
 - User describes a performance regression.
+- User shares a Grafana/Loki dashboard or explore link, or asks to "search Loki"/"check Grafana"/"search the logs" for a problem.
 
 A discipline for hard bugs. Skip phases only when explicitly justified.
 
@@ -28,6 +30,8 @@ This is the skill. Everything else is mechanical. If you have a fast, determinis
 Spend disproportionate effort here. Be aggressive. Be creative. Refuse to give up.
 
 Before building a loop, check Sentry, if the project uses it (`~/.config/agentic/tools/sentry.md`). Sentry issues provide stack traces, request params, and breadcrumbs that shortcut the reproduction process. Use them to narrow the scope before constructing a loop.
+
+If the user shares a Grafana dashboard/explore link, or the project logs to Grafana (`~/.config/agentic/tools/grafana.md`), query the relevant time range and search terms directly instead of guessing at reproduction steps.
 
 ### Ways to construct one, try them in roughly this order
 

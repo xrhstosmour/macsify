@@ -30,6 +30,7 @@ const blockedHosts = [
   { pattern: /github\.com/i, use: "the `gh` CLI per ~/.config/agentic/tools/github.md" },
   { pattern: /phabricator\./i, use: "the Conduit API per ~/.config/agentic/tools/phabricator.md" },
   { pattern: /sentry\.io/i, use: "`sentry-cli` per ~/.config/agentic/tools/sentry.md" },
+  { pattern: /grafana\./i, use: "`logcli` per ~/.config/agentic/tools/grafana.md" },
 ];
 
 // Warn early. 50K tokens is roughly 2-3 API calls with a full context window.

@@ -10,6 +10,7 @@ Match what you are about to do to this table:
 | `GitHub`, `gh`, pull requests, issues | `~/.config/agentic/tools/github.md` |
 | `Phabricator`, `T<id>` links | `~/.config/agentic/tools/phabricator.md` |
 | `Sentry`, error tracking | `~/.config/agentic/tools/sentry.md` |
+| `Grafana`/`Loki` links, "search Loki", "check Grafana", log queries | `~/.config/agentic/tools/grafana.md` |
 | Searching markdown notes | `~/.config/agentic/tools/qmd.md` |
 
 Rules, before and while you act:

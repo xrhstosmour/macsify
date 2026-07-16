@@ -23,6 +23,7 @@ Shared AI configuration for OpenCode and Claude Code. Model assignments live in 
 │   ├── github.md
 │   ├── phabricator.md
 │   ├── sentry.md
+│   ├── grafana.md
 │   └── qmd.md
 ├── hooks/                         # Injected every turn/message
 │   ├── reminders.md               # Routing table, single source for both tools
@@ -75,6 +76,7 @@ Shared AI configuration for OpenCode and Claude Code. Model assignments live in 
 | `github.md` | `GitHub CLI` commands and `PR` guidelines |
 | `phabricator.md` | Phabricator `Conduit` API integration |
 | `sentry.md` | Sentry error tracking and issue analysis |
+| `grafana.md` | Grafana dashboard/log links, `logcli`/Loki only, no `curl`/`HTTP API` path |
 | `qmd.md` | `qmd` markdown search and semantic query usage |
 
 ## Hooks
