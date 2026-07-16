@@ -75,7 +75,7 @@ Opinionated `macOS` configuration via shell scripts.
 
 > Keys (left to right):
 >
-> - `Key 1` = Globe (`Apple`) / Control (`Windows/PC`)
+>   - `Key 1` = Globe (`Apple`) / Control (`Windows/PC`)
 >   - `Key 2` = Control (`Apple`) / Super (`Windows/PC`)
 >   - `Key 3` = Option (`Apple`) / Alt (`Windows/PC`)
 
