@@ -727,8 +727,8 @@ function git_fetch_pull_upstream
     if test "$branch" = "HEAD"
         log_warning "Detached HEAD, skipping upstream check."
     else if git rev-parse --verify -q "origin/$branch" >/dev/null 2>&1
-        set -l expected "refs/remotes/origin/$branch"
-        set -l actual (git rev-parse --abbrev-ref --symbolic-full-name "@{upstream}" 2>/dev/null; or echo "")
+        set -l expected "origin/$branch"
+        set -l actual (git rev-parse --abbrev-ref "@{upstream}" 2>/dev/null; or echo "")
 
         if test "$actual" != "$expected"
             set -l divergence (git rev-list --left-right --count "HEAD...origin/$branch" 2>/dev/null)
