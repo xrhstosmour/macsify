@@ -22,6 +22,11 @@ bind -M insert \ch _atuin_search
 # Disable welcome message.
 set -U fish_greeting
 
+# Stop `OpenCode` from re-scanning `~/.claude/skills`, it already finds every skill
+# through its own `~/.config/opencode/skills` symlink, both point at the same
+# `~/.config/agentic/skills` directory, so scanning both just doubles skill discovery.
+set -gx OPENCODE_DISABLE_CLAUDE_CODE_SKILLS 1
+
 # Activate `mise` environment for `Fish` shell.
 mise activate fish | source
 
