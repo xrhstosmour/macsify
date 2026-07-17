@@ -14,6 +14,7 @@ Run a disciplined 6-phase diagnosis loop against the reported bug or performance
 - Tests are failing and the root cause is not obvious.
 - Something is broken, throwing, or producing wrong output.
 - User describes a performance regression.
+- User shares a `Grafana`/`Loki` dashboard or explore link, or asks to "search Loki"/"check Grafana"/"search the logs" for a problem.
 
 ## Process
 
