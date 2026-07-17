@@ -35,9 +35,9 @@ Shared AI configuration for OpenCode and Claude Code. Model assignments live in 
 
 .config/agentic/                   # Project-local overrides and additions
 ├── commands/
-│   └── create-phabricator-task.md
+│   └── <project-specific-command>.md
 └── skills/
-    └── create-phabricator-task/
+    └── <project-specific-skill>/
         └── SKILL.md
 
 ~/.config/opencode/                # OpenCode-specific
@@ -105,6 +105,12 @@ Skills are loaded by agents and triggered via commands.
 | ----- | ------ | ------- |
 | `diagnose` | `/diagnose` | Disciplined diagnosis loop: reproduce, minimise, hypothesise, instrument, fix, regression-test |
 | `technical_analysis` | `/technical-analysis` | Structured technical analysis with method-level changes, notes, estimation, and architecture deepening opportunities |
+
+### Design Skills
+
+| Skill | Command | Purpose |
+| ----- | ------ | ------- |
+| `interface_design` | Loaded by the `designer` agent, no dedicated command | Craft-first UI design guidance: visual hierarchy, design tokens, states, component checklist |
 
 ### Utility Skills
 
