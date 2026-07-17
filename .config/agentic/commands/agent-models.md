@@ -19,5 +19,5 @@ Follow the agent-models skill:
 2. Fetch model data from provider docs or ask user to paste a table.
 3. Rank models per agent role by quality and rate limits.
 4. Show proposed mapping and get approval.
-5. Edit all 8 config files to apply.
+5. Edit `.config/agentic/models.txt` only, then run `setup/agentic.sh` to propagate to both tools.
 6. Verify with a grep check.
