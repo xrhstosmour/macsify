@@ -150,12 +150,12 @@ Use the template from `~/.config/agentic/tools/github.md` at "PR body format" se
 Follow style in `~/.config/agentic/instructions/communication.md` for tone and formatting.
 
 Derive each section:
-- **What**: From commit messages and diffs. Each logical change gets one numbered item. Follow the style in `~/.config/agentic/instructions/communication.md`.
+- **What**: From commit messages and diffs. Each logical change gets one plain-sentence item starting with the action verb, no `**Topic**:` label prefix. Fold migrations into the feature item they support, never list separately.
 - **Why**: If the user provides a task, issue or tracker link:
   - CORRECT: `Resolves [1234](https://link.example.com/1234).`
   - WRONG: `Resolves [1234](https://link.example.com/1234). After this change ...`
   Nothing else — no explanation, no context, no extra sentences. Use the tracker's native ID format (e.g. `T247574`, `PROJ-123`, `#42`). If no link is provided, write one short sentence on the problem the change solves.
-- **Testing**: Only include when there is a non-obvious verification step: UI flow, manual query, staging check, etc. Do NOT include just to show that tests were run — that is assumed.
+- **Testing**: Only include for manual verification flows on production or staging: UI walkthrough, SQL query, dashboard check, etc. Test commands, migration runs, and downstream synchronize steps do not belong here. When in doubt, omit.
 - **Monitoring**: From relevant dashboards, Sentry boards, or observability queries.
 
 For **PR title**, follow rules in `~/.config/agentic/tools/github.md` at "PR title" section.
