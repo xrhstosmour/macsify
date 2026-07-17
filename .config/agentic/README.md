@@ -28,6 +28,7 @@ Shared AI configuration for OpenCode and Claude Code. Model assignments live in 
 ├── hooks/                         # Injected every turn/message
 │   ├── reminders.md               # Routing table, single source for both tools
 │   ├── context-guard.sh           # Claude Code UserPromptSubmit hook
+│   ├── webfetch-guard.sh          # Claude Code PreToolUse hook, blocks WebFetch when not needed
 │   └── opencode-context-guard.js  # OpenCode plugin equivalent
 ├── commands/                      # Workflow commands
 ├── skills/                        # Reusable skills
@@ -85,7 +86,8 @@ Shared AI configuration for OpenCode and Claude Code. Model assignments live in 
 | ---- | ------- |
 | `reminders.md` | Routing table mapping topics to instruction/tool files, injected every turn |
 | `context-guard.sh` | Claude Code `UserPromptSubmit` hook. Prints `reminders.md`, then warns if the session's transcript is large or idle (risk of an expensive prompt-cache rebuild) |
-| `opencode-context-guard.js` | OpenCode plugin equivalent, same thresholds using the session API's exact token counts instead of a byte-size estimate. Also blocks `WebFetch` on hosts with a dedicated CLI |
+| `webfetch-guard.sh` | Claude Code `PreToolUse` hook (matcher: `WebFetch`). Denies fetches to self-hosted `Phabricator`/`Grafana` hostnames, a static `permissions.deny` domain rule can't match an arbitrary org hostname |
+| `opencode-context-guard.js` | OpenCode plugin equivalent, same thresholds using the session API's exact token counts instead of a byte-size estimate. Also blocks `WebFetch` on all 4 hosts (regex covers self-hosted domains directly) |
 
 ## Skills
 

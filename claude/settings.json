@@ -44,6 +44,17 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "WebFetch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.config/agentic/hooks/webfetch-guard.sh"
+          }
+        ]
+      }
     ]
   },
   "claudeMdExcludes": [
