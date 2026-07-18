@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSWindow Frame about-AppWindow-1</key>
+	<string>637 351 196 221 0 0 1470 923 </string>
+	<key>NSWindow Frame com_apple_SwiftUI_Settings_window</key>
+	<string>636 200 600 631 0 0 1470 923 </string>
+	<key>fingers</key>
+	<string>Three</string>
+	<key>menuBarExtraIsInserted</key>
+	<true/>
+	<key>natrual</key>
+	<true/>
+	<key>swipeUpOverview</key>
+	<false/>
+	<key>threshold</key>
+	<real>3</real>
+	<key>wrap</key>
+	<false/>
+</dict>
+</plist>

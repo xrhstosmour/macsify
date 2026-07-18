@@ -20,6 +20,7 @@ APPLICATIONS_SOURCES=(
   "$APPLICATIONS_SCRIPT_DIRECTORY/../settings/com.sanyamgarg.switch.plist.xml"
   "$APPLICATIONS_SCRIPT_DIRECTORY/../settings/org.p0deje.Maccy.plist.xml"
   "$APPLICATIONS_SCRIPT_DIRECTORY/../settings/pl.maketheweb.TopNotch.plist.xml"
+  "$APPLICATIONS_SCRIPT_DIRECTORY/../settings/club.mediosz.SwipeAeroSpace.plist.xml"
   "$APPLICATIONS_SCRIPT_DIRECTORY/../settings/flameshot.ini"
 )
 
@@ -29,6 +30,7 @@ APPLICATIONS_DESTINATIONS=(
   "$HOME/Library/Preferences/com.sanyamgarg.switch.plist"
   "$HOME/Library/Containers/org.p0deje.Maccy/Data/Library/Preferences/org.p0deje.Maccy.plist"
   "$HOME/Library/Preferences/pl.maketheweb.TopNotch.plist"
+  "$HOME/Library/Preferences/club.mediosz.SwipeAeroSpace.plist"
   "$HOME/.config/flameshot/flameshot.ini"
 )
 
@@ -38,6 +40,7 @@ APPLICATIONS_NAMES=(
   "Switch"
   "Maccy"
   "TopNotch"
+  "SwipeAeroSpace"
   "Flameshot"
 )
 
