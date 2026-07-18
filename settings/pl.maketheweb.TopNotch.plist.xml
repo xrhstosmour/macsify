@@ -5,7 +5,7 @@
 	<key>LaunchAtLogin__hasMigrated</key>
 	<true/>
 	<key>SULastCheckTime</key>
-	<date>2026-07-16T07:57:55Z</date>
+	<date>2026-07-17T09:24:08Z</date>
 	<key>SUUpdateGroupIdentifier</key>
 	<integer>227059201</integer>
 	<key>firstLaunch</key>
@@ -16,20 +16,31 @@
 	<integer>1</integer>
 	<key>processedWallpapers</key>
 	<data>
-	W3sic3BhY2VJRCI6IiIsInByb2Nlc3NlZFVSTCI6ImZpbGU6XC9cL1wvVXNlcnNcL3hy
+	W3sib3JpZ2luVVJMIjoiZmlsZTpcL1wvXC9Vc2Vyc1wveHJoc3Rvc21vdXJcL1BpY3R1
+	cmVzXC93YWxscGFwZXJzXC9yb2Nrc19taWxreV9zdHJlYW0ucG5nIiwiaGFzUm91bmRl
+	ZENvcm5lcnMiOmZhbHNlLCJvcmlnaW5hbFVSTCI6ImZpbGU6XC9cL1wvVXNlcnNcL3hy
 	aHN0b3Ntb3VyXC9MaWJyYXJ5XC9BcHBsaWNhdGlvbiUyMFN1cHBvcnRcL1RvcE5vdGNo
-	XC9wcm9jZXNzZWRcL0Q4U1o5QVhjTUEucG5nIiwib3JpZ2luYWxVUkwiOiJmaWxlOlwv
-	XC9cL1VzZXJzXC94cmhzdG9zbW91clwvTGlicmFyeVwvQXBwbGljYXRpb24lMjBTdXBw
-	b3J0XC9Ub3BOb3RjaFwvb3JpZ2luYWxcL0Q4U1o5QVhjTUEucG5nIiwicmVzb2x1dGlv
-	biI6WzI5NDAsMTkxMl0sImhhc1JvdW5kZWRDb3JuZXJzIjpmYWxzZSwib3JpZ2luVVJM
-	IjoiZmlsZTpcL1wvXC9Vc2Vyc1wveHJoc3Rvc21vdXJcL1BpY3R1cmVzXC93YWxscGFw
-	ZXJzXC9yb2Nrc19taWxreV9zdHJlYW0ucG5nIiwiY29ybmVyUmFkaXVzIjoxfV0=
+	XC9vcmlnaW5hbFwvaFNYWDROWFFrai5wbmciLCJjb3JuZXJSYWRpdXMiOjEsInByb2Nl
+	c3NlZFVSTCI6ImZpbGU6XC9cL1wvVXNlcnNcL3hyaHN0b3Ntb3VyXC9MaWJyYXJ5XC9B
+	cHBsaWNhdGlvbiUyMFN1cHBvcnRcL1RvcE5vdGNoXC9wcm9jZXNzZWRcL2hTWFg0TlhR
+	a2oucG5nIiwic3BhY2VJRCI6IiIsInJlc29sdXRpb24iOlsyOTQwLDE5MTJdfSx7Im9y
+	aWdpblVSTCI6ImZpbGU6XC9cL1wvVXNlcnNcL3hyaHN0b3Ntb3VyXC9QaWN0dXJlc1wv
+	d2FsbHBhcGVyc1wvcm9ja3NfbWlsa3lfc3RyZWFtLnBuZyIsImhhc1JvdW5kZWRDb3Ju
+	ZXJzIjpmYWxzZSwib3JpZ2luYWxVUkwiOiJmaWxlOlwvXC9cL1VzZXJzXC94cmhzdG9z
+	bW91clwvTGlicmFyeVwvQXBwbGljYXRpb24lMjBTdXBwb3J0XC9Ub3BOb3RjaFwvb3Jp
+	Z2luYWxcL2M4ajcwa2Zxb3UucG5nIiwiY29ybmVyUmFkaXVzIjoxLCJwcm9jZXNzZWRV
+	UkwiOiJmaWxlOlwvXC9cL1VzZXJzXC94cmhzdG9zbW91clwvTGlicmFyeVwvQXBwbGlj
+	YXRpb24lMjBTdXBwb3J0XC9Ub3BOb3RjaFwvcHJvY2Vzc2VkXC9jOGo3MGtmcW91LnBu
+	ZyIsInNwYWNlSUQiOiI0MjA2QTYzQS02ODFDLTQ5NUQtQUQxNi00RkI4Q0FCQjIxNjMi
+	LCJyZXNvbHV0aW9uIjpbMjU2MCwxNDQwXX1d
 	</data>
 	<key>useDynamicWallpapers</key>
-	<true/>
+	<false/>
 	<key>wallpapersUsage</key>
 	<data>
-	W3sic3BhY2VJRCI6IiIsImxhc3RVc2VkVGltZXN0YW1wIjoxNzg0MTg4Njc4fV0=
+	W3sic3BhY2VJRCI6IiIsImxhc3RVc2VkVGltZXN0YW1wIjoxNzg0MzY1NTc3fSx7InNw
+	YWNlSUQiOiI0MjA2QTYzQS02ODFDLTQ5NUQtQUQxNi00RkI4Q0FCQjIxNjMiLCJsYXN0
+	VXNlZFRpbWVzdGFtcCI6MTc4NDI5Nzc3Nn1d
 	</data>
 </dict>
 </plist>
