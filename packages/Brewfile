@@ -61,6 +61,7 @@ cask 'google-gemini'
 cask 'localsend'
 cask 'maccy'
 cask 'macfuse'
+cask 'macusb'
 cask 'mediosz/tap/swipeaerospace', trusted: true
 cask 'nikitabobko/tap/aerospace', trusted: true
 cask 'nordvpn'
