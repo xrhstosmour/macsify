@@ -12,6 +12,7 @@ Match what you are about to do to this table:
 | `Sentry`, error tracking | `~/.config/agentic/tools/sentry.md` |
 | `Grafana`/`Loki` links, "search Loki", "check Grafana", log queries | `~/.config/agentic/tools/grafana.md` |
 | Searching markdown notes | `~/.config/agentic/tools/qmd.md` |
+| `Stitch`, Google Stitch designs, UI design import | `~/.config/agentic/tools/stitch.md` |
 
 Rules, before and while you act:
 
