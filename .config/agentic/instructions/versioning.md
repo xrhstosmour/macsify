@@ -12,6 +12,7 @@
 
 - Use imperative mood: "Add feature" not "Added feature" or "Adds feature".
 - Use present tense: "Fix bug" not "Fixed bug" or "Fixes bug".
+- Keep it short: aim for under ~8-10 words, one clear clause. Don't explain the whole diff in the subject line, that's what the PR description is for.
 - Avoid punctuation at the end of the message.
 - Avoid generic messages like "Update README.md" or "Fix bug". Be specific about what was changed and why.
 - Avoid using the same commit message for multiple commits. Each commit should have a unique message that clearly describes the change made.
