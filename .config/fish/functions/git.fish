@@ -1056,3 +1056,142 @@ function git_set_coauthors
         return 1
     end
 end
+
+# Function to create, or attach to a git worktree for a branch, so multiple
+# editor/agent sessions can work on different branches of the same repo at
+# once. Worktrees are kept in a centralized folder per repo.
+# Usage:
+#   git_worktree_add <branch> [base_branch]
+function git_worktree_add
+    if test -z "$argv[1]"
+        log_error "Usage: git_worktree_add <branch> [base_branch]"
+        return 1
+    end
+
+    set branch "$argv[1]"
+    set base_branch "$argv[2]"
+
+    set repo_root (git rev-parse --show-toplevel 2>/dev/null)
+    if test $status -ne 0
+        log_error "Not inside a git repository!"
+        return 1
+    end
+    set repo_name (basename "$repo_root")
+
+    set branch_slug (string replace -a "/" "-" "$branch")
+    set worktree_path "$HOME/Developer/worktrees/$repo_name/$branch_slug"
+
+    if test -d "$worktree_path"
+        log_error "Worktree already exists at `$worktree_path`!"
+        return 1
+    end
+
+    mkdir -p (dirname "$worktree_path")
+
+    log_info "Fetching latest references..."
+    git fetch origin
+
+    if git show-ref --verify --quiet "refs/heads/$branch"
+        log_info "Branch `$branch` exists locally, attaching worktree..."
+        git worktree add "$worktree_path" "$branch"
+    else if git show-ref --verify --quiet "refs/remotes/origin/$branch"
+        log_info "Branch `$branch` exists on remote, tracking it..."
+        git worktree add "$worktree_path" -b "$branch" "origin/$branch"
+    else
+        if test -z "$base_branch"
+            set base_branch (git_get_default_branch)
+            if test $status -ne 0
+                return 1
+            end
+        end
+        log_info "Creating new branch `$branch` off `$base_branch`..."
+        git worktree add "$worktree_path" -b "$branch" "$base_branch"
+    end
+
+    if test $status -ne 0
+        log_error "Failed to create worktree!"
+        return 1
+    end
+
+    log_success "Worktree ready at `$worktree_path`."
+
+    # `mise`'s `cd` hook fails loudly on an untrusted config, trust it before navigating to worktree.
+    if command -v mise >/dev/null 2>&1
+        for mise_config in "$worktree_path/mise.toml" "$worktree_path/.mise.toml"
+            if test -f "$mise_config"
+                mise trust --silent "$mise_config"
+            end
+        end
+    end
+
+    cd "$worktree_path"
+end
+
+# Function to list git worktrees for the current repo and interact with them using fzf.
+# Only lists worktrees under the centralized `~/Developer/worktrees` folder,
+# the main repo checkout is excluded.
+# Pressing:
+#   - ENTER will cd into the selected worktree
+#   - DELETE will remove the selected worktree
+#   - TAB will show the diff of changes for that worktree
+#   - ? will toggle the preview
+# Usage:
+#   git_worktree_list
+function git_worktree_list
+    set -l worktrees_root "$HOME/Developer/worktrees"
+
+    set -l worktree_data (git worktree list --porcelain | awk '
+        /^worktree / { path=$2 }
+        /^branch / { branch=$2; sub("refs/heads/", "", branch); print path"|"branch }
+        /^detached/ { print path"|(detached)" }
+    ')
+
+    if test -z "$worktree_data"
+        log_error "No worktrees found!"
+        return 1
+    end
+
+    set -l display_lines
+    for line in $worktree_data
+        set path (echo "$line" | cut -d'|' -f1)
+        set branch (echo "$line" | cut -d'|' -f2)
+
+        if not string match -q "$worktrees_root/*" "$path"
+            continue
+        end
+
+        if test "$path" = "$PWD"
+            set display_lines $display_lines (echo -e "$path|$BOLD_YELLOW$branch$NO_COLOR")
+        else
+            set display_lines $display_lines (echo -e "$path|$BOLD_GREEN$branch$NO_COLOR")
+        end
+    end
+
+    if test -z "$display_lines"
+        log_error "No worktrees found under `$worktrees_root`!"
+        return 1
+    end
+
+    # `SHELL=/bin/bash` keeps `fzf`'s preview/bind subshells from spawning `fish`,
+    # which sources `config.fish` and trips the `sdkman` "no job control" noise.
+    set -l selected (printf '%s\n' $display_lines | env SHELL=/bin/bash fzf --ansi -d'|' --with-nth=2 --bind 'delete:execute(git worktree remove {1} --force)+abort,tab:execute(git -C {1} diff HEAD | less -R),?:toggle-preview' --preview '
+        path={1}
+        printf "\e[1;33mBranch:\e[0m %s\n" "$(git -C "$path" rev-parse --abbrev-ref HEAD)"
+        printf "\e[1;33mPath:\e[0m %s\n" "${path/#$HOME/~}"
+        printf "\e[1;33mCreated:\e[0m %s\n\n" "$(stat -f "%SB" -t "%d/%m/%Y at %H:%M:%S" "$path")"
+        files="$(git -C "$path" diff --name-only HEAD)"
+        if [ -n "$files" ]; then
+            printf "\e[1;32mFiles:\e[0m\n"
+            printf "%s\n" "$files" | while IFS= read -r f; do
+                printf "\e[1;32m-\e[0m %s\n" "$f"
+            done
+        fi
+    ' --preview-window=right:50%:hidden:wrap)
+
+    if test -z "$selected"
+        return 0
+    end
+
+    set -l path (echo "$selected" | cut -d'|' -f1)
+    cd "$path"
+end

@@ -119,6 +119,8 @@ abbr ghoprs "github_my_prs open"
 abbr ghcprs "github_my_prs closed"
 abbr ghprc "github_create_pr"
 abbr gbs "git_blame_stats"
+abbr gwta "git_worktree_add"
+abbr gwtl "git_worktree_list"
 
 # `Docker` abbreviations.
 abbr d "docker"

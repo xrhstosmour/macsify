@@ -125,6 +125,8 @@ function aliases_cheat_sheet --description "Display all command abbreviations an
     echo "  - gra              Abort revert"
     echo "  - gsu              Add upstream"
     echo "  - gbs              Lines of code per author"
+    echo "  - gwta <branch>    Create/attach worktree for branch"
+    echo "  - gwtl             List worktrees"
     echo ""
 
     echo "🌳 GITHUB:"
