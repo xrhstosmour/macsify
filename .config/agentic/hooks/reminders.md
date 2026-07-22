@@ -16,7 +16,7 @@ Match what you are about to do to this table:
 
 Rules, before and while you act:
 
-- Read the matching file as your first tool call. Responding before reading it is WRONG.
+- Your FIRST tool call before any matched action must be `read` on the matching file. Do not reason, plan, type code, or respond until you have read it. Responding before reading is a violation.
 - If an operation has a matching skill, run it, do not hand-roll the equivalent `gh`/`curl`/CLI commands.
 - When a request could match more than one skill, for example a project skill in `~/.config/agentic/skills/` and a same-topic plugin/marketplace skill, prefer the project skill. It encodes this repo's specific workflow and trigger phrasing.
 - When a skill or routed file defines a checklist, apply every item before finishing, never a subset.
