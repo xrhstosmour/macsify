@@ -7,7 +7,7 @@ description: Use when the user hands off a Stitch export, HTML/CSS, or screensho
 
 ## When to use
 
-- User pastes/attaches a Stitch export (HTML/CSS or screenshot) and asks to build matching UI.
+- User pastes/attaches a Stitch export, HTML/CSS or screenshot, and asks to build matching UI.
 - User saved a Stitch export to a file and asks you to build from it.
 - Not for writing a new Stitch prompt before design, see the `craft-stitch-prompt` skill for that.
 

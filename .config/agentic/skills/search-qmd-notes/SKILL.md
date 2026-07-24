@@ -28,6 +28,6 @@ qmd search "work log"
 # Semantic search.
 qmd vsearch "what did i do on January first week?"
 
-# Best quality (hybrid + re-ranking).
+# Best quality, hybrid + re-ranking.
 qmd query "how I handle pagination in my projects?"
 ```

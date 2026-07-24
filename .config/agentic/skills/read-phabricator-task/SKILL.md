@@ -29,7 +29,7 @@ When you encounter a `https://phabricator.<sub>.<domain>/T<id>` link, use `curl`
    jq -r '.hosts | to_entries[] | select(.key | test("phabricator")) | .value.token // empty' ~/.arcrc
   ```
 
-3. Look for a token in 1Password (`op item get "Phabricator Token" --fields label=credential --reveal`).
+3. Look for a token in 1Password: `op item get "Phabricator Token" --fields label=credential --reveal`.
 4. Ask the user to provide a token.
 
 After finding a token, verify it before task calls:
@@ -49,9 +49,9 @@ Derive the Phabricator base URL from the link you see:
 
 The API base is `$PHAB/api/`.
 
-## Quick reliable flow (copy/paste)
+## Quick reliable flow, copy/paste
 
-Use this when starting from a task link and you need a robust path that avoids SSO HTML pages. Always use this block verbatim for token lookup. Do not write your own token resolution — partial implementations silently drop the 1Password fallback.
+Use this when starting from a task link and you need a robust path that avoids SSO HTML pages. Always use this block verbatim for token lookup. Do not write your own token resolution, partial implementations silently drop the 1Password fallback.
 
 ```bash
 PHAB_LINK="https://phabricator.example.com/T241638"
@@ -91,9 +91,9 @@ end
 '
 ```
 
-## Fetch a task by ID (T\<id\>)
+## Fetch a task by ID, T\<id\>
 
-Extract the numeric ID from the link (e.g. `T242861` to `242861`).
+Extract the numeric ID from the link, like `T242861` to `242861`.
 
 ```bash
 PHAB="<base-url-from-link>"
@@ -108,16 +108,16 @@ curl -s -X POST "$PHAB/api/maniphest.search" \
 
 Response fields of interest:
 
-- `result.data[0].fields.name` — title
-- `result.data[0].fields.description.raw` — description body
-- `result.data[0].fields.ownerPHID` — assignee PHID (null = unassigned)
-- `result.data[0].fields.authorPHID` — author PHID
-- `result.data[0].fields.status.{value,name,color}` — status
-- `result.data[0].fields.priority.name` — priority
-- `result.data[0].fields.dateCreated` / `dateModified` — epoch timestamps
-- `result.data[0].fields.dateClosed` — epoch timestamp, null if open
-- `result.data[0].fields.closerPHID` — who resolved it
-- `result.data[0].attachments.projects.projectPHIDs` — associated project PHIDs
+- `result.data[0].fields.name`, title
+- `result.data[0].fields.description.raw`, description body
+- `result.data[0].fields.ownerPHID`, assignee PHID, null means unassigned
+- `result.data[0].fields.authorPHID`, author PHID
+- `result.data[0].fields.status.{value,name,color}`, status
+- `result.data[0].fields.priority.name`, priority
+- `result.data[0].fields.dateCreated` / `dateModified`, epoch timestamps
+- `result.data[0].fields.dateClosed`, epoch timestamp, null if open
+- `result.data[0].fields.closerPHID`, who resolved it
+- `result.data[0].attachments.projects.projectPHIDs`, associated project PHIDs
 
 ## Compact task summary
 
@@ -136,7 +136,7 @@ curl -s -X POST "$PHAB/api/maniphest.search" \
 '
 ```
 
-## Task transactions (history, comments)
+## Task transactions, history and comments
 
 ```bash
 PHAB="<base-url>" TOKEN="<token>" ID="<id>"
@@ -162,18 +162,18 @@ curl -s -X POST "$PHAB/api/phid.query" \
 ## Search users
 
 ```bash
-# By username (exact).
+# By username, exact.
 curl -s -X POST "$PHAB/api/user.search" \
   -d api.token="$TOKEN" \
   -d "constraints[usernames][0]=<username>" \
   -d limit=5 | jq .
 
-# By display name (fuzzy).
+# By display name, fuzzy.
 curl -s -X POST "$PHAB/api/user.search" \
   -d api.token="$TOKEN" \
   -d "constraints[query]=<name>" \
   -d limit=5 | jq -r '
-.result.data[] | "\(.fields.username // "-") — \(.fields.realName // "-") (PHID: \(.phid))"
+.result.data[] | "\(.fields.username // "-"), \(.fields.realName // "-"), PHID: \(.phid)"
 '
 ```
 
@@ -184,7 +184,7 @@ curl -s -X POST "$PHAB/api/project.search" \
   -d api.token="$TOKEN" \
   -d "constraints[query]=<name>" \
   -d limit=5 | jq -r '
-.result.data[] | "\(.fields.name // "-") (\(.fields.slug // "-")) — PHID: \(.phid)"
+.result.data[] | "\(.fields.name // "-"), \(.fields.slug // "-"), PHID: \(.phid)"
 '
 ```
 
@@ -206,15 +206,15 @@ curl -s -X POST "$PHAB/api/maniphest.search" \
   -d api.token="$TOKEN" \
   -d "constraints[authorPHIDs][0]=<phid>" \
   -d limit=20 | jq -r '
-.result.data[] | "T\(.id): \(.fields.name // "") — \(.fields.status.name // "")"
+.result.data[] | "T\(.id): \(.fields.name // ""), \(.fields.status.name // "")"
 '
 
-# By status (open, inprogress, resolved, etc.)
+# By status, open, inprogress, resolved, etc.
 curl -s -X POST "$PHAB/api/maniphest.search" \
   -d api.token="$TOKEN" \
   -d "constraints[statuses][0]=<status>" \
   -d limit=20 | jq -r '
-.result.data[] | "T\(.id): \(.fields.name // "") — \(.fields.status.name // "")"
+.result.data[] | "T\(.id): \(.fields.name // ""), \(.fields.status.name // "")"
 '
 ```
 
@@ -230,12 +230,12 @@ curl -s -X POST "$PHAB/api/user.whoami" \
 - Task links: `https://phabricator.<sub>.<domain>/T<id>`
 - User links: `https://phabricator.<sub>.<domain>/p/<username>/`
 - Project links: `https://phabricator.<sub>.<domain>/tag/<slug>/`
-- API takes numeric IDs (e.g. `242861`), not `T242861`.
+- API takes numeric IDs, e.g. `242861`, not `T242861`.
 
 ## Pagination
 
 ```bash
-# Page 1 — save cursor.
+# Page 1, save cursor.
 curl -s -X POST "$PHAB/api/maniphest.search" \
   -d api.token="$TOKEN" \
   -d "constraints[statuses][0]=resolved" \
@@ -253,7 +253,7 @@ curl -s -X POST "$PHAB/api/maniphest.search" \
 ## Notes
 
 - All API requests are `POST` with form-encoded data. Pass the token as `api.token=<token>`.
-- Timestamps are Unix epoch (seconds). Convert to ISO 8601 with `date -u -r <epoch> "+%Y-%m-%dT%H:%M:%SZ"`.
+- Timestamps are Unix epoch, seconds. Convert to ISO 8601 with `date -u -r <epoch> "+%Y-%m-%dT%H:%M:%SZ"`.
 - PHIDs are opaque internal identifiers, use `phid.query` to resolve them.
 - If you cannot find a token, ask the user for one or to set `$PHABRICATOR_TOKEN`.
 - If you see Google sign-in HTML, you are not using Conduit API correctly, or token is missing/invalid.

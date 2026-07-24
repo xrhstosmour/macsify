@@ -20,7 +20,7 @@ description: >
 
 Derive `$PHAB` in order:
 1. `$PHAB_URI` env var.
-2. `~/.arcrc` host key — strip the `/api/` suffix: `jq -r '.hosts | to_entries[] | select(.key | test("phabricator")) | .key' ~/.arcrc | sed 's|/api/||'`
+2. `~/.arcrc` host key, strip the `/api/` suffix: `jq -r '.hosts | to_entries[] | select(.key | test("phabricator")) | .key' ~/.arcrc | sed 's|/api/||'`
 3. Ask the user.
 
 Find `$TOKEN` in order:
@@ -41,14 +41,20 @@ If `error_code` is not null, token/auth is invalid and must be fixed first.
 
 ### 1. Gather required fields
 
-- Tag (required): Phabricator project. Ask: "Which tag?"
-- Title (required): Short imperative phrase, max ~60 characters. No priority prefix (priority is a separate field). Example: `Add dark mode toggle`.
+- Tag, required: Phabricator project. Ask: "Which tag?"
+- Title, required: Short imperative phrase, max ~60 characters. No priority prefix, priority is a separate field. Example: `Add dark mode toggle`.
 
 ### 2. Gather optional fields
 
 Ask all at once in a single message:
 
-> Description (auto-generate from git? y/n), Priority (P0–P4), Assignee (default: self-assign), Subscribers, Status (default: open), Parent task (TID), Reference links.
+- Description: auto-generate from git? y/n
+- Priority: P0–P4
+- Assignee: default self-assign
+- Subscribers
+- Status: default open
+- Parent task: TID
+- Reference links
 
 Resolve the current user's PHID for self-assignment:
 
@@ -80,7 +86,7 @@ Tone rules:
 - Short sentences. One idea each.
 - Describe user-facing problem and impact, not code changes.
 
-Remarkup formatting rule (Phabricator's markup dialect, not GitHub-flavored Markdown): always leave a
+Remarkup formatting rule, Phabricator's markup dialect, not GitHub-flavored Markdown: always leave a
 blank line after a `##` header before its content, and a blank line after any line ending in `:` before
 a following list. Remarkup does not reliably render headers or lists without that spacing, headers can
 merge into the paragraph below them, and lists can render as plain text. Apply this to every description
@@ -122,7 +128,7 @@ If no code context exists, ask: "What should the description say? I can help dra
 Always end with a `## References` section, followed by a blank line and then the list. Format every URL
 as a Remarkup hyperlink: `[[https://example.com | Label]]`. Never use bare URLs. Include:
 
-- If a PR exists: `[[<pr_url> | PR #<number>]]` — omit the branch (the PR implies it)
+- If a PR exists: `[[<pr_url> | PR #<number>]]`, omit the branch since the PR implies it
 - If no PR exists: Branch `` `<branch-name>` ``
 - Any extra links the user provided
 
@@ -130,7 +136,7 @@ Show the generated description and ask for approval before proceeding.
 
 ### 4. Resolve PHIDs
 
-Run all resolutions in parallel (`&` + `wait`) when multiple are needed.
+Run all resolutions in parallel, `&` + `wait`, when multiple are needed.
 
 ```bash
 # Project.
@@ -139,7 +145,7 @@ curl -s -X POST "$PHAB/api/project.search" -d api.token="$TOKEN" \
   | jq -r '.result.data[] | "\(.phid)  \(.fields.name)"'
 
 # User: endpoint user.search, constraint constraints[usernames][0]=<username>, limit=1.
-# Task (parent): endpoint maniphest.search, constraint constraints[ids][0]=<id>, limit=1.
+# Task, parent: endpoint maniphest.search, constraint constraints[ids][0]=<id>, limit=1.
 # All return .phid or .result.data[0].phid. Show candidates on no exact match.
 ```
 
@@ -149,7 +155,7 @@ curl -s -X POST "$PHAB/api/project.search" -d api.token="$TOKEN" \
 Tag:         <project-name>
 Title:       <title>
 Priority:    <priority>
-Assignee:    <username> (default: self)
+Assignee:    <username>, default: self
 Subscribers: <usernames>
 Status:      <status>
 Parent:      T<id>
@@ -185,7 +191,7 @@ Add optional transactions by appending `--data-urlencode "transactions[N][type]=
 
 | Field | type | value |
 |-------|------|-------|
-| Priority | `priority` | keyword (see table below) |
+| Priority | `priority` | keyword, see table below |
 | Assignee | `owner` | `<assignee-phid>` |
 | Subscribers | `subscribers.add` | `value[0]=<phid>`, `value[1]=<phid>`, ... |
 | Status | `status` | `open`, `inprogress`, `resolved` |

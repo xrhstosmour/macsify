@@ -27,7 +27,7 @@ Fix `APIEndpoint` timeout
 Rename `utils` file to `utilities`
 Add tests for `User` model
 Update `README.md` with setup instructions
-`opencode`: Update `resolve-pr-comments` skill
+`opencode`: Update `resolve-github-pr-comments` skill
 `billing`: Add new endpoint for invoice export
 `macsify`: Refactor `WindowManager` to use `NSScreen`
 Add CI detection and direct database fallback to setup.sh
@@ -71,7 +71,7 @@ Rules:
 - Resolve target `SHA` from current branch history by path: `git log --format="%H %s" <base>..HEAD -- <path>`
 - Primary target is the latest original commit in range touching that path
 - If ambiguous, use line-level tie-breaker: `git blame -L <line>,<line> <path>`
-- Do not rely only on external metadata (e.g. PR `originalCommit.oid`)
+- Do not rely only on external metadata (PR `originalCommit.oid`)
 - Do not infer target by comment order
 - Exactly one fixup commit per target `SHA`
 - Multiple comments can share one fixup if they map to the same target `SHA`
