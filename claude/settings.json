@@ -2,7 +2,6 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "model": "sonnet",
   "theme": "dark",
-  "permissionMode": "plan",
   "includeCoAuthoredBy": false,
   "preferredNotifChannel": "terminal_bell",
   "spinnerTipsEnabled": false,
@@ -12,6 +11,7 @@
     "ruby-lsp@claude-plugins-official": true
   },
   "permissions": {
+    "defaultMode": "plan",
     "deny": [
       "Read(**/.env)",
       "Read(**/.env.*)",
