@@ -1,4 +1,13 @@
-# QMD
+---
+name: search-qmd-notes
+description: Use when searching the user's markdown notes.
+---
+
+# Search QMD Notes
+
+## When to use
+
+- User asks to search their markdown notes/files.
 
 Use `qmd` for searching your markdown files.
 If not installed, use default search tools instead.
