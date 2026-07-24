@@ -218,6 +218,12 @@ After writing code:
 
 When a skill covers an operation, always invoke it. Never use ad-hoc commands for operations that have a skill. Skills encode safety guardrails, consistency, and quality gates that ad-hoc tool usage lacks.
 
+When a request could match more than one skill, for example a project skill in `~/.config/agentic/skills/` and a same-topic plugin/marketplace skill, prefer the project skill. It encodes this repo's specific workflow and trigger phrasing.
+
+When a skill defines a checklist, apply every item before finishing, never a subset.
+
+This applies in Plan Mode too. Invoking a matching skill is a read-only action, do it directly before any codebase exploration, regardless of the Plan Mode phase you are in.
+
 ## Safety
 
 - Confirm before destructive operations (`rm`, `DROP TABLE`, `DELETE FROM`, etc.).
