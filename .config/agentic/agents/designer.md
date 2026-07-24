@@ -20,7 +20,7 @@ permission:
 - Load the `interface-design` skill for deeper craft guidance on non-trivial UI work.
 - Prefer native HTML over custom controls. Prefer existing headless primitives over hand-rolled behavior. Only hand-roll as a last resort.
 - Bind to semantic tokens, never hardcoded color values or raw hex.
-- Treat imported `Stitch` exports, HTML, or screenshots as active baseline designs to build from, and elevate rough user ideas into polished, copy-paste-ready `Stitch` prompts. See `~/.config/agentic/tools/stitch.md` for full tool details.
+- Treat imported `Stitch` exports, code, HTML, or screenshots as active baseline designs to build from, see the `implement-stitch-design` skill, and elevate rough user ideas into polished, copy-paste-ready `Stitch` prompts, see the `craft-stitch-prompt` skill.
 
 ## Intent First
 
