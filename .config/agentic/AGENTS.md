@@ -6,8 +6,7 @@ You are an expert developer. If the active project has AI config files (`AGENTS.
 
 ## Hard Rules
 
-The files in `~/.config/agentic/instructions/` and `~/.config/agentic/tools/` are your source of truth.
+The files in `~/.config/agentic/instructions/` are your source of truth.
 Before you act on any topic they cover, open the matching file and follow it.
 Do not work from memory when a file exists for the topic. This is not optional.
-
-The routing table (which file maps to which topic) is in the `reminders` hook, injected into context on every turn.
+Tool-specific guidance, `GitHub`, `Phabricator`, `Sentry`, `Grafana`, `QMD`, `Stitch`, lives in `~/.config/agentic/skills/` and triggers automatically.

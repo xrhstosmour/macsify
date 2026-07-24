@@ -19,14 +19,7 @@ Shared AI configuration for OpenCode and Claude Code. Model assignments live in 
 │   ├── communication.md
 │   ├── standards.md
 │   └── versioning.md
-├── tools/                         # Tool-specific usage guides
-│   ├── github.md
-│   ├── phabricator.md
-│   ├── sentry.md
-│   ├── grafana.md
-│   └── qmd.md
 ├── hooks/                         # Injected every turn/message
-│   ├── reminders.md               # Routing table, single source for both tools
 │   ├── context-guard.sh           # Claude Code UserPromptSubmit hook
 │   ├── webfetch-guard.sh          # Claude Code PreToolUse hook, blocks WebFetch when not needed
 │   └── opencode-context-guard.js  # OpenCode plugin equivalent
@@ -49,8 +42,7 @@ Shared AI configuration for OpenCode and Claude Code. Model assignments live in 
 ├── CLAUDE.md -> ~/.config/agentic/AGENTS.md
 ├── settings.json                  # Claude Code settings
 ├── agents/                        # Agent files with injected model/effort
-├── rules/instructions/ -> ~/.config/agentic/instructions/
-└── rules/tools/ -> ~/.config/agentic/tools/
+└── rules/instructions/ -> ~/.config/agentic/instructions/
 ```
 
 ## Workflow
@@ -70,24 +62,13 @@ Shared AI configuration for OpenCode and Claude Code. Model assignments live in 
 | `standards.md` | Core implementation rules, safety, error handling, debugging |
 | `versioning.md` | `Git` conventions and commit rules |
 
-## Tools
-
-| File | Purpose |
-| ---- | ------- |
-| `github.md` | `GitHub CLI` commands and `PR` guidelines |
-| `phabricator.md` | Phabricator `Conduit` API integration |
-| `sentry.md` | Sentry error tracking and issue analysis |
-| `grafana.md` | Grafana dashboard/log links, `logcli`/Loki only, no `curl`/`HTTP API` path |
-| `qmd.md` | `qmd` markdown search and semantic query usage |
-
 ## Hooks
 
 | File | Purpose |
 | ---- | ------- |
-| `reminders.md` | Routing table mapping topics to instruction/tool files, injected every turn |
-| `context-guard.sh` | Claude Code `UserPromptSubmit` hook. Prints `reminders.md`, then warns if the session's transcript is large or idle (risk of an expensive prompt-cache rebuild) |
-| `webfetch-guard.sh` | Claude Code `PreToolUse` hook (matcher: `WebFetch`). Denies fetches to self-hosted `Phabricator`/`Grafana` hostnames, a static `permissions.deny` domain rule can't match an arbitrary org hostname |
-| `opencode-context-guard.js` | OpenCode plugin equivalent, same thresholds using the session API's exact token counts instead of a byte-size estimate. Also blocks `WebFetch` on all 4 hosts (regex covers self-hosted domains directly) |
+| `context-guard.sh` | Claude Code `UserPromptSubmit` hook. Warns if the session's transcript is large or idle. Skill precedence/checklist rules live directly in `instructions/standards.md` now, no separate injection needed |
+| `webfetch-guard.sh` | Claude Code `PreToolUse` hook, matcher: `WebFetch`. Denies fetches to self-hosted `Phabricator`/`Grafana` hostnames, a static `permissions.deny` domain rule can't match an arbitrary org hostname |
+| `opencode-context-guard.js` | OpenCode plugin equivalent, same thresholds using the session API's exact token counts instead of a byte-size estimate. Also blocks `WebFetch` on all 4 hosts, `github.com`, `phabricator.`, `sentry.io`, `grafana.`, regex covers self-hosted domains directly |
 
 ## Skills
 
@@ -97,9 +78,9 @@ Skills are loaded by agents and triggered via commands.
 
 | Skill | Command | Purpose |
 | ----- | ------ | ------- |
-| `create_pr` | `/create-pr` | Create a `PR` with structured description, split commits, feature branch, auto-assign, and labels |
-| `resolve_pr_comments` | `/resolve-pr-comments` | Review `PR` comments, assess validity, make fixup commits, push, reply with `SHA` links |
-| `review_pr` | `/review-pr` | Multi-agent `PR` review, spawns agents in parallel, can post inline comments |
+| `manage_github_pr` | `/manage-github-pr` | Create a `PR` with structured description, split commits, feature branch, auto-assign, and labels, also reviews/edits/comments on existing PRs |
+| `resolve_github_pr_comments` | `/resolve-github-pr-comments` | Review `PR` comments, assess validity, make fixup commits, push, reply with `SHA` links |
+| `review_github_pr` | `/review-github-pr` | Multi-agent `PR` review, spawns agents in parallel, can post inline comments |
 
 ### Diagnostic Skills
 
@@ -126,7 +107,24 @@ Skills are loaded by agents and triggered via commands.
 
 | Skill | Command | Purpose |
 | ----- | ------- | ------- |
-| `create_phabricator_task` | `/create-phabricator-task` | Create and edit Phabricator tasks via the `Conduit` API |
+| `manage_phabricator_task` | `/manage-phabricator-task` | Create and edit Phabricator tasks via the `Conduit` API |
+
+### Tool Skills
+
+Auto-triggered by topic, no dedicated command, formerly always-loaded files under `tools/`.
+
+| Skill | Purpose |
+| ----- | ------- |
+| `read-github-pr` | Read GitHub PR description, diff, files |
+| `read-github-issue` | Read GitHub issue body, comments |
+| `read-github-files` | Read GitHub commits, releases, raw repo file/directory content; also creates releases |
+| `manage-github-issue` | Create, comment on, or edit GitHub issues |
+| `read-phabricator-task` | Phabricator `Conduit` API integration, read/search/analyze |
+| `read-sentry-issue` | Sentry error tracking and issue analysis |
+| `search-grafana-logs` | Grafana dashboard/log links, `logcli`/Loki only, no `curl`/`HTTP API` path |
+| `search-qmd-notes` | `qmd` markdown search and semantic query usage |
+| `craft-stitch-prompt` | Polish a Google Stitch design prompt before the user goes to the Stitch web app |
+| `implement-stitch-design` | Build/match UI from an already-generated Stitch export, HTML/CSS or screenshot |
 
 ## Agents
 
