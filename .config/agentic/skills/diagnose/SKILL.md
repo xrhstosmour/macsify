@@ -31,7 +31,7 @@ Spend disproportionate effort here. Be aggressive. Be creative. Refuse to give u
 
 Before building a loop, check Sentry, if the project uses it, see the `read-sentry-issue` skill. Sentry issues provide stack traces, request params, and breadcrumbs that shortcut the reproduction process. Use them to narrow the scope before constructing a loop.
 
-If the user shares a Grafana dashboard/explore link, or the project logs to Grafana (`~/.config/agentic/tools/grafana.md`), query the relevant time range and search terms directly instead of guessing at reproduction steps.
+If the user shares a Grafana dashboard/explore link, or the project logs to Grafana, see the `search-grafana-logs` skill, query the relevant time range and search terms directly instead of guessing at reproduction steps.
 
 ### Ways to construct one, try them in roughly this order
 
