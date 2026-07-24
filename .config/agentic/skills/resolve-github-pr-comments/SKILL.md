@@ -1,15 +1,15 @@
 ---
-name: resolve-pr-comments
-description: Review PR review comments, assess validity, propose or make fixes, create fixup commits, push, and reply with SHA links.
+name: resolve-github-pr-comments
+description: Review GitHub PR review comments, assess validity, propose or make fixes, create fixup commits, push, and reply with SHA links.
 ---
 
 <!-- markdownlint-disable MD013 -->
 
-# Resolve PR Comments
+# Resolve GitHub PR Comments
 
 ## When to use
 
-- `/resolve-pr-comments <pr_url>`
+- `/resolve-github-pr-comments <pr_url>`
 - User says "resolve pr comments" or "fix pr comments".
 - The user mentions there are review comments to address on an open PR.
 - The user says "there's feedback on my PR", "reviewer left comments", or "I got a review".
