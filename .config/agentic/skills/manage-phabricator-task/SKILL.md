@@ -1,27 +1,41 @@
 ---
-name: create-phabricator-task
+name: manage-phabricator-task
 description: >
-  Create and edit Phabricator tasks via Curl Conduit API. Triggered only when
-  the user explicitly mentions Phabricator or "phab": "create phab task/ticket/issue",
-  "create Phabricator task/ticket/issue", or "/create-phabricator-task".
+  Create and edit Phabricator tasks via the Conduit API: new tasks, or updating
+  an existing task's status, title, description, owner, priority, or subscribers.
+  Triggered when the user explicitly mentions Phabricator or "phab": "create phab
+  task/ticket/issue", "update/edit phab task", "reassign/close/reopen task
+  T<id>", "change priority on T<id>", or "/manage-phabricator-task".
 ---
 
-# Create Phabricator Task
+# Manage Phabricator Task
 
 ## When to use
 
-Use when the user asks to create, file, open, or submit a Phabricator task or ticket.
-
-Do NOT use for reading existing tasks. Use `~/.config/agentic/tools/phabricator.md` for that.
+- User asks to create, file, open, or submit a Phabricator task or ticket.
+- User asks to update, edit, reassign, close, reopen, or change the status/priority of an existing Phabricator task.
+- Do NOT use for just reading existing tasks. Use the `read-phabricator-task` skill for that.
 
 ## Prerequisites
-
-Authenticate using the token discovery flow from `~/.config/agentic/tools/phabricator.md`. Store as `$PHAB` and `$TOKEN`. Verify with `user.whoami` before proceeding.
 
 Derive `$PHAB` in order:
 1. `$PHAB_URI` env var.
 2. `~/.arcrc` host key — strip the `/api/` suffix: `jq -r '.hosts | to_entries[] | select(.key | test("phabricator")) | .key' ~/.arcrc | sed 's|/api/||'`
 3. Ask the user.
+
+Find `$TOKEN` in order:
+1. Environment variable `$PHABRICATOR_TOKEN` or `$CONDUIT_TOKEN`.
+2. `~/.arcrc`: `jq -r '.hosts | to_entries[] | select(.key | test("phabricator")) | .value.token // empty' ~/.arcrc`
+3. 1Password: `op item get "Phabricator Token" --fields label=credential --reveal`.
+4. Ask the user for a token.
+
+Verify before proceeding:
+
+```bash
+curl -s -X POST "$PHAB/api/user.whoami" -d api.token="$TOKEN" | jq .
+```
+
+If `error_code` is not null, token/auth is invalid and must be fixed first.
 
 ## Task creation workflow
 
@@ -188,6 +202,17 @@ Add optional transactions by appending `--data-urlencode "transactions[N][type]=
 
 ## Update existing task
 
+Fetch the task first to confirm you have the right one and to show the user a before/after preview:
+
+```bash
+curl -s -X POST "$PHAB/api/maniphest.search" \
+  -d api.token="$TOKEN" \
+  -d "constraints[ids][0]=<task-id>" \
+  -d limit=1 | jq .
+```
+
+Then apply the change:
+
 ```bash
 curl -s -X POST "$PHAB/api/maniphest.edit" \
   -d api.token="$TOKEN" \
@@ -197,6 +222,8 @@ curl -s -X POST "$PHAB/api/maniphest.edit" \
 ```
 
 Common types: `status`, `title`, `description`, `owner`, `subscribers.add`, `subscribers.remove`.
+
+Show the user what will change and ask for confirmation before executing, same as task creation.
 
 ## Priority keyword mapping
 

@@ -1,10 +1,21 @@
-# Phabricator
+---
+name: read-phabricator-task
+description: Use when a `Phabricator` link like `https://phabricator.<sub>.<domain>/T<id>` appears, or when reading, searching, or analyzing Phabricator tasks via the Conduit API. Not for creating or editing tasks, use the `manage-phabricator-task` skill for that.
+---
+
+# Read Phabricator Task
+
+## When to use
+
+- User shares a Phabricator task link like: `https://phabricator.<sub>.<domain>/T<id>`.
+- Reading, searching, or analyzing Phabricator tasks via the Conduit API.
+- User says "Phabricator" or "phab", and isn't asking to create or edit a task, see `manage-phabricator-task` for that.
 
 When you encounter a `https://phabricator.<sub>.<domain>/T<id>` link, use `curl` to fetch task details and related data via the `Conduit` API.
 
 ## Required behavior
 
-- Always use Conduit API calls (`$PHAB/api/...`) first.
+- Always use Conduit API calls, `$PHAB/api/...`, first.
 - Do not use browser/web scraping for Phabricator task URLs.
 - SSO-protected pages usually return a Google sign-in HTML page, not task content.
 - If API calls fail, troubleshoot token/auth first, then retry API calls.
@@ -14,9 +25,9 @@ When you encounter a `https://phabricator.<sub>.<domain>/T<id>` link, use `curl`
 1. Look for an environment variable named `$PHABRICATOR_TOKEN` or `$CONDUIT_TOKEN`.
 2. Look for a token in `~/.arcrc`:
 
-   ```bash
+  ```bash
    jq -r '.hosts | to_entries[] | select(.key | test("phabricator")) | .value.token // empty' ~/.arcrc
-   ```
+  ```
 
 3. Look for a token in 1Password (`op item get "Phabricator Token" --fields label=credential --reveal`).
 4. Ask the user to provide a token.
