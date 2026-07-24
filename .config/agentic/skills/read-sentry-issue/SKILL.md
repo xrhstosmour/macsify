@@ -1,10 +1,21 @@
-# Sentry
+---
+name: read-sentry-issue
+description: Use when a Sentry issue/event link appears, or when working with Sentry error tracking, authenticating, listing organizations/projects/issues, or fetching event/stacktrace details for an issue.
+---
+
+# Read Sentry Issue
+
+## When to use
+
+- User shares a Sentry issue/event link `https://sentry.io/organizations/<org>/issues/<id>/` or `<org>.sentry.io/issues/<id>/`.
+- User mentions Sentry or error tracking by name.
+- Investigating an exception, stack trace, or production error that might be tracked in Sentry.
 
 ## Authentication
 
 1. Look for a token in `~/.sentryclirc`.
 2. Look for an environment variable named `$SENTRY_AUTH_TOKEN`.
-3. Look for a token in 1Password (`op item get "Sentry Token" --fields label=credential --reveal`).
+3. Look for a token in 1Password via `op item get "Sentry Token" --fields label=credential --reveal`.
 4. Ask the user to provide a token.
 
 ## Commands
@@ -51,7 +62,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
     "REQUEST URL: \(.data.url // "?")",
     (.data.query // [] | map("  \(.[0]) = \(.[1])") | .[])
   else empty
- end
+  end
 ),
 ""
 '
