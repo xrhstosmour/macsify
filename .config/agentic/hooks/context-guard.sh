@@ -1,7 +1,5 @@
 #!/bin/bash
 
-cat ~/.config/agentic/hooks/reminders.md
-
 input=$(cat)
 transcript_path=$(echo "$input" | jq -r '.transcript_path // empty')
 

@@ -4,9 +4,9 @@ input=$(cat)
 [ "$(echo "$input" | jq -r '.tool_name // empty')" = "WebFetch" ] || exit 0
 url=$(echo "$input" | jq -r '.tool_input.url // empty')
 if echo "$url" | grep -qiE 'phabricator\.'; then
-  reason="Use the Conduit API per ~/.config/agentic/tools/phabricator.md, not WebFetch."
+  reason="Use the Conduit API per the read-phabricator-task skill, not WebFetch."
 elif echo "$url" | grep -qiE 'grafana\.'; then
-  reason="Use logcli per ~/.config/agentic/tools/grafana.md, not WebFetch."
+  reason="Use logcli per the search-grafana-logs skill, not WebFetch."
 else
   exit 0
 fi

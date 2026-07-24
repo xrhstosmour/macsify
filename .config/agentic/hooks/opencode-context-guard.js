@@ -1,7 +1,5 @@
 // OpenCode adapter for the agentic hooks. Mirrors what Claude Code does via
 // settings.json:
-//   - Re-injects the routing reminder into the system prompt every turn, so it
-//     stays salient instead of fading (Claude uses the UserPromptSubmit hook).
 //   - Blocks WebFetch on service URLs that have a dedicated CLI, since OpenCode
 //     cannot deny WebFetch by host in config (Claude uses permissions.deny).
 //   - Warns once a session's token usage or idle time gets large, mirroring
@@ -10,27 +8,20 @@
 //     Thresholds are intentionally aggressive (50K tokens, 30 min idle) to
 //     force compaction before context bloat becomes irreversible.
 //
-// The reminder text lives in reminders.md, the single source. The injection
-// hook is experimental in the OpenCode API, so it is wrapped in try/catch: if
-// it ever changes, injection stops silently and nothing crashes.
+// Static instructions (communication/standards/versioning) load via opencode.json's
+// `instructions` array instead, no hook needed for those.
 //
 // experimental.chat.system.transform is not on opencode.ai/docs. Source of truth:
 //   signature:  https://github.com/anomalyco/opencode/blob/dev/packages/plugin/src/index.ts
 //   invocation: https://github.com/anomalyco/opencode/blob/dev/packages/opencode/src/session/llm/request.ts
 //   session shape (tokens, time.updated in epoch ms): https://github.com/anomalyco/opencode/blob/dev/packages/core/src/session.ts
 
-import { readFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
-
-const reminderPath = join(homedir(), ".config", "agentic", "hooks", "reminders.md");
-
 // Service URLs that must go through a dedicated CLI, never WebFetch.
 const blockedHosts = [
-  { pattern: /github\.com/i, use: "the `gh` CLI per ~/.config/agentic/tools/github.md" },
-  { pattern: /phabricator\./i, use: "the Conduit API per ~/.config/agentic/tools/phabricator.md" },
-  { pattern: /sentry\.io/i, use: "`sentry-cli` per ~/.config/agentic/tools/sentry.md" },
-  { pattern: /grafana\./i, use: "`logcli` per ~/.config/agentic/tools/grafana.md" },
+  { pattern: /github\.com/i, use: "the `gh` CLI, see the `read-github-pr`/`read-github-issue`/`read-github-files` skills" },
+  { pattern: /phabricator\./i, use: "the Conduit API per the `read-phabricator-task` skill" },
+  { pattern: /sentry\.io/i, use: "`sentry-cli` per the `read-sentry-issue` skill" },
+  { pattern: /grafana\./i, use: "`logcli` per the `search-grafana-logs` skill" },
 ];
 
 // Warn early. 50K tokens is roughly 2-3 API calls with a full context window.
@@ -41,12 +32,6 @@ const IDLE_WARN_SECONDS = 1800;
 export const AgenticReminderPlugin = async ({ client }) => {
   return {
     "experimental.chat.system.transform": async (input, output) => {
-      try {
-        output.system.push(readFileSync(reminderPath, "utf8"));
-      } catch {
-        // Best-effort. Never break a session if the reminder file is missing.
-      }
-
       const sessionID = input.sessionID;
       if (!sessionID) return;
 

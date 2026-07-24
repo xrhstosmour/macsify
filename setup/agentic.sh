@@ -76,7 +76,6 @@ if brewfile_declares opencode; then
 
     ln -sfn "$AGENTIC_DIRECTORY/agents"       "$HOME/.config/opencode/agents"
     ln -sfn "$AGENTIC_DIRECTORY/instructions" "$HOME/.config/opencode/instructions"
-    ln -sfn "$AGENTIC_DIRECTORY/tools"        "$HOME/.config/opencode/tools"
     ln -sfn "$AGENTIC_DIRECTORY/commands"     "$HOME/.config/opencode/commands"
     ln -sfn "$AGENTIC_DIRECTORY/skills"       "$HOME/.config/opencode/skills"
     ln -sf  "$AGENTIC_DIRECTORY/AGENTS.md"    "$HOME/.config/opencode/AGENTS.md"
@@ -122,5 +121,4 @@ effort: ${effort}" "$HOME/.claude/agents/${agent}.md"
     ln -sfn "$AGENTIC_DIRECTORY/commands"     "$HOME/.claude/commands"
     ln -sfn "$AGENTIC_DIRECTORY/skills"       "$HOME/.claude/skills"
     ln -sfn "$AGENTIC_DIRECTORY/instructions" "$HOME/.claude/rules/instructions"
-    ln -sfn "$AGENTIC_DIRECTORY/tools"        "$HOME/.claude/rules/tools"
 fi

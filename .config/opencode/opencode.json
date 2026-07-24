@@ -6,13 +6,7 @@
   "instructions": [
     "~/.config/opencode/instructions/standards.md",
     "~/.config/opencode/instructions/versioning.md",
-    "~/.config/opencode/instructions/communication.md",
-    "~/.config/opencode/tools/github.md",
-    "~/.config/opencode/tools/phabricator.md",
-    "~/.config/opencode/tools/sentry.md",
-    "~/.config/opencode/tools/grafana.md",
-    "~/.config/opencode/tools/qmd.md",
-    "~/.config/opencode/tools/stitch.md"
+    "~/.config/opencode/instructions/communication.md"
   ],
   "permission": {
     "external_directory": {
