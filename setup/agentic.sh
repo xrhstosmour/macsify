@@ -9,6 +9,7 @@ AGENT_SOURCE_DIRECTORY="$AGENTIC_DIRECTORY/agents"
 
 source "$AGENTIC_SCRIPT_DIRECTORY/../helpers/logs.sh"
 source "$AGENTIC_SCRIPT_DIRECTORY/../helpers/brewfile.sh"
+source "$AGENTIC_SCRIPT_DIRECTORY/../helpers/symlink.sh"
 
 # Only set up the tools declared in the Brewfile. This runs before `brew bundle`,
 # so the Brewfile is the intent signal, not a runtime `command -v` check.
@@ -74,17 +75,17 @@ if brewfile_declares opencode; then
 
     log_info "Creating OpenCode symlinks..."
 
-    ln -sfn "$AGENTIC_DIRECTORY/agents"       "$HOME/.config/opencode/agents"
-    ln -sfn "$AGENTIC_DIRECTORY/instructions" "$HOME/.config/opencode/instructions"
-    ln -sfn "$AGENTIC_DIRECTORY/commands"     "$HOME/.config/opencode/commands"
-    ln -sfn "$AGENTIC_DIRECTORY/skills"       "$HOME/.config/opencode/skills"
-    ln -sf  "$AGENTIC_DIRECTORY/AGENTS.md"    "$HOME/.config/opencode/AGENTS.md"
+    create_symlink "$AGENTIC_DIRECTORY/agents"       "$HOME/.config/opencode/agents"
+    create_symlink "$AGENTIC_DIRECTORY/instructions" "$HOME/.config/opencode/instructions"
+    create_symlink "$AGENTIC_DIRECTORY/commands"     "$HOME/.config/opencode/commands"
+    create_symlink "$AGENTIC_DIRECTORY/skills"       "$HOME/.config/opencode/skills"
+    create_symlink "$AGENTIC_DIRECTORY/AGENTS.md"    "$HOME/.config/opencode/AGENTS.md"
 
     # OpenCode auto-loads plugins from its plugin directory. This plugin re-injects the routing reminder
     # each turn and blocks `WebFetch` on service hosts. `Claude Code` does the same via the `UserPromptSubmit`
     # hook and permissions.deny in `settings.json`.
     mkdir -p "$HOME/.config/opencode/plugin"
-    ln -sfn "$AGENTIC_DIRECTORY/hooks/opencode-context-guard.js" "$HOME/.config/opencode/plugin/agentic-reminder.js"
+    create_symlink "$AGENTIC_DIRECTORY/hooks/opencode-context-guard.js" "$HOME/.config/opencode/plugin/agentic-reminder.js"
 fi
 
 if brewfile_declares claude-code; then
@@ -117,8 +118,8 @@ effort: ${effort}" "$HOME/.claude/agents/${agent}.md"
     log_info "Creating Claude Code symlinks..."
 
     mkdir -p "$HOME/.claude/rules"
-    ln -sf  "$AGENTIC_DIRECTORY/AGENTS.md"    "$HOME/.claude/CLAUDE.md"
-    ln -sfn "$AGENTIC_DIRECTORY/commands"     "$HOME/.claude/commands"
-    ln -sfn "$AGENTIC_DIRECTORY/skills"       "$HOME/.claude/skills"
-    ln -sfn "$AGENTIC_DIRECTORY/instructions" "$HOME/.claude/rules/instructions"
+    create_symlink "$AGENTIC_DIRECTORY/AGENTS.md"    "$HOME/.claude/CLAUDE.md"
+    create_symlink "$AGENTIC_DIRECTORY/commands"     "$HOME/.claude/commands"
+    create_symlink "$AGENTIC_DIRECTORY/skills"       "$HOME/.claude/skills"
+    create_symlink "$AGENTIC_DIRECTORY/instructions" "$HOME/.claude/rules/instructions"
 fi
