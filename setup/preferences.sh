@@ -19,6 +19,7 @@ source "$PREFERENCES_SCRIPT_DIRECTORY/../utilities/trackpad.sh"
 source "$PREFERENCES_SCRIPT_DIRECTORY/../utilities/sound.sh"
 source "$PREFERENCES_SCRIPT_DIRECTORY/../utilities/appearance.sh"
 source "$PREFERENCES_SCRIPT_DIRECTORY/../utilities/system.sh"
+source "$PREFERENCES_SCRIPT_DIRECTORY/../utilities/displays.sh"
 
 apply_finder_configuration
 apply_dock_configuration
@@ -28,3 +29,4 @@ apply_trackpad_configuration
 apply_sound_configuration
 apply_appearance_configuration
 apply_system_configuration
+apply_displays_configuration
