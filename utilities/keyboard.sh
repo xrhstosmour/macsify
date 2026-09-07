@@ -10,6 +10,7 @@ KEYBOARD_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 # Import constant variables.
 source "$KEYBOARD_SCRIPT_DIRECTORY/../helpers/logs.sh"
+source "$KEYBOARD_SCRIPT_DIRECTORY/../helpers/launch_agent.sh"
 
 # Function to apply Keyboard configuration.
 #
@@ -117,12 +118,7 @@ keyboard_clear_hidutil_mappings() {
     # Clear `hidutil` mappings.
     /usr/bin/hidutil property --set '{"UserKeyMapping":[]}' >/dev/null 2>&1
 
-    # Remove any existing launch agent.
-    if [ -f ~/Library/LaunchAgents/com.local.KeyRemapping.plist ]; then
-        log_info "Removing existing launch agent..."
-        launchctl unload ~/Library/LaunchAgents/com.local.KeyRemapping.plist 2>/dev/null || true
-        rm -f ~/Library/LaunchAgents/com.local.KeyRemapping.plist
-    fi
+    remove_launch_agent "com.local.KeyRemapping"
 
     log_success "'hidutil' mappings cleared."
 }
@@ -182,11 +178,10 @@ keyboard_apply_special_key_mappings() {
 keyboard_create_launch_agent() {
     log_info "Creating launch agent for 'hidutil' persistence..."
 
-    # Create launch agent directory if it doesn't exist.
-    mkdir -p ~/Library/LaunchAgents
-
-    # Create the launch agent plist with the correct `hidutil` mappings.
-    cat >~/Library/LaunchAgents/com.local.KeyRemapping.plist <<'EOF'
+    # Build the launch agent plist with the correct `hidutil` mappings.
+    local plist_content
+    plist_content=$(
+        cat <<'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -215,9 +210,7 @@ keyboard_create_launch_agent() {
 </dict>
 </plist>
 EOF
+    )
 
-    # Load the launch agent.
-    launchctl load -w ~/Library/LaunchAgents/com.local.KeyRemapping.plist 2>/dev/null || true
-
-    log_success "Launch agent created and loaded for 'hidutil' persistence."
+    install_launch_agent "com.local.KeyRemapping" "$plist_content"
 }

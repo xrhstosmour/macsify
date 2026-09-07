@@ -12,6 +12,7 @@
   "remoteControlAtStartup": true,
   "enabledPlugins": {
     "ruby-lsp@claude-plugins-official": true,
+    "swift-lsp@claude-plugins-official": true,
     "claude-hud@claude-hud": true
   },
   "extraKnownMarketplaces": {
