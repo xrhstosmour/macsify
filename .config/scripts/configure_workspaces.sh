@@ -23,6 +23,44 @@ get_display_count() {
 }
 
 
+# Function to poll `AeroSpace`'s own monitor count until it matches the
+# expected count, or a bounded timeout elapses. `AeroSpace`'s internal
+# monitor detection can lag behind the `CoreGraphics` event that triggers
+# this script, catching only some of a batch of connected/disconnected
+# displays would otherwise misassign all 10 workspaces onto too few monitors.
+# The ~3s bound (10 attempts x 0.3s) was measured against real reconnect
+# latency during testing, don't shrink it without re-verifying live.
+# Usage:
+#   wait_for_expected_display_count <expected_count>
+wait_for_expected_display_count() {
+    local expected_count=$1
+
+    if [ -z "$expected_count" ]; then
+        return 0
+    fi
+
+    if ! [[ "$expected_count" =~ ^[0-9]+$ ]]; then
+        return 0
+    fi
+
+    local attempt=0
+    local max_attempts=10
+    local delay=0.3
+    local last_count
+
+    while [ "$attempt" -lt "$max_attempts" ]; do
+        last_count=$(get_display_count)
+        if [ "$last_count" -eq "$expected_count" ]; then
+            return 0
+        fi
+        attempt=$((attempt + 1))
+        sleep "$delay"
+    done
+
+    echo "Warning: AeroSpace still reports $last_count monitor(s), expected $expected_count, proceeding anyway." >&2
+}
+
+
 # Function to check if `MacBook` built-in display is present.
 # Returns `true` if found, `false` otherwise.
 # Usage:
@@ -124,6 +162,10 @@ configure_workspaces() {
 # Usage:
 #   main
 main() {
+    local expected_display_count=$1
+
+    wait_for_expected_display_count "$expected_display_count"
+
     local display_count=$(get_display_count)
     local has_builtin=$(has_builtin_display)
 
