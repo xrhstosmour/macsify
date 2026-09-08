@@ -139,6 +139,24 @@ git worktree remove ../project-feature-a
 
 Each worktree is a separate directory with its own branch. Agents work in parallel without interfering.
 
+### Collision Isolation
+
+Before starting work, check `git status` and `git worktree list`. If the current checkout already carries uncommitted changes unrelated to the task at hand, or another worktree or session is already active on the branch you need to touch, do not work directly in that shared checkout.
+
+```bash
+# Isolate the task instead of working in the colliding checkout.
+git fetch origin
+git worktree add ../<project>-<task-name> -b <type>/<task-name> $(git rev-parse --abbrev-ref origin/HEAD)
+
+# Once the branch is merged, clean up.
+git worktree remove ../<project>-<task-name>
+git branch -d <type>/<task-name>
+```
+
+If `git branch -d` refuses, the branch isn't merged into its upstream yet, that's expected for a pushed-but-not-yet-merged or handed-off branch. Stop and ask before reaching for `-D`, don't escalate past it on your own.
+
+Never touch, reset, or stash the colliding worktree or branch to make room, isolate your own task instead and leave the other work exactly as you found it.
+
 ## Branch
 
 `feature/<name>` / `fix/<name>` / `refactor/<name>`
