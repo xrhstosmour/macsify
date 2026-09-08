@@ -292,6 +292,14 @@ Manage context actively. Long sessions burn tokens because every API call re-sen
 - Avoid re-reading the same files across turns. Cache findings in your mental model or notes.
 - To view a match in context, grep for the line number first, then `Read` that file with `offset`/`limit`. Do not chain `grep`/`sed` into one compound shell command (semicolons, command substitution), it costs the same tool calls, and multi-statement shell strings often fail the harness's read-only auto-approval parser, forcing a manual permission prompt that a plain `grep` or `Read` would have skipped.
 
+### Manual Output Compression
+
+Compression happens at invocation time or in how you carry a result forward, never automatically.
+
+- Shape the command to be selective before running it, not after: `grep -c` for a count, `jq` filters for specific fields, `rg` with `-m`/`-A`/`-B` bounds, `sed -n` ranges, instead of dumping everything and trimming afterward.
+- When a result is still large and repetitive, long log dumps, big `JSON` arrays, wide diffs, do not paste it verbatim into your response or carry it forward untouched. Keep only the unique or salient lines, errors, matches, changed lines, and state how many lines were elided.
+- Never silently drop information that changes the answer. If you elide repetitive lines, say so and note that the full output is one command away if truly needed.
+
 ## Context Anti-Patterns
 
 | Anti-Pattern | Fix |
