@@ -1,5 +1,2 @@
 # https://github.com/tobi/qmd
 mise use -g bun@latest && ([ -x "$HOME/.bun/bin/qmd" ] || mise x bun -- bun install -g @tobilu/qmd) && (fish -c 'fish_add_path "$HOME/.bun/bin"' 2>/dev/null; export PATH="$HOME/.bun/bin:$PATH")
-
-# https://github.com/sameerasw/airsync-mac
-if [ -d /Applications/AirSync.app ]; then echo "AirSync already installed, skipping."; else for i in 1 2 3; do LATEST_URL=$(curl -s https://api.github.com/repos/sameerasw/airsync-mac/releases/latest | grep 'browser_download_url.*dmg' | cut -d '"' -f 4); [ -n "$LATEST_URL" ] && break; sleep 5; done && if [ -n "$LATEST_URL" ]; then curl -L "$LATEST_URL" -o AirSync.dmg && MOUNT_POINT=$(sudo hdiutil attach AirSync.dmg -nobrowse | grep -Eo '/Volumes/.*$' | tail -1 | sed 's/[[:space:]]*$//') && sudo ditto "$MOUNT_POINT/AirSync.app" /Applications/AirSync.app && sudo hdiutil detach "$MOUNT_POINT" -force && rm AirSync.dmg; else echo "Warning: Could not fetch AirSync download URL"; fi; fi
