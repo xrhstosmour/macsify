@@ -74,7 +74,7 @@ function keybindings_cheat_sheet --description "Display all keybindings with des
 
     # Service Mode.
     echo "🔧 SERVICE MODE:"
-    echo "     First, press Key 3 + ; to enter and then choose:"
+    echo "    First, press Key 3 + ; to enter and then choose:"
     echo "  - R                             Reload environment"
     echo "  - Backspace                     Close all except current"
     echo ""
