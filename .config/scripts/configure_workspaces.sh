@@ -7,19 +7,42 @@ trap "exit" INT
 # Terminate script on error.
 set -e
 
-# Function to print monitor information.
+# Function to log a message to `stderr`, captured by the `DisplayWatcher`
+# `LaunchAgent`'s `StandardErrorPath` (`~/Library/Logs/DisplayWatcher.log`), so a
+# boot-time run's monitor snapshot and distribution decisions stay diagnosable
+# after the fact instead of only reproducible by guesswork.
 # Usage:
-#   get_monitor_info
-get_monitor_info() {
+#   log <message>
+log() {
+    echo "[configure_workspaces] $1" >&2
+}
+
+
+# Function to take a single snapshot of `aerospace list-monitors` output. Every
+# other monitor-derived value in this script, display count, built-in
+# presence, monitor IDs and names, is computed from this ONE snapshot, never
+# by calling `aerospace list-monitors` again mid-run. Separate calls can
+# disagree with each other while the display set is still settling, exactly
+# the boot-time race (lid closed, externals still negotiating) this script
+# exists to handle, and disagreement here is what let a stray workspace
+# beyond 10 survive uncorrected.
+# Usage:
+#   get_monitor_snapshot
+get_monitor_snapshot() {
     aerospace list-monitors
 }
 
 
-# Function to get the number of connected displays.
+# Function to get the number of connected displays from a monitor snapshot.
 # Usage:
-#   get_display_count
+#   get_display_count <snapshot>
 get_display_count() {
-    aerospace list-monitors | wc -l | tr -d ' '
+    local snapshot=$1
+    if [ -z "$snapshot" ]; then
+        echo 0
+        return
+    fi
+    echo "$snapshot" | wc -l | tr -d ' '
 }
 
 
@@ -49,7 +72,7 @@ wait_for_expected_display_count() {
     local last_count
 
     while [ "$attempt" -lt "$max_attempts" ]; do
-        last_count=$(get_display_count)
+        last_count=$(get_display_count "$(get_monitor_snapshot)")
         if [ "$last_count" -eq "$expected_count" ]; then
             return 0
         fi
@@ -57,21 +80,110 @@ wait_for_expected_display_count() {
         sleep "$delay"
     done
 
-    echo "Warning: AeroSpace still reports $last_count monitor(s), expected $expected_count, proceeding anyway." >&2
+    log "Warning: AeroSpace still reports $last_count monitor(s), expected $expected_count, proceeding anyway."
 }
 
 
-# Function to check if `MacBook` built-in display is present.
-# Returns `true` if found, `false` otherwise.
+# Function to check if `MacBook` built-in display is present in a monitor
+# snapshot. Returns `true` if found, `false` otherwise.
 # Usage:
-#   has_builtin_display
+#   has_builtin_display <snapshot>
 has_builtin_display() {
-        # Built-in displays usually have names like "Built-in", "Color LCD", etc.
-    if aerospace list-monitors | grep -qi "built-in\|color lcd\|liquid retina"; then
+    local snapshot=$1
+    # Built-in displays usually have names like "Built-in", "Color LCD", etc.
+    if echo "$snapshot" | grep -qi "built-in\|color lcd\|liquid retina"; then
         echo "true"
     else
         echo "false"
     fi
+}
+
+
+# Function to clean up any workspace beyond 10. `AeroSpace` only reaps a
+# workspace, drops it from `list-workspaces --all`, on an actual focus
+# transition away from it, not merely once it has zero windows (verified
+# live: emptying a stray workspace alone left it listed forever, a
+# `workspace <other>` switch-away is what actually reaps it).
+#
+# Monitor OWNERSHIP of a workspace and which workspace is currently VISIBLE
+# on a monitor are two different things in `AeroSpace`. The distribution loop
+# in `configure_workspaces` only reassigns ownership for workspaces 1-10, it
+# never touches a stray workspace's ownership, so a stray created earlier can
+# still be visible on its original owning monitor even after distribution
+# runs (verified live). Switching away from it must land on a workspace
+# already owned by that SAME monitor, never a hardcoded one (e.g. always
+# workspace 10): a different monitor can legitimately own that number, and
+# switching to it there would steal it away, which is exactly what broke the
+# 1-5 / 6-10 split the first time this was tried.
+# Usage:
+#   cleanup_stray_workspaces <originally_focused> <monitor_id>...
+cleanup_stray_workspaces() {
+    local originally_focused=$1
+    shift
+    local monitor_ids=("$@")
+    local stray_workspaces=()
+
+    for workspace in $(aerospace list-workspaces --all); do
+        if [ "$workspace" -gt 10 ]; then
+            stray_workspaces+=("$workspace")
+            log "found stray workspace $workspace, cleaning up"
+
+            # Find which monitor, if any, currently shows this stray workspace.
+            local owning_monitor=""
+            for monitor_id in "${monitor_ids[@]}"; do
+                local visible_workspace
+                visible_workspace=$(aerospace list-workspaces --monitor "$monitor_id" --visible 2>/dev/null || true)
+                if [ "$visible_workspace" = "$workspace" ]; then
+                    owning_monitor="$monitor_id"
+                    break
+                fi
+            done
+
+            # Pick a replacement already owned by that same monitor so switching
+            # to it cannot reassign ownership of a workspace some other monitor
+            # legitimately holds.
+            local replacement=""
+            if [ -n "$owning_monitor" ]; then
+                for candidate in $(aerospace list-workspaces --monitor "$owning_monitor" 2>/dev/null); do
+                    if [[ "$candidate" =~ ^[0-9]+$ ]] && [ "$candidate" -le 10 ] && [ "$candidate" != "$workspace" ]; then
+                        replacement="$candidate"
+                        break
+                    fi
+                done
+            fi
+
+            # Not currently visible anywhere, any real workspace works to force
+            # the switch-away, prefer what was originally focused.
+            if [ -z "$replacement" ]; then
+                replacement=10
+                if [[ "$originally_focused" =~ ^[0-9]+$ ]] && [ "$originally_focused" -le 10 ] && [ "$originally_focused" != "$workspace" ]; then
+                    replacement=$originally_focused
+                fi
+            fi
+
+            # Move all windows from this workspace to the replacement, so they
+            # land on the same monitor the stray was actually showing on.
+            for window_id in $(aerospace list-windows --workspace "$workspace" 2>/dev/null | awk '{print $1}'); do
+                aerospace move-node-to-workspace "$replacement" --window-id "$window_id" 2>/dev/null || true
+            done
+
+            log "flushing stray workspace $workspace via $replacement"
+            aerospace workspace "$workspace" 2>/dev/null || true
+            aerospace workspace "$replacement" 2>/dev/null || true
+        fi
+    done
+
+    if [ "${#stray_workspaces[@]}" -eq 0 ]; then
+        return 0
+    fi
+
+    # `AeroSpace` reaps the workspace shortly after the switch-away
+    # completes, not synchronously with it, give it a moment so
+    # `list-workspaces --all` is already clean by the time this script
+    # exits rather than clean up moments later.
+    sleep 0.3
+
+    log "flushed stray workspace(s): ${stray_workspaces[*]}"
 }
 
 
@@ -80,28 +192,21 @@ has_builtin_display() {
 # otherwise distributed round-robin to external displays.
 #
 # Usage:
-#   configure_workspaces <display_count> <has_builtin>
+#   configure_workspaces <snapshot> <display_count> <has_builtin> <originally_focused>
 configure_workspaces() {
-    local total_displays=$1
-    local has_builtin=$2
+    local snapshot=$1
+    local total_displays=$2
+    local has_builtin=$3
+    local originally_focused=$4
 
     if [ "$total_displays" -eq 0 ]; then
         return 1
     fi
 
-    # Get monitor IDs.
-    local monitor_ids=($(aerospace list-monitors | awk '{print $1}'))
+    # Get monitor IDs from the snapshot `main` already took, not a fresh query.
+    local monitor_ids=($(echo "$snapshot" | awk '{print $1}'))
 
-    # Clean up any extra workspaces (keep only 1-10).
-    # Move windows from extra workspaces to workspace 10, then empty workspaces auto-close.
-    for workspace in $(aerospace list-workspaces --all); do
-        if [ "$workspace" -gt 10 ]; then
-            # Move all windows from this workspace to workspace 10.
-            for window_id in $(aerospace list-windows --workspace "$workspace" 2>/dev/null | awk '{print $1}'); do
-                aerospace move-node-to-workspace 10 --window-id "$window_id" 2>/dev/null || true
-            done
-        fi
-    done
+    log "snapshot: $total_displays display(s), has_builtin=$has_builtin, monitor_ids=${monitor_ids[*]}"
 
     # Identify built-in monitor if present.
     local builtin_monitor=""
@@ -109,7 +214,7 @@ configure_workspaces() {
 
     if [ "$has_builtin" = "true" ]; then
         for monitor_id in "${monitor_ids[@]}"; do
-            local monitor_name=$(aerospace list-monitors | grep "^$monitor_id " | cut -d'|' -f2 | tr -d ' ')
+            local monitor_name=$(echo "$snapshot" | grep "^$monitor_id " | cut -d'|' -f2 | tr -d ' ')
             if [[ "$monitor_name" =~ Built-in|Retina|LCD ]]; then
                 builtin_monitor="$monitor_id"
             else
@@ -126,7 +231,9 @@ configure_workspaces() {
     local remainder=$((10 % total_displays))
     local workspace=1
 
-    # Distribute to external monitors first.
+    # Distribute to external monitors first. This also evicts any stray
+    # workspace beyond 10 that a currently connected monitor may still be
+    # showing, since every real monitor is forced onto a workspace in 1-10.
     for monitor_id in "${external_monitors[@]}"; do
         for i in $(seq 1 $workspaces_per_display); do
             aerospace move-workspace-to-monitor --workspace "$workspace" "$monitor_id"
@@ -154,11 +261,20 @@ configure_workspaces() {
             done
         fi
     fi
+
+    log "distributed workspaces 1-$((workspace - 1)) across ${#monitor_ids[@]} monitor(s)"
+
+    cleanup_stray_workspaces "$originally_focused" "${monitor_ids[@]}"
 }
 
 
 # Main execution function.
-# Prints current monitor setup, computes workspace distribution, and applies it.
+# Waits for `AeroSpace`'s monitor count to settle, takes a single monitor
+# snapshot, computes display count and built-in presence from it, and applies
+# the resulting workspace distribution. Captures the focused workspace before
+# any of that runs, `move-workspace-to-monitor` follows focus to whatever it
+# just moved, so distribution itself shifts focus around, capturing this any
+# later would restore the wrong workspace.
 # Usage:
 #   main
 main() {
@@ -166,10 +282,17 @@ main() {
 
     wait_for_expected_display_count "$expected_display_count"
 
-    local display_count=$(get_display_count)
-    local has_builtin=$(has_builtin_display)
+    local originally_focused
+    originally_focused=$(aerospace list-workspaces --focused 2>/dev/null || true)
 
-    configure_workspaces "$display_count" "$has_builtin"
+    local snapshot
+    snapshot=$(get_monitor_snapshot)
+    local display_count
+    display_count=$(get_display_count "$snapshot")
+    local has_builtin
+    has_builtin=$(has_builtin_display "$snapshot")
+
+    configure_workspaces "$snapshot" "$display_count" "$has_builtin" "$originally_focused"
 }
 
 # Run if executed directly.
