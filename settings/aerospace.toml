@@ -168,6 +168,9 @@ alt-semicolon = 'exec-and-forget osascript ~/.config/scripts/open_wezterm.scpt'
 # Lock screen.
 alt-backslash = 'exec-and-forget ~/.config/scripts/lock_screen.sh'
 
+# Sleep.
+alt-minus = 'exec-and-forget ~/.config/scripts/sleep.sh'
+
 # Shutdown.
 alt-esc = 'exec-and-forget ~/.config/scripts/shutdown.sh'
 
