@@ -64,6 +64,7 @@ function keybindings_cheat_sheet --description "Display all keybindings with des
     echo "  - Key 2 + Space                  Switch input source"
     echo "  - Key 2 + .                      Spotlight search"
     echo "  - Key 2 + \\                      Lock screen"
+    echo "  - Key 2 + -                      Sleep"
     echo "  - Key 2 + Esc                    Shutdown"
     echo "  - Key 2 + ]                      Restart"
     echo "  - Key 3 + ,                      Reveal hidden menu bar icons"
@@ -73,7 +74,7 @@ function keybindings_cheat_sheet --description "Display all keybindings with des
 
     # Service Mode.
     echo "🔧 SERVICE MODE:"
-    echo "     First, press Key 3 + ; to enter and then choose:"
+    echo "    First, press Key 3 + ; to enter and then choose:"
     echo "  - R                             Reload environment"
     echo "  - Backspace                     Close all except current"
     echo ""
