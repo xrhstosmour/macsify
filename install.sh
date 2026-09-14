@@ -20,6 +20,9 @@ source "$INSTALL_SCRIPT_DIRECTORY/helpers/ui.sh"
 log_info "Copying configuration files to '~/.config'..."
 mkdir -p ~/.config && cp -R .config/* ~/.config/
 
+# Give execute permission to all scripts in the directory.
+chmod +x ~/.config/scripts/*.sh
+
 # Install `Homebrew` and Brewfile dependencies before agentic setup below, its
 # MCP registration steps need `opencode`/`claude`/`codex`/`copilot` actually
 # installed, not just declared in the Brewfile.
@@ -30,9 +33,6 @@ brew bundle install --file="$INSTALL_SCRIPT_DIRECTORY/packages/Brewfile" || log_
 # Set up agentic configuration: inject models, symlink shared content.
 log_info "Setting up agentic configuration..."
 bash "$INSTALL_SCRIPT_DIRECTORY/setup/agentic.sh"
-
-# Give execute permission to all scripts in the directory.
-chmod +x ~/.config/scripts/*.sh
 
 # Configure `macOS`.
 log_info "Starting 'macOS' configuration..."
