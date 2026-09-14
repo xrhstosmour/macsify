@@ -9,5 +9,5 @@ end
 # Usage:
 #   enable_sleep
 function enable_sleep --description "End the active Amphetamine session to allow sleep."
-    osascript -e 'tell application "Amphetamine" to end session'
+    osascript -e 'if application "Amphetamine" is running then tell application "Amphetamine" to end session'
 end

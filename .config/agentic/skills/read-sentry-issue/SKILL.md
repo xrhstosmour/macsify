@@ -56,6 +56,13 @@ Directly available:
 
 This skill is read-only. With only "Inspect Issues & Events" granted at login (see Authentication above), mutating tools like `add_issue_note`, `update_issue`, `create_project` aren't reachable at all. If a differently-scoped login ever makes one visible, don't call it, that's a sign the login needs to be redone with the write categories unchecked, not a green light to use it.
 
+## Interpreting issue/event data
+
+- Stacktrace frames in the API payload run outermost to innermost, the last in-app frame is the one that raised. The Sentry web UI reverses this by default (most-recent-first), so don't cross-reference payload order against a screenshot without accounting for that.
+- Chained/nested exceptions appear as separate entries in the exception values list, in root-cause-first order, the last entry is what actually surfaced to the user.
+- An issue's lifetime count (from a full issue/resource fetch) is not the same as a time-windowed count (from a search scoped to a period like the last 24 hours), don't conflate the two.
+- Full raw issue/event payloads can be large, when a fetch returns a big blob, pull out only the fields needed (culprit, stacktrace frames, tags) rather than passing the whole thing through.
+
 ## Notes
 
 - Task/issue links: `https://sentry.io/organizations/<org>/issues/<id>/` or `<org>.sentry.io/issues/<id>/`.
