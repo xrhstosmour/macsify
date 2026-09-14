@@ -20,6 +20,8 @@
 	<string>none</string>
 	<key>cmdShortcut3Action</key>
 	<string>none</string>
+	<key>collapseNativeTabsIntoSingleWindow</key>
+	<false/>
 	<key>compactModeHideTrafficLights</key>
 	<true/>
 	<key>compactModeItemSize</key>
@@ -30,6 +32,8 @@
 	<false/>
 	<key>dockBackgroundStyle</key>
 	<string>liquidGlass</string>
+	<key>enableCmdRightClickQuit</key>
+	<false/>
 	<key>enableCmdTabEnhancements</key>
 	<true/>
 	<key>enableDockLocking</key>
@@ -37,6 +41,8 @@
 	<key>enableDockPreviewGestures</key>
 	<false/>
 	<key>enableDockPreviews</key>
+	<true/>
+	<key>enableFolderWidget</key>
 	<false/>
 	<key>enableLivePreview</key>
 	<false/>
@@ -48,16 +54,20 @@
 	<false/>
 	<key>enableWindowSwitcherSearch</key>
 	<false/>
+	<key>enabledTrafficLightButtons</key>
+	<array/>
 	<key>hideHoverContainerBackground</key>
 	<false/>
 	<key>hidePreviewCardBackground</key>
 	<false/>
 	<key>hideWidgetContainerBackground</key>
 	<false/>
+	<key>includeHiddenWindowsInDockPreview</key>
+	<false/>
 	<key>instantWindowSwitcher</key>
 	<true/>
 	<key>lockedDockScreenIdentifier</key>
-	<string>Optional(1)-1800.0-1169.0-Optional(8)-Optional("NSCalibratedRGBColorSpace")</string>
+	<string>37D8832A-2D66-02CA-B9F7-8F30A301B230</string>
 	<key>mouseFollowsFocusMode</key>
 	<string>always</string>
 	<key>reopenSettingsAfterRestart</key>
@@ -68,10 +78,14 @@
 	<true/>
 	<key>showAnimations</key>
 	<false/>
+	<key>showAppName</key>
+	<false/>
 	<key>showMenuBarIcon</key>
 	<false/>
 	<key>showSpecialAppControls</key>
 	<false/>
+	<key>showWindowTitle</key>
+	<true/>
 	<key>showWindowlessAppsInSwitcher</key>
 	<false/>
 	<key>sortMinimizedToEnd</key>
@@ -90,6 +104,8 @@
 	<false/>
 	<key>titleOverflowStyle</key>
 	<string>marquee</string>
+	<key>trafficLightButtonsVisibility</key>
+	<string>never</string>
 	<key>useClassicWindowOrdering</key>
 	<false/>
 	<key>windowSwitcherControlPosition</key>
