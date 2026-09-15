@@ -117,6 +117,14 @@ DEAD CODE IDENTIFIED:
 
 Don't leave dead code lying around, it confuses future readers and agents. Don't silently delete things you're not sure about.
 
+### Comment and Test Hygiene
+
+Comments go stale the same way code does, and the moment to catch it is the same self-critique pass you already run after writing or changing code, not only after a refactor. A comment can be born stale the first time you write it near existing documentation, not just left behind later when code moves. As part of that pass, reread the comments near the code you touched, not just the code itself. A comment that explained a shape which moved or disappeared becomes orphaned, still sitting where it always was, still reading as true. This shows up most in codebases with dense per function or per test documentation, where one behavior change forces edits in several places and the old wording is easy to leave standing.
+
+When two files explain the same fact or incident, only one should carry the full explanation. Point the other one at it by name instead of retelling it. Two independent tellings of the same fact drift apart the next time either one is edited, and nobody notices until they disagree.
+
+Apply the same check to tests. A test that only reproves something an earlier test in the same file already guarantees adds no coverage and should be dropped, not kept for its own sake.
+
 ### Implementation Rules
 
 One thing at a time, don't mix refactors with features in the same commit. Gate incomplete features behind a flag so you can merge increments safely. New code should be opt-in and conservative. Each increment should be independently revertable, prefer additive changes, and keep the project compilable, must build and tests must pass after each increment.
