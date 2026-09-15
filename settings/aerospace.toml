@@ -68,14 +68,16 @@ preset = 'qwerty'
 #
 # Top gap clears a 44 point bar drawn over every display. Set per monitor
 # because the built-in display already reserves notch space a flat value
-# would double up on. 49 is the bar plus the ordinary 5 point gap, 17 is
-# 49 minus the 32 points macOS already holds back for the notch band.
+# would double up on. 49 is the bar plus the ordinary 5 point gap, 11 is
+# 49 minus the 38 points macOS holds back there, measured with `NSScreen`
+# (`frame` vs `visibleFrame`) rather than assumed. The external branch's
+# 0 point reservation is still an assumption, unverified.
 [gaps]
 inner.horizontal = 5
 inner.vertical = 5
 outer.left = 5
 outer.bottom = 5
-outer.top = [{ monitor.built-in = 17 }, 49]
+outer.top = [{ monitor.built-in = 11 }, 49]
 outer.right = 5
 
 # 'main' binding mode declaration.
