@@ -3,12 +3,12 @@ name: manage-phabricator-task
 description: >
   Create and edit Phabricator tasks via the official Phabricator MCP server: new
   tasks, or updating an existing task's status, title, description, owner, priority,
-  project tags, or subscribers, added indirectly via @-mention, resolved from a
-  username where possible.
+  project tags, workboard column, or subscribers, added indirectly via @-mention,
+  resolved from a username where possible.
   Triggered when the user explicitly mentions Phabricator or "phab": "create phab
   task/ticket/issue", "create a parent/umbrella task", "update/edit phab task",
   "reassign/close/reopen task T<id>", "change priority on T<id>", "tag T<id>",
-  or "/manage-phabricator-task".
+  "move T<id> to <column>", or "/manage-phabricator-task".
 ---
 
 # Manage Phabricator Task
@@ -16,7 +16,7 @@ description: >
 ## When to use
 
 - User asks to create, file, open, or submit a Phabricator task or ticket, including a "parent task" with no existing TID given, see "Umbrella tasks" below for that disambiguation.
-- User asks to update, edit, reassign, close, reopen, or change the status/priority/tags of an existing Phabricator task.
+- User asks to update, edit, reassign, close, reopen, or change the status/priority/tags/workboard column of an existing Phabricator task.
 - Do NOT use for just reading existing tasks. Use the `read-phabricator-task` skill for that.
 
 ## Authentication
@@ -76,6 +76,20 @@ An umbrella is a normal task carrying the umbrella tag, not a separate task type
 - Real work gets filed as subtasks: from the child task, call `pha_task_update_relationships(task_id=<child PHID>, relationship_type="parent", target_ids="<umbrella PHID>")`, the existing mechanism already documented under "Parent task" in the field table below, nothing new to call. The tool's own description doesn't state which side ends up as parent, only the enum name, so this direction is inferred, not confirmed. Immediately after the call, re-fetch the child task (`pha_task_get(task_id=<child numeric ID>)`, this tool's schema documents a numeric ID, not a PHID, unlike `pha_task_update_relationships` above) and inspect the actual response for the parent relationship, field names aren't confirmed here, read whatever the live response actually contains rather than assuming a key, before telling the user it's done. If the response doesn't surface it clearly enough to confirm the direction, say so plainly and ask the user to check the task in Phabricator rather than reporting success unverified.
 - Umbrella plus several children in one request, e.g. splitting a discussion into an umbrella with child tasks under it: gather fields shared across every child once (domain tag, assignee, due date if uniform), then show one combined preview covering the umbrella and all children together, one confirmation for the whole set rather than one per task. Titles and descriptions still get asked per child, don't force a shared one. Execute in order: create the umbrella first, then each child, linking each to the umbrella as it's created.
 
+## Workboard columns
+
+Some workflows track planning status purely by which workboard column a task sits in, not a separate status field. This stays orthogonal to the `status` field (`open`/`inprogress`/`resolved`), don't conflate the two or invent an extra status alongside them.
+
+- The committed-work board is itself a Phabricator project, ask the user which one if it isn't already clear from the conversation, resolve it to a PHID via `pha_project_search`. It may be a different project than the tags in "Tag model" above, a task usually needs the board's own project tag applied before it can sit in one of its columns.
+- Column names are whatever the user's actual board uses, ask rather than assuming an English label like "In Progress" exists verbatim.
+- To move a task into a column:
+  1. Resolve the board's project PHID, asking or searching as above.
+  2. Call `pha_workboard_search_columns` with `project_phids=[<board project PHID>]`, this returns the real column names and PHIDs live, cache that for the rest of this conversation so you don't re-ask on every move within it.
+  3. Match the user's requested column against that live list, ask if the wording is ambiguous.
+  4. Show "Moving T1234 to column '<literal column display name>'" and get confirmation before executing, same pattern as every other mutation in this skill.
+  5. Call `pha_workboard_move_task(task_id=<task ID or PHID>, column_phid=<target column PHID>)`.
+- Offer this as an optional field in both task creation (step 2) and task updates, alongside the other optional fields.
+
 ### Resolve a username to a PHID
 
 `pha_user_search` can't look up other people, but `pha_task_search_advanced` accepts plain usernames in its `assigned` filter and resolves them server-side. Call `pha_task_search_advanced(assigned=["<username>"], limit=1)` and read `ownerPHID` off the first result, that's the person's PHID. Use this for a subscriber, or an assignee other than self. If it comes back empty, that person has never owned a task and can't be resolved this way, ask for their `PHID-USER-...` directly or tell the user to add them manually after creation.
@@ -99,6 +113,7 @@ Ask all at once in a single message. Status and due date are always asked, never
 - Due date: optional, any date the user gives, normalize to `YYYY-MM-DD` before using it, see "Field discovery" above, always lands in the description as a fallback, and in the real field too when one exists
 - Parent task: TID
 - Reference links: goes in the description's `## References` section and, when present, in the real `reference` field too, see step 6
+- Committed-board column: optional, only when "Workboard columns" above applies, ask which column on the board
 
 Resolve the current user's PHID for self-assignment via `pha_user_whoami`. Use this PHID as the default assignee unless the user names someone else, in which case resolve their username the same way as subscribers.
 
@@ -188,6 +203,7 @@ Assignee:    <username>, default: self, required when the umbrella tag is set
 Subscribers: <usernames>, or none
 Status:      <status>
 Due date:    <date>, or none
+Column:      <board column>, or none, when "Workboard columns" applies
 Parent:      T<id>
 
 <description>
@@ -203,7 +219,7 @@ Ask: "Ready to create?" Do NOT execute without explicit confirmation.
 2. If a due date was given, prepend a `**Due:** <YYYY-MM-DD>` line to the top of the description, followed by a blank line, this always happens regardless of whether a real field is also available. See "Field discovery" above, if a real field was found, plan to set it too in step 5.
 3. If a reference link was given, make sure it's in the description's `## References` section, then plan to also set it via the real `reference` parameter in step 5.
 4. `pha_task_create(title=..., description=..., owner_phid=<assignee-phid>)`. On success it returns the created task's `id`/`phid`, report the task back as `$PHAB/T<id>`. New tasks default to priority "Needs Triage" and status "open", not Normal, and to no project tag at all.
-5. A tag, non-default priority, non-open status, a reference link, or a due-date parameter found in step 2, needs a follow-up `pha_task_update(task_id=<phid from step 4>, ...)` to set it, a task created without this call is missing its tag, reference, and due date. A parent task is the one exception, that goes through `pha_task_update_relationships` instead, never `pha_task_update`, see the field table below and "Umbrella tasks" above for the exact call shape and the verification step after it.
+5. A tag, non-default priority, non-open status, a reference link, or a due-date parameter found in step 2, needs a follow-up `pha_task_update(task_id=<phid from step 4>, ...)` to set it, a task created without this call is missing its tag, reference, and due date. Two exceptions go through a different tool, never `pha_task_update`: a parent task, via `pha_task_update_relationships`, see the field table below and "Umbrella tasks" above for the exact call shape and the verification step after it, and a committed-board column, via `pha_workboard_move_task` as described in "Workboard columns" above, a task created with a column requested is left off the board entirely without this call.
 
 | Field | `pha_task_update` param |
 |-------|-------------------------|
@@ -214,6 +230,7 @@ Ask: "Ready to create?" Do NOT execute without explicit confirmation.
 | Reference link | `reference` |
 | Due date | see "Field discovery" above, use the real field if one was found this session, falls back to the description's `**Due:** <date>` line regardless |
 | Parent task | use `pha_task_update_relationships` instead, `relationship_type="parent"`, `target_ids` is a comma-separated string of PHIDs, not an array |
+| Committed-board column | use `pha_workboard_move_task` instead, see "Workboard columns" above |
 
 ### 7. Error handling
 
@@ -236,6 +253,7 @@ Then apply the change via `pha_task_update`, passing the task PHID and the field
 
 - Reference link: set the real `reference` parameter directly, and also make sure the link is in the description's `## References` section, add it there if it's missing.
 - Due date: fetch the current description with `pha_task_get`, add or replace the `**Due:** <date>` line yourself, and write the whole description back, this always happens regardless of whether a real field is also available. See "Field discovery" above, if a real field was found this session, set it directly too.
+- Committed-board column: see "Workboard columns" above.
 
 Use `pha_task_add_comment` to add a comment instead of a field edit, or to add subscribers, resolve their PHIDs per "Resolve a username to a PHID" above and mention each one, `@<phid>`, in the comment.
 

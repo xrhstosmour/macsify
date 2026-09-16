@@ -87,9 +87,18 @@ Call the MCP project-search tool by name query.
 
 Call the MCP task-search tool with the relevant constraint: free-text query, author PHID, or status (`open`, `inprogress`, `resolved`, etc.).
 
+For "tasks I created/updated this week" style queries, resolve self via "Who am I?" below, then filter by `author_phids=[<self-phid>]` plus `created_after`/`modified_after` (Unix timestamps, e.g. `date -v-7d +%s` on macOS or `date -d '7 days ago' +%s` on Linux, for "this week").
+
 ## Who am I?
 
 Call the MCP "who am I" tool to get the current authenticated user's PHID and username.
+
+## Workboard columns
+
+Read-only counterparts to `manage-phabricator-task`'s "Workboard columns" section, ask the user which board/project and, if needed, which column, rather than assuming either:
+
+- `pha_workboard_search_columns`: list a board's columns, pass `project_phids=[<board project PHID>]`.
+- `pha_workboard_search_tasks_by_column`: list the tasks currently sitting in a given column, pass `column_phid=<column PHID>`.
 
 ## Due date / reference fields
 
