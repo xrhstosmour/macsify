@@ -4,11 +4,13 @@ description: >
   Create and edit Phabricator tasks via the official Phabricator MCP server: new
   tasks, or updating an existing task's status, title, description, owner, priority,
   project tags, workboard column, or subscribers, added indirectly via @-mention,
-  resolved from a username where possible.
+  resolved from a username where possible. Also posts stakeholder-facing status
+  update comments on a task.
   Triggered when the user explicitly mentions Phabricator or "phab": "create phab
   task/ticket/issue", "create a parent/umbrella task", "update/edit phab task",
   "reassign/close/reopen task T<id>", "change priority on T<id>", "tag T<id>",
-  "move T<id> to <column>", or "/manage-phabricator-task".
+  "move T<id> to <column>", "post a status update on T<id>", "write an update
+  for stakeholders", or "/manage-phabricator-task".
 ---
 
 # Manage Phabricator Task
@@ -17,6 +19,7 @@ description: >
 
 - User asks to create, file, open, or submit a Phabricator task or ticket, including a "parent task" with no existing TID given, see "Umbrella tasks" below for that disambiguation.
 - User asks to update, edit, reassign, close, reopen, or change the status/priority/tags/workboard column of an existing Phabricator task.
+- User asks to post a stakeholder-facing status update comment on a task.
 - Do NOT use for just reading existing tasks. Use the `read-phabricator-task` skill for that.
 
 ## Authentication
@@ -89,6 +92,22 @@ Some workflows track planning status purely by which workboard column a task sit
   4. Show "Moving T1234 to column '<literal column display name>'" and get confirmation before executing, same pattern as every other mutation in this skill.
   5. Call `pha_workboard_move_task(task_id=<task ID or PHID>, column_phid=<target column PHID>)`.
 - Offer this as an optional field in both task creation (step 2) and task updates, alongside the other optional fields.
+
+## Status update comment
+
+A distinct, opt-in action from a normal comment. Some workflows treat a task's comment thread as carrying both private/internal discussion and public stakeholder-facing status, relying on a literal prefix to tell them apart downstream.
+
+- Only ever draft or post one when the user explicitly asks for a status update, never proactively, not even right after finishing other work on the task. Trigger phrases distinct from a generic "add a comment": "post a status update on T1234", "write an update for stakeholders", "post the weekly update".
+- Post it on the task's umbrella if it has one, not on the task itself. `has_parents` on `pha_task_search_advanced` is a search filter, it can narrow a query to tasks that have a parent, it can't tell you which parent a specific task has, don't rely on it here. Instead inspect the task's own response for a parent link, and if it has one, check whether that parent carries the umbrella tag, if so, that parent is where the comment goes. If the task has no parent, or its parent isn't umbrella-tagged, post on the task itself. Tell the user which task you're posting to before asking for approval, don't post silently to a different task than they'd expect.
+- Draft comment text that starts with the literal prefix `Update:`, exact string, no variant casing or spacing, followed by one short sentence, not a paragraph, covering what's being worked on, current status, and a rough timeline only if there genuinely is one to give. The reader is non-technical leadership skimming a roadmap view, not an engineer, no jargon, no implementation detail, no multi-clause explanation of how, just what and when.
+  - Match this style and length, not a bare label and not an essay: "Working on free trial functionality for specific users, on track, underlying logic will probably be live in the next few days.", "Awaiting updates from two other teams, currently investigating implementation options.".
+  - Timelines are always conservative, pad rather than promise something is about to ship, and never say "done" or imply near-completion before it's actually confirmed done, verify the real state first (see below), don't infer it from a good mood. Hedge with "probably", "should be", "next few days" rather than committing to a specific date.
+  - WRONG: "Update: PR is in review, shipping this week." based only on seeing inline comments on the PR, comments can come from self-review or a stray suggestion with no reviewer ever requested.
+  - Before describing a PR's status, invoke the `read-github-pr` skill to check its actual state, requested reviewers and review decisions, not just whether it has comments. "In review" means a reviewer was actually requested, not that comments exist.
+  - CORRECT: "Update: Working on the reported bug, on track, should be ready for review in the next few days."
+- Anything more detailed, the technical why/how, goes in a separate plain comment, no `Update:` prefix, posted on the task the work actually happened on, the subtask, not the umbrella, if the user wants that context on record. Never folded into the `Update:` line itself, and never posted to the umbrella.
+- Show the drafted comment(s) and get explicit approval before posting via `pha_task_add_comment`, same confirm-before-execute pattern as the rest of this skill.
+- Never prefix an internal/engineering-discussion comment with `Update:`, that's what breaks the "only `Update:` is public status, and it's short" contract this convention depends on.
 
 ### Resolve a username to a PHID
 
@@ -254,6 +273,7 @@ Then apply the change via `pha_task_update`, passing the task PHID and the field
 - Reference link: set the real `reference` parameter directly, and also make sure the link is in the description's `## References` section, add it there if it's missing.
 - Due date: fetch the current description with `pha_task_get`, add or replace the `**Due:** <date>` line yourself, and write the whole description back, this always happens regardless of whether a real field is also available. See "Field discovery" above, if a real field was found this session, set it directly too.
 - Committed-board column: see "Workboard columns" above.
+- Stakeholder status update: see "Status update comment" above, don't use a plain comment for this.
 
 Use `pha_task_add_comment` to add a comment instead of a field edit, or to add subscribers, resolve their PHIDs per "Resolve a username to a PHID" above and mention each one, `@<phid>`, in the comment.
 
