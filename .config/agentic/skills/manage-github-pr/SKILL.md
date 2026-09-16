@@ -191,6 +191,7 @@ Derive each section:
   - Use a numbered list only when there are two or more items.
 - Why: If the user provides a task, issue or tracker link:
   - CORRECT: `Resolves [1234](https://link.example.com/1234).`
+  - CORRECT: `Resolves [T247574](https://phabricator.example.com/T247574).`
   - WRONG: `Resolves [1234](https://link.example.com/1234). After this change ...`
   Nothing else, no explanation, no context, no extra sentences. Use the tracker's native ID format, like `T247574`, `PROJ-123`, or `#42`. If no link is provided, write one short sentence on the problem the change solves.
 - Testing: List concrete scenarios and cases manually exercised, UI walkthroughs, staging checks, representative edge cases. Never mention test-suite runs, coverage counts, or lint/typecheck results, those are process, not scenarios, and belong to the quality gate already run in Phase 2.9, not the PR body.
