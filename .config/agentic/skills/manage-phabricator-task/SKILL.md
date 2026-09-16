@@ -3,19 +3,23 @@ name: manage-phabricator-task
 description: >
   Create and edit Phabricator tasks via the official Phabricator MCP server: new
   tasks, or updating an existing task's status, title, description, owner, priority,
-  project tags, or subscribers, added indirectly via @-mention, resolved from a
-  username where possible.
+  project tags, workboard column, or subscribers, added indirectly via @-mention,
+  resolved from a username where possible. Also posts stakeholder-facing status
+  update comments on a task.
   Triggered when the user explicitly mentions Phabricator or "phab": "create phab
-  task/ticket/issue", "update/edit phab task", "reassign/close/reopen task
-  T<id>", "change priority on T<id>", or "/manage-phabricator-task".
+  task/ticket/issue", "create a parent/umbrella task", "update/edit phab task",
+  "reassign/close/reopen task T<id>", "change priority on T<id>", "tag T<id>",
+  "move T<id> to <column>", "post a status update on T<id>", "write an update
+  for stakeholders", or "/manage-phabricator-task".
 ---
 
 # Manage Phabricator Task
 
 ## When to use
 
-- User asks to create, file, open, or submit a Phabricator task or ticket.
-- User asks to update, edit, reassign, close, reopen, or change the status/priority of an existing Phabricator task.
+- User asks to create, file, open, or submit a Phabricator task or ticket, including a "parent task" with no existing TID given, see "Umbrella tasks" below for that disambiguation.
+- User asks to update, edit, reassign, close, reopen, or change the status/priority/tags/workboard column of an existing Phabricator task.
+- User asks to post a stakeholder-facing status update comment on a task.
 - Do NOT use for just reading existing tasks. Use the `read-phabricator-task` skill for that.
 
 ## Authentication
@@ -33,8 +37,77 @@ Verified live against this MCP server, don't try to work around these:
 
 - No user directory search. `pha_user_search` returns "not authorized" for every query shape tried, on an account that otherwise has full task read/write access. Treat it as unavailable, `pha_user_whoami` (self) is the only user-lookup tool that works directly. See "Resolve a username to a PHID" below for a working alternative.
 - No subscriber field on `pha_task_create`/`pha_task_update`, not a permissions issue, the field doesn't exist on those tools. `pha_task_update_relationships` only handles `subtask`/`parent` edges. The only way to subscribe someone is indirect: @-mentioning their `PHID-USER-...` in a description or comment auto-subscribes them.
-- No due date parameter on `pha_task_create`/`pha_task_update` as of the last check. Before relying on that, check the current tool schema with `ToolSearch` (query `"phabricator task"`), schemas can change. The date always gets folded into the description as a `**Due:** <date>` line (see step 6), and, if a due-date parameter has appeared, it's also set directly on the real field.
-- Reference links do have a real field, `pha_task_update`'s `reference` parameter, but only on `pha_task_update`, `pha_task_create` doesn't accept it. A new task always needs the create-then-update two-call pattern to persist a reference (see step 6).
+- Due date field: don't assume it's present or absent, see "Field discovery" below, this instance may have gained or lost it since the last check. The description always carries a `**Due:** <date>` fallback line regardless (see step 6).
+- Reference links do have a real field, `pha_task_update`'s `reference` parameter, but only on `pha_task_update`, `pha_task_create` doesn't accept it. A new task always needs the create-then-update two-call pattern to persist a reference (see step 6). Re-confirm this still holds via "Field discovery" below, schemas can drift.
+
+## Field discovery
+
+Run once per session, cache the result for the rest of the session, don't re-discover on every call:
+
+- Call `ToolSearch` (query like `"phabricator task update"` or `"phabricator task create"`) and inspect the live schema of `pha_task_update`/`pha_task_create` for a due-date-shaped parameter, match by parameter name or description containing due/deadline/date semantics, don't hardcode one exact expected name, it may be a standard param or a custom-field key on this instance.
+- Re-confirm the `reference` parameter still exists on `pha_task_update` the same way, schemas can drift in either direction, not just grow.
+- If a real due-date parameter or custom field is found, pass the normalized `YYYY-MM-DD` value through it directly.
+- Regardless of whether a real field was found, always also keep the `**Due:** <date>` description-line fallback (see step 6), a newly-appeared field could be write-restricted, non-persisting, or display-only on this instance, never rely on it alone.
+- Read and write can be asymmetric: even with no writable due-date parameter on `pha_task_update`/`pha_task_create`, a real value may still show up when *reading* a task, under a custom-fields-style object on `pha_task_get`/`pha_task_search_advanced` responses (key names are instance-specific, inspect the actual response rather than assuming one). If a task already has a real due date set there, e.g. from the Phabricator web UI directly, treat that as the source of truth over the description's `**Due:**` line, don't overwrite or ignore it.
+
+## Tag model
+
+Some workflows use exactly four tracking categories on every task. Nothing about this is stored anywhere, ask about it fresh in every conversation:
+
+1. **Umbrella/roadmap tag**: one tag marking a task big enough to belong on a roadmap view.
+2. **Later/parked tag**: one tag for real-but-not-being-picked-up-yet work.
+3. **Domain tag**: exactly one per task, chosen from whatever domain-shaped tags are actually in use. Never apply two, if the user tries, ask them to pick one.
+4. **Due/launch date**: the real field from "Field discovery" above, not a tag. Only relevant within roughly the next three weeks, a stale or far-future date is effectively ignored by anything reading it downstream, mention this to the user rather than silently accepting a date outside that window.
+
+Only apply this model when the user names one of these categories, umbrella, later, domain, or a workboard column, or when candidate tags turned up while resolving them look domain/umbrella/later-shaped. If it's unclear which applies, ask once near the start of task creation: "Does this task track by domain/umbrella/later tags?" A no, or no signal either way, falls back to the plain single-tag flow in step 1 below.
+
+If the user already names the target tag or project directly in their request (e.g. "create it in <project>", "tag this <project>"), resolve and confirm that one via `pha_project_search` directly, skip the candidate-list discovery below entirely, that's only for when no tag was named.
+
+This skill never decides or applies a tag on its own when the user hasn't named one, always ask and let the user pick, nothing here is cached or persisted between conversations. Building the candidate list, every time, from two sources, deduplicated:
+1. Unique project tags currently in use on whichever board/project the user names, collected from that board's own tasks via `pha_task_search_advanced` with `projects=[<board project PHID>]`, `include_projects=true`. Ask which board/project if it isn't already clear from the conversation.
+2. Unique tags found on the user's own tasks created in the last week, `pha_task_search_advanced` with `author_phids=[<self-phid>]`, `created_after=<unix timestamp for 7 days ago, e.g. \`date -v-7d +%s\` on macOS or \`date -d '7 days ago' +%s\` on Linux>`, `include_projects=true`.
+
+Present the combined list alongside "or something else," ask which role each chosen tag plays, domain, umbrella, later, then apply exactly what the user confirms.
+
+### Umbrella tasks
+
+An umbrella is a normal task carrying the umbrella tag, not a separate task type or creation path.
+
+- "Create a parent task" (with no existing TID given to attach under) means create a new umbrella, not the "Parent task: TID" field below, that field links a task under an *existing* task and is a different meaning of "parent". If the user gives an existing TID to attach under, that's the TID field, not this section.
+- **Owner is a hard requirement, not just a default**, when the umbrella tag is being applied. At the preview/confirm step (step 5), if owner would be unset, stop and say why, an unowned umbrella disappears from every downstream view, not just this one.
+- Title format: `☂️ Name`, or `☂️ <flag emoji> Name` when a specific market/region is the point of the task. Default suggestion, not mandatory, show the drafted title and confirm rather than applying it silently, the user can ask for a different format.
+- Real work gets filed as subtasks: from the child task, call `pha_task_update_relationships(task_id=<child PHID>, relationship_type="parent", target_ids="<umbrella PHID>")`, the existing mechanism already documented under "Parent task" in the field table below, nothing new to call. The tool's own description doesn't state which side ends up as parent, only the enum name, so this direction is inferred, not confirmed. Immediately after the call, re-fetch the child task (`pha_task_get(task_id=<child numeric ID>)`, this tool's schema documents a numeric ID, not a PHID, unlike `pha_task_update_relationships` above) and inspect the actual response for the parent relationship, field names aren't confirmed here, read whatever the live response actually contains rather than assuming a key, before telling the user it's done. If the response doesn't surface it clearly enough to confirm the direction, say so plainly and ask the user to check the task in Phabricator rather than reporting success unverified.
+- Umbrella plus several children in one request, e.g. splitting a discussion into an umbrella with child tasks under it: gather fields shared across every child once (domain tag, assignee, due date if uniform), then show one combined preview covering the umbrella and all children together, one confirmation for the whole set rather than one per task. Titles and descriptions still get asked per child, don't force a shared one. Execute in order: create the umbrella first, then each child, linking each to the umbrella as it's created.
+
+## Workboard columns
+
+Some workflows track planning status purely by which workboard column a task sits in, not a separate status field. This stays orthogonal to the `status` field (`open`/`inprogress`/`resolved`), don't conflate the two or invent an extra status alongside them.
+
+- The committed-work board is itself a Phabricator project, ask the user which one if it isn't already clear from the conversation, resolve it to a PHID via `pha_project_search`. It may be a different project than the tags in "Tag model" above, a task usually needs the board's own project tag applied before it can sit in one of its columns.
+- Column names are whatever the user's actual board uses, ask rather than assuming an English label like "In Progress" exists verbatim.
+- To move a task into a column:
+  1. Resolve the board's project PHID, asking or searching as above.
+  2. Call `pha_workboard_search_columns` with `project_phids=[<board project PHID>]`, this returns the real column names and PHIDs live, cache that for the rest of this conversation so you don't re-ask on every move within it.
+  3. Match the user's requested column against that live list, ask if the wording is ambiguous.
+  4. Show "Moving T1234 to column '<literal column display name>'" and get confirmation before executing, same pattern as every other mutation in this skill.
+  5. Call `pha_workboard_move_task(task_id=<task ID or PHID>, column_phid=<target column PHID>)`.
+- Offer this as an optional field in both task creation (step 2) and task updates, alongside the other optional fields.
+
+## Status update comment
+
+A distinct, opt-in action from a normal comment. Some workflows treat a task's comment thread as carrying both private/internal discussion and public stakeholder-facing status, relying on a literal prefix to tell them apart downstream.
+
+- Only ever draft or post one when the user explicitly asks for a status update, never proactively, not even right after finishing other work on the task. Trigger phrases distinct from a generic "add a comment": "post a status update on T1234", "write an update for stakeholders", "post the weekly update".
+- Post it on the task's umbrella if it has one, not on the task itself. `has_parents` on `pha_task_search_advanced` is a search filter, it can narrow a query to tasks that have a parent, it can't tell you which parent a specific task has, don't rely on it here. Instead inspect the task's own response for a parent link, and if it has one, check whether that parent carries the umbrella tag, if so, that parent is where the comment goes. If the task has no parent, or its parent isn't umbrella-tagged, post on the task itself. Tell the user which task you're posting to before asking for approval, don't post silently to a different task than they'd expect.
+- Draft comment text that starts with the literal prefix `Update:`, exact string, no variant casing or spacing, followed by one short sentence, not a paragraph, covering what's being worked on, current status, and a rough timeline only if there genuinely is one to give. The reader is non-technical leadership skimming a roadmap view, not an engineer, no jargon, no implementation detail, no multi-clause explanation of how, just what and when.
+  - Match this style and length, not a bare label and not an essay: "Working on free trial functionality for specific users, on track, underlying logic will probably be live in the next few days.", "Awaiting updates from two other teams, currently investigating implementation options.".
+  - Timelines are always conservative, pad rather than promise something is about to ship, and never say "done" or imply near-completion before it's actually confirmed done, verify the real state first (see below), don't infer it from a good mood. Hedge with "probably", "should be", "next few days" rather than committing to a specific date.
+  - WRONG: "Update: PR is in review, shipping this week." based only on seeing inline comments on the PR, comments can come from self-review or a stray suggestion with no reviewer ever requested.
+  - Before describing a PR's status, invoke the `read-github-pr` skill to check its actual state, requested reviewers and review decisions, not just whether it has comments. "In review" means a reviewer was actually requested, not that comments exist.
+  - CORRECT: "Update: Working on the reported bug, on track, should be ready for review in the next few days."
+- Anything more detailed, the technical why/how, goes in a separate plain comment, no `Update:` prefix, posted on the task the work actually happened on, the subtask, not the umbrella, if the user wants that context on record. Never folded into the `Update:` line itself, and never posted to the umbrella.
+- Show the drafted comment(s) and get explicit approval before posting via `pha_task_add_comment`, same confirm-before-execute pattern as the rest of this skill.
+- Never prefix an internal/engineering-discussion comment with `Update:`, that's what breaks the "only `Update:` is public status, and it's short" contract this convention depends on.
 
 ### Resolve a username to a PHID
 
@@ -44,8 +117,8 @@ Verified live against this MCP server, don't try to work around these:
 
 ### 1. Gather required fields
 
-- Tag, required: Phabricator project. Ask: "Which tag?" Before asking, check the user's own last 2-3 authored tasks (`pha_task_search_advanced` with `author_phids=[<self-phid>]`, `order="newest"`, `limit=3`, `include_projects=true`) and offer any tags found there as quick options alongside "or something else". Resolve a chosen or typed name to a PHID with `pha_project_search` (`name_like=<text>`), show candidates and ask when there's no exact match.
-- Title, required: Short imperative phrase, max ~60 characters. No priority prefix, priority is a separate field. Do not wrap words in backticks, unlike commit messages, Phabricator titles are plain text. Example: Add dark mode toggle.
+- Tag(s), required: if the user already named the tag/project, resolve and confirm it directly, see "Tag model" above, skip the rest of this bullet. Otherwise, if "Tag model" above applies (the user is explicitly tracking domain/umbrella/later tags, or names a workboard to track status by column), gather domain (required, exactly one), umbrella (optional, y/n), and later (optional, y/n) together as one structured prompt, resolving literal names per "Tag model"'s live candidate-list flow, never pick one automatically. Otherwise, plain single Phabricator project tag: ask "Which tag?" Before asking, check the user's own tasks created in the last week (`pha_task_search_advanced` with `author_phids=[<self-phid>]`, `created_after=<unix timestamp for 7 days ago>`, `include_projects=true`) and offer any tags found there as quick options alongside "or something else". Resolve a chosen or typed name to a PHID with `pha_project_search` (`name_like=<text>`), show candidates and ask when there's no exact match.
+- Title, required: Short imperative phrase, max ~60 characters, states the outcome not the activity, e.g. "Support dark mode" not "Investigate dark mode support". No priority prefix, priority is a separate field. Do not wrap words in backticks, unlike commit messages, Phabricator titles are plain text. Example: Add dark mode toggle.
 
 ### 2. Gather optional fields
 
@@ -56,9 +129,10 @@ Ask all at once in a single message. Status and due date are always asked, never
 - Assignee: default self-assign
 - Subscribers: usernames, resolved to PHIDs, see "Resolve a username to a PHID" above
 - Status: open, in progress, or resolved, default open, see the status keyword table in step 6
-- Due date: optional, any date the user gives, normalize to `YYYY-MM-DD` before using it, see the due date limitation above, it lands in the description, not a real field
+- Due date: optional, any date the user gives, normalize to `YYYY-MM-DD` before using it, see "Field discovery" above, always lands in the description as a fallback, and in the real field too when one exists
 - Parent task: TID
 - Reference links: goes in the description's `## References` section and, when present, in the real `reference` field too, see step 6
+- Committed-board column: optional, only when "Workboard columns" above applies, ask which column on the board
 
 Resolve the current user's PHID for self-assignment via `pha_user_whoami`. Use this PHID as the default assignee unless the user names someone else, in which case resolve their username the same way as subscribers.
 
@@ -141,13 +215,14 @@ Show candidates and ask when there's no exact match.
 ### 5. Preview and confirm
 
 ```
-Tag:         <project-name>
+Tag:         <project-name>, or Domain/Umbrella/Later when "Tag model" applies
 Title:       <title>
 Priority:    <priority>
-Assignee:    <username>, default: self
+Assignee:    <username>, default: self, required when the umbrella tag is set
 Subscribers: <usernames>, or none
 Status:      <status>
 Due date:    <date>, or none
+Column:      <board column>, or none, when "Workboard columns" applies
 Parent:      T<id>
 
 <description>
@@ -160,10 +235,10 @@ Ask: "Ready to create?" Do NOT execute without explicit confirmation.
 `pha_task_create` only accepts `title`, `description`, and `owner_phid`, nothing else, so this is always two calls, not one:
 
 1. If any subscribers were resolved, append one `@<phid>` mention per person to the end of the description, that's what auto-subscribes them, there's no separate field for it.
-2. If a due date was given, prepend a `**Due:** <YYYY-MM-DD>` line to the top of the description, followed by a blank line, this always happens regardless of whether a real field is also available. Check via `ToolSearch` whether `pha_task_update` currently exposes a due-date parameter, if it does, plan to set it too in step 5.
+2. If a due date was given, prepend a `**Due:** <YYYY-MM-DD>` line to the top of the description, followed by a blank line, this always happens regardless of whether a real field is also available. See "Field discovery" above, if a real field was found, plan to set it too in step 5.
 3. If a reference link was given, make sure it's in the description's `## References` section, then plan to also set it via the real `reference` parameter in step 5.
 4. `pha_task_create(title=..., description=..., owner_phid=<assignee-phid>)`. On success it returns the created task's `id`/`phid`, report the task back as `$PHAB/T<id>`. New tasks default to priority "Needs Triage" and status "open", not Normal, and to no project tag at all.
-5. A tag, non-default priority, non-open status, a reference link, a due-date parameter found in step 2, or anything else requested, needs a follow-up `pha_task_update(task_id=<phid from step 4>, ...)` to set it, a task created without this call is missing its tag, reference, and due date.
+5. A tag, non-default priority, non-open status, a reference link, or a due-date parameter found in step 2, needs a follow-up `pha_task_update(task_id=<phid from step 4>, ...)` to set it, a task created without this call is missing its tag, reference, and due date. Two exceptions go through a different tool, never `pha_task_update`: a parent task, via `pha_task_update_relationships`, see the field table below and "Umbrella tasks" above for the exact call shape and the verification step after it, and a committed-board column, via `pha_workboard_move_task` as described in "Workboard columns" above, a task created with a column requested is left off the board entirely without this call.
 
 | Field | `pha_task_update` param |
 |-------|-------------------------|
@@ -172,8 +247,9 @@ Ask: "Ready to create?" Do NOT execute without explicit confirmation.
 | Assignee | `owner_phid` |
 | Status | `status`: `open`, `inprogress`, `resolved` |
 | Reference link | `reference` |
-| Due date | no stable parameter as of the last check, re-verify with `ToolSearch` each time, falls back to the description's `**Due:** <date>` line otherwise |
-| Parent task | use `pha_task_update_relationships` instead, `relationship_type="parent"` |
+| Due date | see "Field discovery" above, use the real field if one was found this session, falls back to the description's `**Due:** <date>` line regardless |
+| Parent task | use `pha_task_update_relationships` instead, `relationship_type="parent"`, `target_ids` is a comma-separated string of PHIDs, not an array |
+| Committed-board column | use `pha_workboard_move_task` instead, see "Workboard columns" above |
 
 ### 7. Error handling
 
@@ -195,7 +271,9 @@ Fetch the task first via `pha_task_get`, by numeric ID, to confirm you have the 
 Then apply the change via `pha_task_update`, passing the task PHID and the field(s) to update: `status`, `title`, `description`, `owner_phid`, `priority`, `projects_add`/`projects_remove`/`projects_set`.
 
 - Reference link: set the real `reference` parameter directly, and also make sure the link is in the description's `## References` section, add it there if it's missing.
-- Due date: fetch the current description with `pha_task_get`, add or replace the `**Due:** <date>` line yourself, and write the whole description back, this always happens regardless of whether a real field is also available. Also check via `ToolSearch` whether `pha_task_update` has gained a due-date parameter, if so set it directly too.
+- Due date: fetch the current description with `pha_task_get`, add or replace the `**Due:** <date>` line yourself, and write the whole description back, this always happens regardless of whether a real field is also available. See "Field discovery" above, if a real field was found this session, set it directly too.
+- Committed-board column: see "Workboard columns" above.
+- Stakeholder status update: see "Status update comment" above, don't use a plain comment for this.
 
 Use `pha_task_add_comment` to add a comment instead of a field edit, or to add subscribers, resolve their PHIDs per "Resolve a username to a PHID" above and mention each one, `@<phid>`, in the comment.
 

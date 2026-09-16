@@ -87,9 +87,22 @@ Call the MCP project-search tool by name query.
 
 Call the MCP task-search tool with the relevant constraint: free-text query, author PHID, or status (`open`, `inprogress`, `resolved`, etc.).
 
+For "tasks I created/updated this week" style queries, resolve self via "Who am I?" below, then filter by `author_phids=[<self-phid>]` plus `created_after`/`modified_after` (Unix timestamps, e.g. `date -v-7d +%s` on macOS or `date -d '7 days ago' +%s` on Linux, for "this week").
+
 ## Who am I?
 
 Call the MCP "who am I" tool to get the current authenticated user's PHID and username.
+
+## Workboard columns
+
+Read-only counterparts to `manage-phabricator-task`'s "Workboard columns" section, ask the user which board/project and, if needed, which column, rather than assuming either:
+
+- `pha_workboard_search_columns`: list a board's columns, pass `project_phids=[<board project PHID>]`.
+- `pha_workboard_search_tasks_by_column`: list the tasks currently sitting in a given column, pass `column_phid=<column PHID>`.
+
+## Due date / reference fields
+
+This skill is independently invocable, don't assume `manage-phabricator-task`'s "Field discovery" already ran earlier in this session. If it did, reuse that result. If not, do the same live check yourself before relying on either field's absence: `ToolSearch` (query like `"phabricator task update"`) for a due-date-shaped parameter, and confirm the `reference` parameter still exists. A real field, once confirmed present, appears either as a top-level `fields.*` entry or under a custom-fields object on the `pha_task_get`/`pha_task_search_advanced` response, inspect the actual response shape rather than assuming a key path. When no real field was found, fall back to parsing the `**Due:**` line and the `## References` section out of the description body, same fallback contract as the write side.
 
 ## Task URL format
 
