@@ -33,8 +33,18 @@ Verified live against this MCP server, don't try to work around these:
 
 - No user directory search. `pha_user_search` returns "not authorized" for every query shape tried, on an account that otherwise has full task read/write access. Treat it as unavailable, `pha_user_whoami` (self) is the only user-lookup tool that works directly. See "Resolve a username to a PHID" below for a working alternative.
 - No subscriber field on `pha_task_create`/`pha_task_update`, not a permissions issue, the field doesn't exist on those tools. `pha_task_update_relationships` only handles `subtask`/`parent` edges. The only way to subscribe someone is indirect: @-mentioning their `PHID-USER-...` in a description or comment auto-subscribes them.
-- No due date parameter on `pha_task_create`/`pha_task_update` as of the last check. Before relying on that, check the current tool schema with `ToolSearch` (query `"phabricator task"`), schemas can change. The date always gets folded into the description as a `**Due:** <date>` line (see step 6), and, if a due-date parameter has appeared, it's also set directly on the real field.
-- Reference links do have a real field, `pha_task_update`'s `reference` parameter, but only on `pha_task_update`, `pha_task_create` doesn't accept it. A new task always needs the create-then-update two-call pattern to persist a reference (see step 6).
+- Due date field: don't assume it's present or absent, see "Field discovery" below, this instance may have gained or lost it since the last check. The description always carries a `**Due:** <date>` fallback line regardless (see step 6).
+- Reference links do have a real field, `pha_task_update`'s `reference` parameter, but only on `pha_task_update`, `pha_task_create` doesn't accept it. A new task always needs the create-then-update two-call pattern to persist a reference (see step 6). Re-confirm this still holds via "Field discovery" below, schemas can drift.
+
+## Field discovery
+
+Run once per session, cache the result for the rest of the session, don't re-discover on every call:
+
+- Call `ToolSearch` (query like `"phabricator task update"` or `"phabricator task create"`) and inspect the live schema of `pha_task_update`/`pha_task_create` for a due-date-shaped parameter, match by parameter name or description containing due/deadline/date semantics, don't hardcode one exact expected name, it may be a standard param or a custom-field key on this instance.
+- Re-confirm the `reference` parameter still exists on `pha_task_update` the same way, schemas can drift in either direction, not just grow.
+- If a real due-date parameter or custom field is found, pass the normalized `YYYY-MM-DD` value through it directly.
+- Regardless of whether a real field was found, always also keep the `**Due:** <date>` description-line fallback (see step 6), a newly-appeared field could be write-restricted, non-persisting, or display-only on this instance, never rely on it alone.
+- Read and write can be asymmetric: even with no writable due-date parameter on `pha_task_update`/`pha_task_create`, a real value may still show up when *reading* a task, under a custom-fields-style object on `pha_task_get`/`pha_task_search_advanced` responses (key names are instance-specific, inspect the actual response rather than assuming one). If a task already has a real due date set there, e.g. from the Phabricator web UI directly, treat that as the source of truth over the description's `**Due:**` line, don't overwrite or ignore it.
 
 ### Resolve a username to a PHID
 
@@ -56,7 +66,7 @@ Ask all at once in a single message. Status and due date are always asked, never
 - Assignee: default self-assign
 - Subscribers: usernames, resolved to PHIDs, see "Resolve a username to a PHID" above
 - Status: open, in progress, or resolved, default open, see the status keyword table in step 6
-- Due date: optional, any date the user gives, normalize to `YYYY-MM-DD` before using it, see the due date limitation above, it lands in the description, not a real field
+- Due date: optional, any date the user gives, normalize to `YYYY-MM-DD` before using it, see "Field discovery" above, always lands in the description as a fallback, and in the real field too when one exists
 - Parent task: TID
 - Reference links: goes in the description's `## References` section and, when present, in the real `reference` field too, see step 6
 
@@ -160,7 +170,7 @@ Ask: "Ready to create?" Do NOT execute without explicit confirmation.
 `pha_task_create` only accepts `title`, `description`, and `owner_phid`, nothing else, so this is always two calls, not one:
 
 1. If any subscribers were resolved, append one `@<phid>` mention per person to the end of the description, that's what auto-subscribes them, there's no separate field for it.
-2. If a due date was given, prepend a `**Due:** <YYYY-MM-DD>` line to the top of the description, followed by a blank line, this always happens regardless of whether a real field is also available. Check via `ToolSearch` whether `pha_task_update` currently exposes a due-date parameter, if it does, plan to set it too in step 5.
+2. If a due date was given, prepend a `**Due:** <YYYY-MM-DD>` line to the top of the description, followed by a blank line, this always happens regardless of whether a real field is also available. See "Field discovery" above, if a real field was found, plan to set it too in step 5.
 3. If a reference link was given, make sure it's in the description's `## References` section, then plan to also set it via the real `reference` parameter in step 5.
 4. `pha_task_create(title=..., description=..., owner_phid=<assignee-phid>)`. On success it returns the created task's `id`/`phid`, report the task back as `$PHAB/T<id>`. New tasks default to priority "Needs Triage" and status "open", not Normal, and to no project tag at all.
 5. A tag, non-default priority, non-open status, a reference link, a due-date parameter found in step 2, or anything else requested, needs a follow-up `pha_task_update(task_id=<phid from step 4>, ...)` to set it, a task created without this call is missing its tag, reference, and due date.
@@ -172,7 +182,7 @@ Ask: "Ready to create?" Do NOT execute without explicit confirmation.
 | Assignee | `owner_phid` |
 | Status | `status`: `open`, `inprogress`, `resolved` |
 | Reference link | `reference` |
-| Due date | no stable parameter as of the last check, re-verify with `ToolSearch` each time, falls back to the description's `**Due:** <date>` line otherwise |
+| Due date | see "Field discovery" above, use the real field if one was found this session, falls back to the description's `**Due:** <date>` line regardless |
 | Parent task | use `pha_task_update_relationships` instead, `relationship_type="parent"` |
 
 ### 7. Error handling
@@ -195,7 +205,7 @@ Fetch the task first via `pha_task_get`, by numeric ID, to confirm you have the 
 Then apply the change via `pha_task_update`, passing the task PHID and the field(s) to update: `status`, `title`, `description`, `owner_phid`, `priority`, `projects_add`/`projects_remove`/`projects_set`.
 
 - Reference link: set the real `reference` parameter directly, and also make sure the link is in the description's `## References` section, add it there if it's missing.
-- Due date: fetch the current description with `pha_task_get`, add or replace the `**Due:** <date>` line yourself, and write the whole description back, this always happens regardless of whether a real field is also available. Also check via `ToolSearch` whether `pha_task_update` has gained a due-date parameter, if so set it directly too.
+- Due date: fetch the current description with `pha_task_get`, add or replace the `**Due:** <date>` line yourself, and write the whole description back, this always happens regardless of whether a real field is also available. See "Field discovery" above, if a real field was found this session, set it directly too.
 
 Use `pha_task_add_comment` to add a comment instead of a field edit, or to add subscribers, resolve their PHIDs per "Resolve a username to a PHID" above and mention each one, `@<phid>`, in the comment.
 

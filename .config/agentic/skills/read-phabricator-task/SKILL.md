@@ -91,6 +91,10 @@ Call the MCP task-search tool with the relevant constraint: free-text query, aut
 
 Call the MCP "who am I" tool to get the current authenticated user's PHID and username.
 
+## Due date / reference fields
+
+This skill is independently invocable, don't assume `manage-phabricator-task`'s "Field discovery" already ran earlier in this session. If it did, reuse that result. If not, do the same live check yourself before relying on either field's absence: `ToolSearch` (query like `"phabricator task update"`) for a due-date-shaped parameter, and confirm the `reference` parameter still exists. A real field, once confirmed present, appears either as a top-level `fields.*` entry or under a custom-fields object on the `pha_task_get`/`pha_task_search_advanced` response, inspect the actual response shape rather than assuming a key path. When no real field was found, fall back to parsing the `**Due:**` line and the `## References` section out of the description body, same fallback contract as the write side.
+
 ## Task URL format
 
 - Task links: `https://phabricator.<sub>.<domain>/T<id>`
