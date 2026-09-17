@@ -72,7 +72,8 @@
       "WebSearch",
       "WebFetch(domain:opencode.ai)",
       "WebFetch(domain:models.dev)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "mcp__claude-in-chrome__tabs_context_mcp"
     ],
     "deny": [
       "Read(**/.env)",
