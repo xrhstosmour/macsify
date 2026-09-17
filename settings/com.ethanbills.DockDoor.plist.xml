@@ -62,6 +62,8 @@
 	<false/>
 	<key>hideWidgetContainerBackground</key>
 	<false/>
+	<key>ignoreAppsWithSingleWindow</key>
+	<true/>
 	<key>includeHiddenWindowsInDockPreview</key>
 	<false/>
 	<key>instantWindowSwitcher</key>
