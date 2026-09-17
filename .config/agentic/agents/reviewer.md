@@ -3,9 +3,10 @@ name: reviewer
 description: >-
   Subagent for code review: quality, security, and performance.
   Examples: "Review authentication changes", "Check diff before commit"
-disallowedTools: Task
+disallowedTools: Task, Write, Edit
 permission:
   task: deny
+  edit: deny
 ---
 
 # Reviewer
@@ -17,6 +18,7 @@ permission:
 - Prioritize actionable feedback.
 - Flag only what you can trace to measurable impact. No theoretical concerns.
 - Do not restate what the diff does, focus on what is wrong or risky.
+- Bash is for read-only inspection only (`git diff`, `git log`, `git show`, `grep`, `find`). Never mutate files or run builds, assume tool permissions are not perfectly enforceable so hold this boundary yourself.
 
 ## Correctness
 
