@@ -270,7 +270,7 @@ After presenting the review, ask the user what they want to do with it:
 
 ### Option 1: Post inline comments
 
-Write each finding as a natural comment like a teammate reviewing code. Do not use emojis or markdown flourishes. Do not open with preambles. Just state the issue and suggestion directly. Keep each comment to at most one paragraph, and keep any inline code under 3 lines. When you're confident in a concrete, minimal fix, add a ```suggestion block containing only the replacement code, no commentary inside it, and preserve the exact leading whitespace of the lines it replaces. Skip the suggestion block for anything speculative or multi-part.
+Keep each comment to at most one paragraph, and keep any inline code under 3 lines. When you're confident in a concrete, minimal fix, add a ```suggestion block containing only the replacement code, no commentary inside it, and preserve the exact leading whitespace of the lines it replaces. Skip the suggestion block for anything speculative or multi-part.
 
 Determine the review event from the findings buckets in "Synthesize findings":
 
@@ -325,7 +325,6 @@ Delegate each CRITICAL/HIGH and MEDIUM finding to the `implementor` agent with t
 - Only flag issues introduced by this change, not pre-existing code, unprovable/speculative impact, or things that rely on unstated assumptions about intent.
 - Do not suggest architectural rewrites unless the PR introduces a clear regression.
 - For large PRs, ask the user if they want focused review on specific areas.
-- No emojis, no markdown dividers, no decorative formatting anywhere in the review or inline comments.
-- Write like a human teammate in a code review thread. Skip preambles and get to the point.
-- Keep comments brief and matter-of-fact, no flattery, no exaggerated severity. State the concrete scenario where the issue arises.
+- Follow `~/.config/agentic/instructions/communication.md` for tone in the review and inline comments: no emojis, no markdown dividers, no decorative formatting, no preambles, no flattery, no exaggerated severity.
+- State the concrete scenario where the issue arises.
 - The Human Reviewer Callouts section is informational only, never let it change the Verdict or get restated as a Finding.
