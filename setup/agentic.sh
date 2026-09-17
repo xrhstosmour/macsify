@@ -125,7 +125,7 @@ fi
 
 PHABRICATOR_MCP_URL="${PHABRICATOR_MCP_URL:-$(derive_phabricator_mcp_url)}"
 
-if brewfile_declares opencode; then
+if brewfile_declares "anomalyco/tap/opencode"; then
     log_info "Injecting OpenCode agent models..."
 
     OPENCODE_CONFIGURATION_PATH="$HOME/.config/opencode/opencode.json"

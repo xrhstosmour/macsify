@@ -8,6 +8,10 @@
 //     check was dropped from both scripts: it was an unreliable estimate of
 //     actual context usage, and the host's own context indicator already
 //     covers that accurately.
+//   - Blocks stray .md file creation, mirroring Claude Code's
+//     documentation-guard.sh (same extension check, exempt basenames, and
+//     exempt-path allowlist, adapted for OpenCode's own agentic-config
+//     symlink targets instead of Claude Code's ~/.claude/* paths).
 //
 // Static instructions (communication/standards/versioning) load via opencode.json's
 // `instructions` array instead, no hook needed for those.
@@ -16,6 +20,8 @@
 //   signature:  https://github.com/anomalyco/opencode/blob/dev/packages/plugin/src/index.ts
 //   invocation: https://github.com/anomalyco/opencode/blob/dev/packages/opencode/src/session/llm/request.ts
 //   session shape (tokens, time.updated in epoch ms): https://github.com/anomalyco/opencode/blob/dev/packages/core/src/session.ts
+
+import { existsSync } from "node:fs";
 
 // Service URLs that must go through a dedicated CLI, never WebFetch. Patterns
 // match against the hostname only (see below), anchored to a label boundary,
@@ -27,6 +33,15 @@ const blockedHosts = [
   { pattern: /(^|\.)sentry\.io$/i, use: "the Sentry MCP tools per the `read-sentry-issue` skill" },
   { pattern: /(^|\.)grafana\./i, use: "`logcli` per the `search-grafana-logs` skill" },
 ];
+
+// Fails open on any doubt, same as documentation-guard.sh: a false-positive
+// block on real skill/agent authoring is worse than an occasional stray file.
+const docGuardExemptBasenames = new Set(["README.md", "CLAUDE.md", "AGENTS.md", "CODEX.md", "CONTRIBUTING.md", "SKILL.md"]);
+// OpenCode's own agents/commands/skills/instructions live under the
+// .config/agentic/ source of truth (symlinked into
+// ~/.config/opencode/{agents,commands,skills,instructions}), not under
+// ~/.claude/*, so the exempt paths differ from documentation-guard.sh.
+const docGuardExemptPathPattern = /(^|\/)\.config\/agentic\/|\/\.config\/opencode\/(agents|commands|skills|instructions)\//;
 
 // No documented cache-TTL basis for this environment's actual providers
 // (opencode/deepseek-v4-flash-free, nemotron, etc. via the opencode-go gateway,
@@ -71,17 +86,33 @@ export const AgenticReminderPlugin = async ({ client }) => {
       }
     },
     "tool.execute.before": async (input, output) => {
-      if ((input.tool ?? "").toLowerCase() !== "webfetch") return;
-      const url = String(output.args?.url ?? "");
-      let host = url;
-      try {
-        host = new URL(url).hostname;
-      } catch {
-        // Not a parseable absolute URL, fall back to matching the raw string.
+      const tool = (input.tool ?? "").toLowerCase();
+
+      if (tool === "webfetch") {
+        const url = String(output.args?.url ?? "");
+        let host = url;
+        try {
+          host = new URL(url).hostname;
+        } catch {
+          // Not a parseable absolute URL, fall back to matching the raw string.
+        }
+        const blocked = blockedHosts.find((entry) => entry.pattern.test(host));
+        if (blocked) {
+          throw new Error(`Blocked: use ${blocked.use}, not WebFetch.`);
+        }
+        return;
       }
-      const blocked = blockedHosts.find((entry) => entry.pattern.test(host));
-      if (blocked) {
-        throw new Error(`Blocked: use ${blocked.use}, not WebFetch.`);
+
+      if (tool === "write") {
+        const filePath = String(output.args?.filePath ?? "");
+        if (!/\.md$/i.test(filePath)) return;
+        if (existsSync(filePath)) return;
+        const base = filePath.split("/").pop();
+        if (docGuardExemptBasenames.has(base)) return;
+        if (docGuardExemptPathPattern.test(filePath)) return;
+        throw new Error(
+          "Unnecessary documentation file creation blocked. Use README.md/CLAUDE.md/AGENTS.md for docs instead, per CLAUDE.md's file-creation rule.",
+        );
       }
     },
   };

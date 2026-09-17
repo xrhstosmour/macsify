@@ -8,6 +8,7 @@ tap 'xrhstosmour/stege', trusted: true
 
 # Install dependencies for various utilities and applications.
 brew 'airsync'
+brew 'anomalyco/tap/opencode', trusted: true
 brew 'aria2'
 brew 'atuin'
 brew 'bat'
@@ -29,7 +30,6 @@ brew 'jq'
 brew 'logcli'
 brew 'mas'
 brew 'media-control'
-brew 'opencode'
 brew 'scrcpy'
 brew 'sd'
 brew 'starship'

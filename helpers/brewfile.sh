@@ -12,7 +12,7 @@ BREWFILE_PATH="${BREWFILE_PATH:-$BREWFILE_SCRIPT_DIRECTORY/../packages/Brewfile}
 # Returns non-zero when the Brewfile is missing, the line is commented, or the
 # package was removed entirely, so all "not wanted" cases behave the same.
 # Usage:
-#   brewfile_declares "opencode"
+#   brewfile_declares "anomalyco/tap/opencode"
 brewfile_declares() {
   local package="$1"
   [ -f "$BREWFILE_PATH" ] || return 1
