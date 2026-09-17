@@ -4,20 +4,20 @@
 # Updated by the agent-models skill. Read by setup/agentic.sh.
 
 # OpenCode
-opencode:leader:model:opencode/deepseek-v4-flash-free
-opencode:leader:variant:max
+opencode:leader:model:opencode/union-alpha
+opencode:leader:variant:-
 opencode:architect:model:opencode/nemotron-3-ultra-free
 opencode:architect:variant:-
-opencode:implementor:model:opencode/north-mini-code-free
-opencode:implementor:variant:high
+opencode:implementor:model:opencode/union-alpha
+opencode:implementor:variant:-
 opencode:clarifier:model:opencode/big-pickle
 opencode:clarifier:variant:-
 opencode:tester:model:opencode/mimo-v2.5-free
 opencode:tester:variant:-
-opencode:designer:model:opencode/laguna-s-2.1-free
-opencode:designer:variant:high
-opencode:reviewer:model:opencode/ling-3.0-flash-free
-opencode:reviewer:variant:high
+opencode:designer:model:opencode/mimo-v2.5-free
+opencode:designer:variant:-
+opencode:reviewer:model:opencode/nemotron-3-ultra-free
+opencode:reviewer:variant:-
 opencode:explore:model:opencode/big-pickle
 opencode:explore:variant:-
 opencode:compaction:model:opencode/mimo-v2.5-free
