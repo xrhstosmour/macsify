@@ -4,11 +4,11 @@
 # Updated by the agent-models skill. Read by setup/agentic.sh.
 
 # OpenCode
-opencode:leader:model:opencode/union-alpha
-opencode:leader:variant:-
+opencode:leader:model:opencode/muse-spark-1.3-contributor-free
+opencode:leader:variant:xhigh
 opencode:architect:model:opencode/nemotron-3-ultra-free
 opencode:architect:variant:-
-opencode:implementor:model:opencode/union-alpha
+opencode:implementor:model:opencode/nemotron-3.5-lightning-free
 opencode:implementor:variant:-
 opencode:clarifier:model:opencode/big-pickle
 opencode:clarifier:variant:-
@@ -56,10 +56,10 @@ codex:reviewer:model:gpt-5.6
 codex:reviewer:effort:high
 
 # Copilot CLI
-copilot:leader:model:claude-sonnet-4.5
-copilot:architect:model:claude-sonnet-4.5
-copilot:implementor:model:claude-sonnet-4.5
-copilot:clarifier:model:claude-sonnet-4.5
+copilot:leader:model:claude-sonnet-5
+copilot:architect:model:claude-sonnet-5
+copilot:implementor:model:claude-sonnet-5
+copilot:clarifier:model:claude-sonnet-5
 copilot:tester:model:claude-haiku-4.5
-copilot:designer:model:claude-sonnet-4.5
-copilot:reviewer:model:claude-opus-4.5
+copilot:designer:model:claude-sonnet-5
+copilot:reviewer:model:claude-opus-5

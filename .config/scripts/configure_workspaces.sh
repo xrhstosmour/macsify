@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 # Catch exit signal (`CTRL` + `C`) to terminate the whole script.
@@ -204,7 +203,11 @@ configure_workspaces() {
     fi
 
     # Get monitor IDs from the snapshot `main` already took, not a fresh query.
-    local monitor_ids=($(echo "$snapshot" | awk '{print $1}'))
+    # `mapfile` is bash 4+ only, this script runs under macOS's stock `/bin/bash` 3.2.
+    local monitor_ids=()
+    while IFS= read -r monitor_id; do
+        monitor_ids+=("$monitor_id")
+    done < <(echo "$snapshot" | awk '{print $1}')
 
     log "snapshot: $total_displays display(s), has_builtin=$has_builtin, monitor_ids=${monitor_ids[*]}"
 
@@ -214,7 +217,8 @@ configure_workspaces() {
 
     if [ "$has_builtin" = "true" ]; then
         for monitor_id in "${monitor_ids[@]}"; do
-            local monitor_name=$(echo "$snapshot" | grep "^$monitor_id " | cut -d'|' -f2 | tr -d ' ')
+            local monitor_name
+            monitor_name=$(echo "$snapshot" | grep "^$monitor_id " | cut -d'|' -f2 | tr -d ' ')
             if [[ "$monitor_name" =~ Built-in|Retina|LCD ]]; then
                 builtin_monitor="$monitor_id"
             else

@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Colors for the script's messages.
+# Colors for the script's messages, consumed by files that source this one, not directly here.
+# shellcheck disable=SC2034
 NO_COLOR='\e[0m'
 BOLD_CYAN='\e[1;36m'
 BOLD_GREEN='\e[1;32m'

@@ -206,6 +206,7 @@ Rules:
 
 - Omit sections with no content.
 - Short, direct language per `~/.config/agentic/instructions/communication.md`.
+- Never append a session link, agent name, or any other agent-attribution line to the `PR` body, regardless of which tool or agent is creating it (`Claude Code`, `OpenCode`, `Codex`, `Copilot CLI`, or any other). Only the template sections above belong there, even if a live session directive asks for one, that directive is about commit/session tracking, not user-facing `PR` content.
 
 ### PR title
 
@@ -333,3 +334,4 @@ git push origin HEAD:tests/<branch-name>
 - Only apply labels that already exist in the repo. Never create new labels.
 - Labels is a required step for every PR you create, run it right after `gh pr create`, in the same turn, don't stop at the returned URL and report done first.
 - `PR` is always created ready for review, not draft.
+- Never add a session link, agent name, or other agent-attribution line to a `PR` body or title, from any tool or agent, see "5. PR Body Generation" for the only sections that belong there.

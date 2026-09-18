@@ -18,10 +18,10 @@ SHELLS_PATH="/etc/shells"
 
 # Add `Fish` shell path to `/etc/shells` if it's not already present.
 if ! grep -q "^${FISH_PATH}$" "${SHELLS_PATH}"; then
-  log_info "Adding '${FISH_PATH}' to '"${SHELLS_PATH}"'..."
+  log_info "Adding '${FISH_PATH}' to '${SHELLS_PATH}'..."
   echo "${FISH_PATH}" | sudo tee -a "${SHELLS_PATH}"
 else
-  log_warning "'${FISH_PATH}' already exists in '"${SHELLS_PATH}"'."
+  log_warning "'${FISH_PATH}' already exists in '${SHELLS_PATH}'."
 fi
 
 # Get the current user's default shell.

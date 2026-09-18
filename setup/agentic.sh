@@ -275,6 +275,13 @@ if (settings.statusLine && typeof settings.statusLine.command === "string") {
     log_info "Creating Claude Code symlinks..."
 
     mkdir -p "$HOME/.claude/rules"
+
+    # Prune dangling symlinks left behind by a source directory this repo no longer
+    # provides (like the old `tools/` folder). Only removes *broken* symlinks, so a
+    # currently-valid one a user or tool placed under this directory is untouched, a
+    # failure to unlink one shouldn't block the rest of setup below.
+    find "$HOME/.claude/rules" -maxdepth 1 -type l ! -exec test -e {} \; -delete \
+        || log_warning "Could not prune stale symlinks under ~/.claude/rules, check manually."
     create_symlink "$AGENTIC_DIRECTORY/AGENTS.md"    "$HOME/.claude/CLAUDE.md"
     create_symlink "$AGENTIC_DIRECTORY/commands"     "$HOME/.claude/commands"
     create_symlink "$AGENTIC_DIRECTORY/skills"       "$HOME/.claude/skills"
