@@ -122,6 +122,8 @@ Skills are loaded by agents and triggered via commands. The `Command` column bel
 | `handoff` | `/handoff` | Compact conversation into a handoff document for fresh agent sessions |
 | `agent-models` | `/agent-models` | Research, rank, and apply model updates across all agents and configs for any provider |
 | `humanize` | `/humanize` | Rewrite AI-sounding text as natural human writing, English and Greek |
+| `capture-knowledge` | `/capture-knowledge` | Extract reusable knowledge from the conversation into an external second-brain repo, opens a `PR` |
+| `eli5` | Loaded automatically, no dedicated command | Explain a concept, error, or code simply, dead-simple by default or matched to a stated audience |
 
 ### Task Management Skills
 
