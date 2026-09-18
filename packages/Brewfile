@@ -25,6 +25,7 @@ brew 'gemini-cli'
 brew 'getsentry/tools/sentry-cli', trusted: true
 brew 'gh'
 brew 'helix'
+brew 'herdr'
 brew 'jless'
 brew 'jq'
 brew 'logcli'
