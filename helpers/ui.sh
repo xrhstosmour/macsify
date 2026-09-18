@@ -77,6 +77,7 @@ ask_user_before_execution() {
                 if [[ "$script_or_function_or_command" == *"#"* ]]; then
 
                     # Before executing the function, we must source the script where it is defined.
+                    # shellcheck disable=SC1090
                     source "$script_or_function_or_command_path"
                     "$script_or_function_or_command_name" "${arguments[@]}"
                 elif [[ -f "$script_or_function_or_command" ]]; then

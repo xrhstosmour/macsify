@@ -1,0 +1,29 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: |
+          curl -sSfL https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.xz | tar -xJ
+          sudo mv shellcheck-v0.11.0/shellcheck /usr/local/bin/shellcheck
+
+      - name: Shellcheck
+        run: find . -name '*.sh' -not -path './.git/*' -print0 | xargs -0r shellcheck -S warning
+
+      - name: Validate JSON
+        run: find . -name '*.json' -not -path './.git/*' -print0 | xargs -0r -I{} jq empty {}
+
+      - name: Validate skill frontmatter
+        run: .github/scripts/check-skill-frontmatter.sh
