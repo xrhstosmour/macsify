@@ -42,7 +42,7 @@ Remove redundant `alembic` and `initial_data` from `prestart.sh`
 - Use `fixup` commits for review comment fixes, typos, small oversights.
 - Use `amend` for single-commit changes.
 - Before running `git commit`, run `git diff --staged --name-only` and check whether the staged files span more than one topic. If they do, stop, unstage, and split with `git add -p` first. Never `git add -A` or `git add .` straight into a single commit when the change touches more than one topic.
-- If a change touches one topic across multiple files, a single commit is correct.
+- If a change touches one topic across multiple files, a single commit is correct, unless that topic itself bundles multiple contexts, see "Context granularity" below.
 - If a change bundles two unrelated topics, for example a bug fix and a documentation update, split into two commits. Don't combine them into one commit with a long message trying to describe both.
 
 ```bash
@@ -50,6 +50,24 @@ git add <file> && git commit --fixup <SHA>
 git rebase -i --autosquash master
 git commit --amend --no-edit
 ```
+
+#### Context granularity
+
+"Topic" means the underlying concern, not the feature name. A single feature, like integrating a new tool, still bundles several distinct contexts, and each gets its own commit even though they all ship together:
+
+- Dependency or package manifest changes, for example a `Brewfile.rb`/`package.json` entry.
+- The new tool or feature's own configuration.
+- Shell or CLI integration: aliases, abbreviations, wrapper functions, cheat sheets.
+- Documentation: `README.md` rows, feature tables, doc comments.
+
+```text
+Add `herdr` to `Brewfile.rb`
+Add `herdr` dark theme configuration
+Add `herdr` cheat sheet and abbreviations
+Document `herdr` in `README.md`
+```
+
+Only bundle these into one commit when the pieces cannot stand alone without each other, for example a config file that is meaningless without a schema or type change landing in the same commit, or when the whole diff is trivially small, a couple of lines across two files with no dedicated config or shell-integration file to speak of.
 
 ### Git safety
 
