@@ -1,0 +1,104 @@
+# Herdr's sidebar is hardcoded to the left edge. `ui.sidebar_position` was
+# requested and closed by the maintainers as an unimplemented feature idea,
+# see https://github.com/herdrdev/herdr/issues/4115. Nothing below tries to
+# work around that, `prefix+b` (the stock `ctrl+b` prefix, see `[keys]` below)
+# toggles the sidebar out of the way instead.
+
+[keys]
+# `cmd+b` was tried and reverted, `cmd` is captured by `WezTerm`/macOS as
+# terminal chrome and never reaches a program running inside the pty, tried
+# again with `enable_kitty_keyboard` in `wezterm.lua`'s `system.lua`, still
+# didn't reach `Herdr`, reverted that too. `f12` was tried next, but F-keys
+# aren't universal across keyboards (compact external ones often lack them),
+# so back to the stock `ctrl+b`: it works today, confirmed unbound by both
+# `WezTerm` (no default or custom `ctrl+b`) and `AeroSpace` (`ctrl-b` isn't in
+# its binding table), and per `README.md`'s modifier table it's the same
+# physical "Key 3" position on both keyboards, the `option` key internal, the
+# `alt`-labeled key external, just a different printed label, not a
+# different key.
+# prefix = "ctrl+b" is the default, left unset here to track it automatically.
+
+# Tabs cycle with `[`/`]` instead of the default `n`/`p`. `copy_mode`'s
+# hardcoded default is also `prefix+[`, not visible in `herdr --default-config`'s
+# printed comments, that template is incomplete, confirmed against the real
+# source (`src/config/keybinds.rs`). Its own test suite confirms a user
+# binding silently displaces whatever default sat on the same key, so this
+# is expected to just work, no separate `copy_mode = ""` override needed.
+# `switch_tab` is cleared so `prefix+1..9` is free below for jumping straight
+# to an agent by its sidebar index instead.
+next_tab = "prefix+]"
+previous_tab = "prefix+["
+switch_tab = ""
+focus_agent = "prefix+1..9"
+
+# New tab, not `prefix+c`.
+new_tab = "prefix+t"
+# Keybindings overlay, not `prefix+?`.
+help = "prefix+/"
+# New workspace, not `prefix+shift+n`.
+new_workspace = "prefix+n"
+# Reload config, not `prefix+shift+r`. That default spot is `resize_mode`'s,
+# moved to `prefix+shift+r` below so nothing gets silently displaced.
+reload_config = "prefix+r"
+resize_mode = "prefix+shift+r"
+
+[theme]
+# Closest built-in dark theme to start from, overridden below to match
+# `WezTerm`'s palette exactly.
+name = "one-dark"
+# `WezTerm` has no light-mode branch either, stay dark regardless of system
+# appearance.
+auto_switch = false
+
+[theme.custom]
+# Every value below is lifted from `.config/wezterm/constants.lua`'s
+# `constants.palette` table, so `Herdr` reads as the same terminal as
+# `WezTerm` rather than a different app.
+panel_bg = "#000000"
+sidebar_bg = "#141414"
+active_row_bg = "#1f1f1f"
+selection_bg = "#333333"
+accent = "#13d4d4"
+green = "#32ff32"
+blue = "#5ea1ff"
+red = "#ff6e5e"
+yellow = "#f1ff5e"
+
+[ui]
+# Matches `WezTerm`'s tab bar position.
+tab_bar_position = "top"
+status_indicators = "symbols"
+sidebar_collapsed_mode = "compact"
+accent = "#13d4d4"
+confirm_close = true
+# No `{agent}`/`{branch}` token exists for the outer window title (only
+# `{hostname}`/`{workspace}`/`{tab}`/`{pane}`/`{terminal_title}` do), so this
+# covers what it can, dot-joined like `WezTerm`'s own tab titles.
+window_title = "{workspace}.{tab}"
+
+[ui.sidebar.spaces]
+# Header: which space. Subheader: which git branch it's on. Matches the
+# built-in default, pinned explicitly so it survives an upstream default change.
+rows = [
+    ["state_icon", "workspace"],
+    ["branch", "git_status"],
+]
+
+[ui.sidebar.agents]
+# Header: which agent, in which space. Subheader: which tab it's running in.
+# A single `agent.space.branch` string isn't possible, sidebar rows only accept
+# known tokens or `$custom` ones, no literal separators, confirmed by testing
+# a "." entry against `herdr config check`, so this spreads the same
+# information across the header/subheader pair instead.
+rows = [
+    ["state_icon", "agent", "workspace"],
+    ["tab"],
+]
+
+[ui.toast]
+# Agents finishing or getting blocked is the whole point of running them
+# inside `Herdr`, surface it in-app rather than staying silent.
+delivery = "herdr"
+
+[ui.toast.herdr]
+position = "bottom-right"

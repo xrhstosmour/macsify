@@ -12,6 +12,17 @@ function aliases_cheat_sheet --description "Display all command abbreviations an
     echo "  - egc              Edit .gitconfig"
     echo "  - kbcs             Show keyboard cheat sheet"
     echo "  - alcs             Show aliases cheat sheet"
+    echo "  - ehc              Edit Herdr config"
+    echo "  - cacs             Show coding agents cheat sheet"
+    echo ""
+
+    echo "🐑 HERDR:"
+    echo "  - hrd              Launch or attach to the default session"
+    echo "  - hdsv             Run the Herdr server explicitly"
+    echo "  - hdsvd            Stop the Herdr server"
+    echo "  - hdls             List sessions"
+    echo "  - hda <name>       Attach to a named session"
+    echo "  - hdag             List agents and their status"
     echo ""
 
     echo "🖥️  SYSTEM:"
