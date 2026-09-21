@@ -82,6 +82,18 @@ Supply chain: Flag new dependencies pulled from outside the project's package re
 
 Redirects: User-controlled redirect targets must be validated against an allowlist.
 
+Web hardening: Flag CORS wildcarded together with credentials, cookies missing `HttpOnly`/`Secure`/`SameSite`, and endpoints reachable over plain HTTP where TLS should be enforced.
+
+Debug and admin surfaces: Flag debug or admin functionality, mode toggles, or diagnostic endpoints (`/debug`, `/admin`, `/status`, `/env`) that can be enabled or reached in production via an environment variable, query parameter, or header.
+
+Enumeration and oracles: Flag error message, response time, response size, or status code differences between "does not exist" and "no access" that let a caller enumerate users or resources. Flag search, filter, sort, or autocomplete parameters that reveal the existence or attributes of records outside the caller's access.
+
+Export, import, and bulk operations: Flag export, backup, or bulk-read operations that can include data above the caller's access level. Flag import, restore, or bulk-write operations that bypass the same validation and permission checks as their non-bulk equivalent.
+
+Trust boundary composition: When a value crosses from one component, service, cache, queue, webhook, or lifecycle stage to another, flag the receiving side assuming a guarantee the sender didn't actually enforce. Flag capability or scope growth that survives a token refresh, delegation, or role change, when the resulting principal shouldn't retain it.
+
+Obvious exposures: Grep for `-----BEGIN` key material, security-relevant `TODO`/`FIXME`/`HACK` comments, and committed `.env`/`.pem`/`.key` files.
+
 Control relaxation: Treat a diff that weakens an existing security control, disabling a CSRF/CORS check, widening a permit or allow list, loosening a content-security-policy or frame-ancestors directive, adding an "allow other host" style override, as high severity by default, even before a concrete exploit chain is proven. Removing or loosening a guard is often riskier than never having had one, since it looks intentional.
 
 Existing code is not evidence of a safe pattern. Don't wave through a construct because it already ships and runs elsewhere in the codebase, judge it on its own merits like newly written code.
