@@ -122,6 +122,15 @@
     ],
     "PreToolUse": [
       {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.config/agentic/hooks/bash-output-cap.sh"
+          }
+        ]
+      },
+      {
         "matcher": "WebFetch",
         "hooks": [
           {
