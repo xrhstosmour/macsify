@@ -108,6 +108,12 @@ Skills are loaded by agents and triggered via commands. The `Command` column bel
 | `technical-analysis` | `/technical-analysis` | Structured technical analysis with method-level changes, notes, estimation, and architecture deepening opportunities |
 | `seo` | `/seo` | Technical SEO, E-E-A-T/content quality, schema markup, sitemap, image SEO, and AI-search (GEO/AEO) analysis for any URL |
 
+### Creative Skills
+
+| Skill | Command | Purpose |
+| ----- | ------ | ------- |
+| `promo-video` | `/promo-video` | Plan and produce a short launch video for the current project: inspect, storyboard, tone, share copy, then render locally via `npx hyperframes` |
+
 ### Design Skills
 
 | Skill | Command | Purpose |
