@@ -116,6 +116,28 @@ register_mcp_server() {
   return 0
 }
 
+# Runs a `herdr integration`/`herdr plugin` install, logging before and warning (never
+# aborting the rest of the install) on failure. Factors out the repeated log-run-warn
+# shape six Herdr install sites below would otherwise each hand-roll. Guards on `herdr`
+# actually being on PATH, `brewfile_declares herdr` only proves the Brewfile lists it,
+# not that `brew bundle` succeeded. Wrapped in `run_with_timeout`/`</dev/null` like
+# `register_mcp_server` above, a `herdr integration install <agent>` call has no `--yes`
+# equivalent and would otherwise hang the whole script under `set -e` on a stuck prompt.
+# Usage:
+#   install_herdr_component <label> <herdr subcommand and arguments...>
+install_herdr_component() {
+  local label="$1"
+  shift
+
+  if ! command -v herdr &>/dev/null; then
+    log_warning "${label} skipped, herdr not found on PATH."
+    return 1
+  fi
+
+  log_info "Installing ${label}..."
+  run_with_timeout 30 "$@" </dev/null || log_warning "${label} install failed, run manually later."
+}
+
 # Only set up the tools declared in the Brewfile. `install.sh` runs `brew bundle` before
 # this script, so the Brewfile is the intent signal, not a runtime `command -v` check.
 if [ ! -f "$MODELS_FILE_PATH" ]; then
@@ -213,6 +235,13 @@ if brewfile_declares "anomalyco/tap/opencode"; then
     else
         log_warning "Skipping 'opencode-status-hud' plugin installation as 'npm' not found!"
     fi
+
+    # `Herdr`'s own installer drops a plugin file into OpenCode's plugin directory, unlike
+    # the `settings.json`/`hooks.json` cases above nothing here overwrites it on a re-run,
+    # so this mainly matters for a first-time install picking up the integration at all.
+    if brewfile_declares herdr; then
+        install_herdr_component "Herdr integration for OpenCode" herdr integration install opencode
+    fi
 fi
 
 if brewfile_declares claude-code; then
@@ -303,6 +332,13 @@ if (settings.statusLine && typeof settings.statusLine.command === "string") {
     elif register_mcp_server claude sentry Sentry --transport http sentry "https://mcp.sentry.dev/mcp?skills=inspect" -s user; then
         log_warning "Uncheck everything except 'Inspect Issues & Events' on the consent screen."
     fi
+
+    # `Herdr`'s own installer merges a `SessionStart` hook into `settings.json` so its
+    # sidebar can show this agent's live status, run last so it lands after the `cp`
+    # above overwrote the file with the tracked baseline, not before.
+    if brewfile_declares herdr; then
+        install_herdr_component "Herdr integration for Claude Code" herdr integration install claude
+    fi
 fi
 
 if brewfile_declares codex; then
@@ -373,6 +409,13 @@ EOF
             run_with_timeout 30 codex mcp add sentry --url "https://mcp.sentry.dev/mcp?skills=inspect" </dev/null || log_warning "Sentry MCP registration failed, register manually later."
             log_warning "Uncheck everything except 'Inspect Issues & Events' on the consent screen."
         fi
+    fi
+
+    # `Herdr`'s own installer merges a `SessionStart` hook into `hooks.json`, run last
+    # so it lands after the `cat >"$CODEX_DIRECTORY/hooks.json"` above overwrote the
+    # file with the tracked baseline, not before.
+    if brewfile_declares herdr; then
+        install_herdr_component "Herdr integration for Codex" herdr integration install codex
     fi
 fi
 
@@ -447,4 +490,27 @@ EOF
             log_warning "Uncheck everything except 'Inspect Issues & Events' on the consent screen."
         fi
     fi
+
+    # `Herdr`'s own installer merges a `SessionStart` hook into `hooks/agentic.json`, run
+    # last so it lands after the `cat >"$COPILOT_DIRECTORY/hooks/agentic.json"` above
+    # overwrote the file with the tracked baseline, not before.
+    if brewfile_declares herdr; then
+        install_herdr_component "Herdr integration for Copilot CLI" herdr integration install copilot
+    fi
+fi
+
+if brewfile_declares herdr; then
+    # `herdr` itself has no auto-naming, new tabs just show a bare number, so
+    # `.config/herdr/config.toml` pairs with this plugin (152 stars, MIT,
+    # reviewed for network calls before adding here) instead of reinventing it.
+    # Pinned to the tag reviewed above, `herdr plugin install` is idempotent so
+    # re-running this is safe, but floating on the branch would silently pull
+    # whatever the next upstream push contains straight into every shell.
+    install_herdr_component "herdr-automatic-rename plugin" herdr plugin install qu8n/herdr-automatic-rename --ref v0.11.1 --yes
+
+    # Diff/file review pane, reviewed before adding: read-only against the
+    # worktree, only network call is reading (never posting to) the PR via
+    # `gh`/`glab`/`az`, per its own `README.md`. Pinned to the tag reviewed above,
+    # same reasoning as the plugin install right before this one.
+    install_herdr_component "herdr-reviewr plugin" herdr plugin install persiyanov/herdr-reviewr --ref v0.38.0 --yes
 fi

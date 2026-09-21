@@ -15,6 +15,7 @@ Opinionated `macOS` configuration via shell scripts.
 | Development Languages | `Node.js`, `Python`, `Go`, `Java`, `Ruby`, `.NET` (via `mise`) |
 | Keyboard | Remapping with persistence (`kbcs` for cheat sheet) |
 | Shell Abbreviations | Custom aliases (`alcs` for cheat sheet) |
+| Coding Agent Runtime | `Herdr` (`ehc` to edit config) |
 | Menu Bar | `Stege` |
 | Clipboard | `Maccy` |
 | Screenshots | `Flameshot` |
