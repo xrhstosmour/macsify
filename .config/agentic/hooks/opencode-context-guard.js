@@ -30,6 +30,18 @@
 //     only guards a 1MB in-memory capture safety limit), so bash's returned
 //     output is otherwise uncapped. This is a gap Claude Code's Bash tool
 //     shares too, hence bash-output-cap.sh existing at all.
+//   - Routes a new top-level session into a herdr space matching its git repo,
+//     mirroring Claude Code's herdr-workspace-router.sh (SessionStart hook).
+//     There's no dedicated "session started" hook key in this OpenCode plugin
+//     API version (@opencode-ai/plugin's Hooks interface), so this listens on
+//     the generic `event` hook for `session.created` and skips subsessions
+//     (an `info.parentID`) the same way the Claude-side hook skips subagents.
+//     herdr's env vars (HERDR_ENV/HERDR_PANE_ID/HERDR_SOCKET_PATH) are plain
+//     shell env vars set on the pane before opencode is spawned inside it, so
+//     they reach this plugin via `process.env` like any inherited OS env var,
+//     no special OpenCode plumbing needed. Shares the same
+//     ~/.config/herdr/workspace-router-map.json state file as the Claude-side
+//     hook, and the same portable mkdir-based lock (Node has no fcntl.flock).
 //
 // Static instructions (communication/standards/versioning) load via opencode.json's
 // `instructions` array instead, no hook needed for those.
@@ -46,7 +58,11 @@
 // output.output here is honored, unlike Claude Code's PostToolUse, which is
 // read-only (code.claude.com/docs/en/hooks).
 
-import { existsSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmdirSync, statSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import net from "node:net";
+import os from "node:os";
+import path from "node:path";
 
 // Service URLs that must go through a dedicated CLI, never WebFetch. Patterns
 // match against the hostname only (see below), anchored to a label boundary,
@@ -107,8 +123,187 @@ const IDLE_WARN_SECONDS = 3600;
 // once that value has actually moved forward, not on every request in a burst.
 const lastWarned = new Map();
 
+// Sends one newline-delimited JSON-RPC request to herdr's local unix socket
+// and resolves with its `result` (or rejects on an `error` response or
+// timeout). Mirrors the Claude-side hook's Python `rpc()` helper exactly,
+// same wire shape, same one-request-one-line-response protocol.
+function herdrRpc(socketPath, method, params) {
+  return new Promise((resolve, reject) => {
+    const client = net.createConnection({ path: socketPath });
+    let buffer = "";
+    const timer = setTimeout(() => {
+      client.destroy();
+      reject(new Error("herdr rpc timeout"));
+    }, 1000);
+    client.on("connect", () => {
+      const requestId = `herdr:workspace-router:${Date.now()}:${Math.floor(Math.random() * 1_000_000)}`;
+      client.write(JSON.stringify({ id: requestId, method, params }) + "\n");
+    });
+    client.on("data", (chunk) => {
+      buffer += chunk.toString("utf-8");
+      if (!buffer.includes("\n")) return;
+      clearTimeout(timer);
+      client.end();
+      try {
+        const response = JSON.parse(buffer);
+        if (response.error) reject(new Error(response.error.message || "herdr rpc error"));
+        else resolve(response.result);
+      } catch (error) {
+        reject(error);
+      }
+    });
+    client.on("error", (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+  });
+}
+
+// Portable cross-process mutex for the shared repo-to-workspace map file,
+// a plain `mkdir` is atomic on POSIX (fails with EEXIST if another process
+// already holds it). Matches the Claude-side hook's own mkdir-based lock
+// (see herdr-workspace-router.sh) so the two interoperate on the same file
+// instead of racing with incompatible locking schemes.
+// If the holder is killed before its `finally` block removes the lock
+// directory, it would otherwise wedge every future run forever, so a lock
+// older than the critical section could ever legitimately take is force-
+// cleared instead of waited out.
+const LOCK_STALE_MS = 15000;
+
+async function withHerdrMapLock(mapPath, fn) {
+  const lockPath = `${mapPath}.lock`;
+  let acquired = false;
+  for (let attempt = 0; attempt < 50; attempt++) {
+    try {
+      mkdirSync(lockPath);
+      acquired = true;
+      break;
+    } catch (error) {
+      if (error.code !== "EEXIST") throw error;
+      try {
+        const age = Date.now() - statSync(lockPath).mtimeMs;
+        if (age > LOCK_STALE_MS) {
+          try {
+            rmdirSync(lockPath);
+          } catch {
+            // Another process may have already cleared it, just retry.
+          }
+          continue;
+        }
+      } catch {
+        // Lock disappeared between the failed mkdir and this stat, retry immediately.
+      }
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+  }
+  if (!acquired) return;
+  try {
+    let repoMap = {};
+    try {
+      const content = readFileSync(mapPath, "utf-8");
+      if (content.trim()) repoMap = JSON.parse(content);
+    } catch {
+      repoMap = {};
+    }
+    await fn(repoMap);
+    const sortedMap = Object.fromEntries(Object.entries(repoMap).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+    writeFileSync(mapPath, `${JSON.stringify(sortedMap, null, 2)}\n`, "utf-8");
+  } finally {
+    try {
+      rmdirSync(lockPath);
+    } catch {
+      // Best effort, a leftover lock dir self-heals via the staleness check above.
+    }
+  }
+}
+
+// Routes the pane a new top-level OpenCode session started in into a herdr
+// space matching its git repo. Only ever runs for a pane herdr already
+// knows about and running an agent, opening a plain shell tab with no
+// repository never reaches this at all (no session, no event), and a cwd
+// that isn't a git repo exits below before anything is created or moved.
+async function routeHerdrWorkspace(info) {
+  if (!info || info.parentID) return;
+  if (process.env.HERDR_ENV !== "1") return;
+  const paneId = process.env.HERDR_PANE_ID;
+  const socketPath = process.env.HERDR_SOCKET_PATH;
+  if (!paneId || !socketPath) return;
+
+  try {
+    const paneResult = await herdrRpc(socketPath, "pane.get", { pane_id: paneId });
+    const pane = paneResult.pane;
+    const currentWorkspaceId = pane.workspace_id;
+    const cwd = pane.foreground_cwd || pane.cwd;
+
+    const workspaceResult = await herdrRpc(socketPath, "workspace.list", {});
+    const workspaces = Object.fromEntries(workspaceResult.workspaces.map((w) => [w.workspace_id, w]));
+    if (!workspaces[currentWorkspaceId] || typeof cwd !== "string" || !cwd) return;
+
+    // Identity is the worktree's own root (`--show-toplevel`), not
+    // `--git-common-dir`: the common dir is shared by every linked worktree
+    // of a repo, so keying on it would merge separate worktrees, each
+    // usually a distinct, parallel unit of work, into one space. See the
+    // matching comment in herdr-workspace-router.sh.
+    let worktreeRoot;
+    try {
+      worktreeRoot = execFileSync(
+        "git",
+        ["-C", cwd, "rev-parse", "--path-format=absolute", "--show-toplevel"],
+        { encoding: "utf-8", timeout: 2000 },
+      ).trim();
+    } catch {
+      return;
+    }
+    if (!worktreeRoot) return;
+    const repoName = path.basename(worktreeRoot) || "workspace";
+
+    const mapPath = path.join(os.homedir(), ".config", "herdr", "workspace-router-map.json");
+    mkdirSync(path.dirname(mapPath), { recursive: true });
+
+    await withHerdrMapLock(mapPath, async (repoMap) => {
+      // A stale mapping (workspace closed or renamed since) is cleared the
+      // same way as no mapping at all, it must not leave this repo stuck.
+      let mappedWorkspaceId = repoMap[worktreeRoot];
+      if (mappedWorkspaceId && !workspaces[mappedWorkspaceId]) mappedWorkspaceId = null;
+      let destination = null;
+
+      if (mappedWorkspaceId && mappedWorkspaceId !== currentWorkspaceId) {
+        destination = { type: "new_tab", workspace_id: mappedWorkspaceId };
+      } else if (!mappedWorkspaceId) {
+        const current = workspaces[currentWorkspaceId];
+        if (current.pane_count === 1 && current.tab_count === 1) {
+          repoMap[worktreeRoot] = currentWorkspaceId;
+        } else {
+          destination = { type: "new_workspace", label: repoName, tab_label: null };
+        }
+      }
+
+      if (destination) {
+        try {
+          const moveResponse = await herdrRpc(socketPath, "pane.move", { pane_id: paneId, destination });
+          const moveResult = moveResponse.move_result ?? {};
+          let resolvedWorkspaceId = moveResult.pane?.workspace_id;
+          if (moveResult.created_workspace) {
+            resolvedWorkspaceId = moveResult.created_workspace.workspace_id ?? resolvedWorkspaceId;
+          }
+          if (resolvedWorkspaceId) repoMap[worktreeRoot] = resolvedWorkspaceId;
+        } catch {
+          // Best effort, never break session start over a routing failure.
+        }
+      }
+    });
+  } catch {
+    // Best effort, never break session start over a routing failure.
+  }
+}
+
 export const AgenticReminderPlugin = async ({ client }) => {
   return {
+    event: async ({ event }) => {
+      if (event.type === "session.created") {
+        await routeHerdrWorkspace(event.properties?.info);
+      }
+    },
     "experimental.chat.system.transform": async (input, output) => {
       const sessionID = input.sessionID;
       if (!sessionID) return;
