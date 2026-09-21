@@ -149,15 +149,6 @@
             "command": "bash ~/.config/agentic/hooks/webfetch-guard.sh"
           }
         ]
-      },
-      {
-        "matcher": "Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.config/agentic/hooks/documentation-guard.sh"
-          }
-        ]
       }
     ]
   },
