@@ -182,52 +182,9 @@ When code fails: report the failure with root cause, show the failing test outpu
 
 ## Stop the Line
 
-When anything unexpected happens, STOP adding features. Preserve evidence (error output, logs, repro steps). Diagnose using the triage below. Fix the root cause, not the symptom. Guard with a regression test. Resume only after verification passes.
+When anything unexpected happens, STOP adding features. Preserve evidence (error output, logs, repro steps). Diagnose using the `diagnose` skill. Fix the root cause, not the symptom. Guard with a regression test. Resume only after verification passes.
 
 Do not push past a failing test or broken build to work on the next feature.
-
-## Debugging
-
-Follow this triage checklist in order:
-
-### 1. Reproduce
-
-Make the failure happen reliably. For test failures:
-
-```bash
-<test command> --filter "test name"
-<test command> --path "specific-file" --isolated
-```
-
-### 2. Localize
-
-Narrow down which layer fails: UI, API, database, build, external service, or the test itself. For regressions, find the commit:
-
-```bash
-git bisect start
-git bisect bad HEAD
-git bisect good <known-good-commit>
-git bisect run <test command> --filter "failing test"
-```
-
-### 3. Reduce
-
-Create the minimal failing case, remove unrelated code until only the bug remains.
-
-### 4. Fix the Root Cause
-
-Fix the underlying issue, not the symptom. Ask "why does this happen?" until you reach the actual cause. Example: duplicate entries in UI. Symptom fix is de-dup in component, root cause fix is correcting the query.
-
-### 5. Guard Against Recurrence
-
-Write a regression test that fails without the fix and passes with it.
-
-### 6. Verify End-to-End
-
-```bash
-<test command> # Full suite or specific test.
-<build command> # Type/compilation.
-```
 
 ## Boundary Definition
 
