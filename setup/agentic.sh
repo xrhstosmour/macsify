@@ -213,6 +213,14 @@ if brewfile_declares "anomalyco/tap/opencode"; then
     else
         log_warning "Skipping 'opencode-status-hud' plugin installation as 'npm' not found!"
     fi
+
+    # `Herdr`'s own installer drops a plugin file into OpenCode's plugin directory, unlike
+    # the `settings.json`/`hooks.json` cases above nothing here overwrites it on a re-run,
+    # so this mainly matters for a first-time install picking up the integration at all.
+    if command -v herdr &>/dev/null; then
+        log_info "Installing Herdr integration for OpenCode..."
+        herdr integration install opencode || log_warning "Herdr integration install failed for opencode, run manually later."
+    fi
 fi
 
 if brewfile_declares claude-code; then
@@ -303,6 +311,14 @@ if (settings.statusLine && typeof settings.statusLine.command === "string") {
     elif register_mcp_server claude sentry Sentry --transport http sentry "https://mcp.sentry.dev/mcp?skills=inspect" -s user; then
         log_warning "Uncheck everything except 'Inspect Issues & Events' on the consent screen."
     fi
+
+    # `Herdr`'s own installer merges a `SessionStart` hook into `settings.json` so its
+    # sidebar can show this agent's live status, run last so it lands after the `cp`
+    # above overwrote the file with the tracked baseline, not before.
+    if command -v herdr &>/dev/null; then
+        log_info "Installing Herdr integration for Claude Code..."
+        herdr integration install claude || log_warning "Herdr integration install failed for claude, run manually later."
+    fi
 fi
 
 if brewfile_declares codex; then
@@ -373,6 +389,14 @@ EOF
             run_with_timeout 30 codex mcp add sentry --url "https://mcp.sentry.dev/mcp?skills=inspect" </dev/null || log_warning "Sentry MCP registration failed, register manually later."
             log_warning "Uncheck everything except 'Inspect Issues & Events' on the consent screen."
         fi
+    fi
+
+    # `Herdr`'s own installer merges a `SessionStart` hook into `hooks.json`, run last
+    # so it lands after the `cat >"$CODEX_DIRECTORY/hooks.json"` above overwrote the
+    # file with the tracked baseline, not before.
+    if command -v herdr &>/dev/null; then
+        log_info "Installing Herdr integration for Codex..."
+        herdr integration install codex || log_warning "Herdr integration install failed for codex, run manually later."
     fi
 fi
 
@@ -446,5 +470,13 @@ EOF
         if register_mcp_server copilot sentry Sentry --transport http sentry "https://mcp.sentry.dev/mcp?skills=inspect"; then
             log_warning "Uncheck everything except 'Inspect Issues & Events' on the consent screen."
         fi
+    fi
+
+    # `Herdr`'s own installer merges a `SessionStart` hook into `hooks/agentic.json`, run
+    # last so it lands after the `cat >"$COPILOT_DIRECTORY/hooks/agentic.json"` above
+    # overwrote the file with the tracked baseline, not before.
+    if command -v herdr &>/dev/null; then
+        log_info "Installing Herdr integration for Copilot CLI..."
+        herdr integration install copilot || log_warning "Herdr integration install failed for copilot, run manually later."
     fi
 fi
