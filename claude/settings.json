@@ -73,7 +73,14 @@
       "WebFetch(domain:opencode.ai)",
       "WebFetch(domain:models.dev)",
       "Read(//tmp/**)",
-      "mcp__claude-in-chrome__tabs_context_mcp"
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "mcp__phabricator__pha_task_get",
+      "mcp__phabricator__pha_task_get_transactions",
+      "mcp__phabricator__pha_task_search_advanced",
+      "mcp__phabricator__pha_project_search",
+      "mcp__phabricator__pha_project_get",
+      "mcp__phabricator__pha_user_whoami",
+      "mcp__phabricator__pha_workboard_search_columns"
     ],
     "deny": [
       "Read(**/.env)",

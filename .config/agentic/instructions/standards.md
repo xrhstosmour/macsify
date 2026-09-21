@@ -131,25 +131,7 @@ One thing at a time, don't mix refactors with features in the same commit. Gate 
 
 ## Migrations
 
-### Timestamps
-
-Always use real, generated timestamps with millisecond precision when naming migration files. Never hardcode sequential or placeholder timestamps.
-
-```bash
-# Generate a real timestamp with milliseconds (UTC).
-date -u +"%Y%m%d%H%M%S%3N"
-```
-
-Do not use timestamps that look hand-typed or sequential, like `20260706120000`, `20260706120001`, `20260707120000`. These lack sub-second precision and can collide when migrations are generated in rapid succession. Better use the framework's built-in migration generator if it exists, or generate a timestamp programmatically.
-
-### Chain
-
-Migration chains must stay linear with a single head. Concurrent PRs adding migrations from different ancestors create a multi-head state that blocks `upgrade head` and fails CI.
-
-- **CI check**: Verify a single head in the lint step, no database connection required.
-- **Generate from head**: Always run `upgrade head` first so new migrations chain off the current tip.
-- **Merge heads immediately**: Resolve divergence via the framework's merge command in a dedicated PR before any new migration is added.
-- **Down-revision from script**: Set `down_revision` to the output of `current`, after `upgrade head`, never an intermediate node.
+Naming and chain-linearity rules for database migration files live in the `migrations` skill, it auto-triggers when creating or reviewing a migration.
 
 ## Planning Protocol
 
@@ -200,52 +182,9 @@ When code fails: report the failure with root cause, show the failing test outpu
 
 ## Stop the Line
 
-When anything unexpected happens, STOP adding features. Preserve evidence (error output, logs, repro steps). Diagnose using the triage below. Fix the root cause, not the symptom. Guard with a regression test. Resume only after verification passes.
+When anything unexpected happens, STOP adding features. Preserve evidence (error output, logs, repro steps). Diagnose using the `diagnose` skill. Fix the root cause, not the symptom. Guard with a regression test. Resume only after verification passes.
 
 Do not push past a failing test or broken build to work on the next feature.
-
-## Debugging
-
-Follow this triage checklist in order:
-
-### 1. Reproduce
-
-Make the failure happen reliably. For test failures:
-
-```bash
-<test command> --filter "test name"
-<test command> --path "specific-file" --isolated
-```
-
-### 2. Localize
-
-Narrow down which layer fails: UI, API, database, build, external service, or the test itself. For regressions, find the commit:
-
-```bash
-git bisect start
-git bisect bad HEAD
-git bisect good <known-good-commit>
-git bisect run <test command> --filter "failing test"
-```
-
-### 3. Reduce
-
-Create the minimal failing case, remove unrelated code until only the bug remains.
-
-### 4. Fix the Root Cause
-
-Fix the underlying issue, not the symptom. Ask "why does this happen?" until you reach the actual cause. Example: duplicate entries in UI. Symptom fix is de-dup in component, root cause fix is correcting the query.
-
-### 5. Guard Against Recurrence
-
-Write a regression test that fails without the fix and passes with it.
-
-### 6. Verify End-to-End
-
-```bash
-<test command> # Full suite or specific test.
-<build command> # Type/compilation.
-```
 
 ## Boundary Definition
 
