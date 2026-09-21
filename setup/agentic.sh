@@ -480,3 +480,12 @@ EOF
         herdr integration install copilot || log_warning "Herdr integration install failed for copilot, run manually later."
     fi
 fi
+
+if command -v herdr &>/dev/null; then
+    # `herdr` itself has no auto-naming, new tabs just show a bare number, so
+    # `.config/herdr/config.toml` pairs with this plugin (152 stars, MIT,
+    # reviewed for network calls before adding here) instead of reinventing it.
+    # `herdr plugin install` is idempotent, safe to run on every setup pass.
+    log_info "Installing herdr-automatic-rename plugin..."
+    herdr plugin install qu8n/herdr-automatic-rename --yes || log_warning "herdr-automatic-rename install failed, run manually later."
+fi

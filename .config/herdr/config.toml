@@ -21,9 +21,10 @@
 # Tabs cycle with `[`/`]` instead of the default `n`/`p`. `copy_mode`'s
 # hardcoded default is also `prefix+[`, not visible in `herdr --default-config`'s
 # printed comments, that template is incomplete, confirmed against the real
-# source (`src/config/keybinds.rs`). Its own test suite confirms a user
-# binding silently displaces whatever default sat on the same key, so this
-# is expected to just work, no separate `copy_mode = ""` override needed.
+# source (`src/config/keybinds.rs`), and a user binding silently displaces
+# whatever default sat on the same key. `copy_mode` moved to `prefix+c`
+# below, the slot `new_tab` vacates by moving to `prefix+t`, so it isn't
+# lost.
 # `switch_tab` is cleared so `prefix+1..9` is free below for jumping straight
 # to an agent by its sidebar index instead.
 next_tab = "prefix+]"
@@ -31,8 +32,10 @@ previous_tab = "prefix+["
 switch_tab = ""
 focus_agent = "prefix+1..9"
 
-# New tab, not `prefix+c`.
+# New tab, not `prefix+c`. `copy_mode` takes the vacated `prefix+c` instead
+# of losing its binding to `previous_tab` above.
 new_tab = "prefix+t"
+copy_mode = "prefix+c"
 # Keybindings overlay, not `prefix+?`.
 help = "prefix+/"
 # New workspace, not `prefix+shift+n`.
@@ -65,17 +68,20 @@ red = "#ff6e5e"
 yellow = "#f1ff5e"
 
 [ui]
-# The default is already `true`, pinned explicitly because it's easy to blame this on a
-# config bug otherwise: the new-tab dialog (`open_new_tab_overlay` in
-# `src/client/shell/overlay_input.rs`) prefills the input with the next tab number
-# (`"1"`, `"2"`, ...) as replace-on-type text, not a blank field, so pressing `enter`
-# without typing over it saves that number as the literal tab name. Type a name the
-# moment the dialog opens, don't just confirm it.
-prompt_new_tab_name = true
+# `Herdr` has no built-in auto-naming, a new tab's own default is its bare
+# index (`open_new_tab_overlay` in `src/client/shell/overlay_input.rs`
+# prefills the rename input with that number as replace-on-type text), so
+# `herdr-automatic-rename` (installed by `setup/agentic.sh`) does the naming
+# instead. Off here per that plugin's own README: the prompt counts as a
+# manual rename and opts the tab out of automatic naming otherwise.
+prompt_new_tab_name = false
 # Matches `WezTerm`'s tab bar position.
 tab_bar_position = "top"
 status_indicators = "symbols"
 sidebar_collapsed_mode = "compact"
+# Keep in sync with `[theme.custom]`'s `accent` above, `Herdr` has no way to
+# reference one table's value from another, so `TOML` can't express this as
+# one source of truth.
 accent = "#bd5eff"
 confirm_close = true
 # No `{agent}`/`{branch}` token exists for the outer window title (only
@@ -92,13 +98,13 @@ rows = [
 ]
 
 [ui.sidebar.agents]
-# Header: which agent, in which space. Subheader: which tab it's running in.
-# A single `agent.space.branch` string isn't possible, sidebar rows only accept
-# known tokens or `$custom` ones, no literal separators, confirmed by testing
-# a "." entry against `herdr config check`, so this spreads the same
-# information across the header/subheader pair instead.
+# Header: which agent. Subheader: which tab it's running in, named by
+# `herdr-automatic-rename` (see `.config/herdr-automatic-rename/config.sh`).
+# `workspace` dropped from the header, the sidebar already groups agents
+# under their space above this row, repeating it here just widened the row
+# without adding information.
 rows = [
-    ["state_icon", "agent", "workspace"],
+    ["state_icon", "agent"],
     ["tab"],
 ]
 
