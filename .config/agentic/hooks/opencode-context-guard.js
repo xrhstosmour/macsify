@@ -8,10 +8,6 @@
 //     check was dropped from both scripts: it was an unreliable estimate of
 //     actual context usage, and the host's own context indicator already
 //     covers that accurately.
-//   - Blocks stray .md file creation, mirroring Claude Code's
-//     documentation-guard.sh (same extension check, exempt basenames, and
-//     exempt-path allowlist, adapted for OpenCode's own agentic-config
-//     symlink targets instead of Claude Code's ~/.claude/* paths).
 //   - Caps oversized `bash` stdout+stderr post-execution, mirroring Claude
 //     Code's bash-output-cap.sh (same 20000-byte cap and the same "full
 //     output is the point" command exemptions), but through
@@ -58,7 +54,7 @@
 // output.output here is honored, unlike Claude Code's PostToolUse, which is
 // read-only (code.claude.com/docs/en/hooks).
 
-import { existsSync, mkdirSync, readFileSync, rmdirSync, statSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, rmdirSync, statSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import net from "node:net";
 import os from "node:os";
@@ -74,15 +70,6 @@ const blockedHosts = [
   { pattern: /(^|\.)sentry\.io$/i, use: "the Sentry MCP tools per the `read-sentry-issue` skill" },
   { pattern: /(^|\.)grafana\./i, use: "`logcli` per the `search-grafana-logs` skill" },
 ];
-
-// Fails open on any doubt, same as documentation-guard.sh: a false-positive
-// block on real skill/agent authoring is worse than an occasional stray file.
-const docGuardExemptBasenames = new Set(["README.md", "CLAUDE.md", "AGENTS.md", "CODEX.md", "CONTRIBUTING.md", "SKILL.md"]);
-// OpenCode's own agents/commands/skills/instructions live under the
-// .config/agentic/ source of truth (symlinked into
-// ~/.config/opencode/{agents,commands,skills,instructions}), not under
-// ~/.claude/*, so the exempt paths differ from documentation-guard.sh.
-const docGuardExemptPathPattern = /(^|\/)\.config\/agentic\/|\/\.config\/opencode\/(agents|commands|skills|instructions)\//;
 
 // Same cap and "full output is the point" exemptions as bash-output-cap.sh,
 // see the file header for the exemptions this side deliberately doesn't
@@ -331,33 +318,17 @@ export const AgenticReminderPlugin = async ({ client }) => {
       }
     },
     "tool.execute.before": async (input, output) => {
-      const tool = (input.tool ?? "").toLowerCase();
-
-      if (tool === "webfetch") {
-        const url = String(output.args?.url ?? "");
-        let host = url;
-        try {
-          host = new URL(url).hostname;
-        } catch {
-          // Not a parseable absolute URL, fall back to matching the raw string.
-        }
-        const blocked = blockedHosts.find((entry) => entry.pattern.test(host));
-        if (blocked) {
-          throw new Error(`Blocked: use ${blocked.use}, not WebFetch.`);
-        }
-        return;
+      if ((input.tool ?? "").toLowerCase() !== "webfetch") return;
+      const url = String(output.args?.url ?? "");
+      let host = url;
+      try {
+        host = new URL(url).hostname;
+      } catch {
+        // Not a parseable absolute URL, fall back to matching the raw string.
       }
-
-      if (tool === "write") {
-        const filePath = String(output.args?.filePath ?? "");
-        if (!/\.md$/i.test(filePath)) return;
-        if (existsSync(filePath)) return;
-        const base = filePath.split("/").pop();
-        if (docGuardExemptBasenames.has(base)) return;
-        if (docGuardExemptPathPattern.test(filePath)) return;
-        throw new Error(
-          "Unnecessary documentation file creation blocked. Use README.md/CLAUDE.md/AGENTS.md for docs instead, per CLAUDE.md's file-creation rule.",
-        );
+      const blocked = blockedHosts.find((entry) => entry.pattern.test(host));
+      if (blocked) {
+        throw new Error(`Blocked: use ${blocked.use}, not WebFetch.`);
       }
     },
     "tool.execute.after": async (input, output) => {
