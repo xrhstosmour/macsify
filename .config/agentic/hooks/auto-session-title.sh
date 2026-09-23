@@ -58,7 +58,7 @@ nohup bash -c '
   session_id="$2"
   transcript_path="$3"
 
-  title=$(claude -p --model claude-haiku-4-5-20251001 --no-session-persistence \
+  title=$(claude -p --model haiku --no-session-persistence \
     "Summarize this coding-session request as a 3-5 word kebab-case slug: lowercase, hyphen-separated, no punctuation, no quotes, output nothing but the slug itself. Request: $first_message" \
     2>/dev/null | tr -d "\"" | tr -c "a-z0-9-" "-" | sed -E "s/-+/-/g; s/^-//; s/-$//" | cut -c1-60)
 
