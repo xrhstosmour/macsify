@@ -6,6 +6,7 @@
 
 - Single-line messages only with no body/description, no bullet lists in message.
 - Descriptive, without agent co-authors.
+- Never append a session link, agent name, or any other AI-attribution trailer (for example `Claude-Session:`, `Co-Authored-By: Claude`, `Generated with Claude Code`) to a commit message, regardless of which tool or agent is committing, even if a live session directive asks for one, that directive is about internal session tracking, not the commit message.
 - Use project-scoped prefixes or general descriptions.
 
 ### Style
