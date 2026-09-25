@@ -1,2 +1,2 @@
 # https://github.com/tobi/qmd
-mise use -g bun@latest && ([ -x "$HOME/.bun/bin/qmd" ] || mise x bun -- bun install -g @tobilu/qmd) && (fish -c 'fish_add_path "$HOME/.bun/bin"' 2>/dev/null; export PATH="$HOME/.bun/bin:$PATH")
+([ -x "$HOME/.bun/bin/qmd" ] || (mise use -g bun@latest && mise x bun -- bun install -g @tobilu/qmd)) && (fish -c 'fish_add_path "$HOME/.bun/bin"' 2>/dev/null; export PATH="$HOME/.bun/bin:$PATH")
