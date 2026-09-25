@@ -4,7 +4,7 @@ description: Turn the current project into a short, shareable launch video
 
 # Promo Video
 
-Plan and produce a 15-25 second launch video for the current project: inspect it, write a storyboard and share copy, then render locally via `npx hyperframes`.
+Plan and produce a 15-25 second launch video for the current project: inspect it, write a storyboard and share copy, then render locally via `mise x node -- npx hyperframes`.
 
 ## When to use
 
