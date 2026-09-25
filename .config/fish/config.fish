@@ -27,6 +27,18 @@ set -U fish_greeting
 # `~/.config/agentic/skills` directory, so scanning both just doubles skill discovery.
 set -gx OPENCODE_DISABLE_CLAUDE_CODE_SKILLS 1
 
+# Opt out of usage telemetry by default. `DO_NOT_TRACK` is the cross-tool
+# convention, `HYPERFRAMES_NO_TELEMETRY` is checked separately by `Hyperframes`,
+# which otherwise reports on an opt-out basis and links usage to a `HeyGen`
+# account once signed in. Both are compared against the literal string `1`.
+set -gx DO_NOT_TRACK 1
+set -gx HYPERFRAMES_NO_TELEMETRY 1
+
+# Make `Node.js` read the system keychain instead of its own bundled CA list, so
+# `Node` ecosystem tools (`npm`, `yarn`, `npx`) trust whatever certificates are
+# installed there, such as one presented by a proxy or VPN that terminates TLS.
+set -gx NODE_USE_SYSTEM_CA 1
+
 # Activate `mise` environment for `Fish` shell.
 mise activate fish | source
 

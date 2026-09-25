@@ -115,7 +115,7 @@ Skills are loaded by agents and triggered via commands. The `Command` column bel
 
 | Skill | Command | Purpose |
 | ----- | ------ | ------- |
-| `promo-video` | `/promo-video` | Plan and produce a short launch video for the current project: inspect, storyboard, tone, share copy, then render locally via `npx hyperframes` |
+| `promo-video` | `/promo-video` | Plan and produce a short launch video for the current project: inspect, storyboard, tone, share copy, then render locally via `mise x node -- npx hyperframes`, whose creation skills `packages/additional_packages.txt` installs |
 
 ### Design Skills
 
@@ -140,9 +140,7 @@ Skills are loaded by agents and triggered via commands. The `Command` column bel
 | ----- | ------- | ------- |
 | `manage-phabricator-task` | `/manage-phabricator-task` | Create and edit Phabricator tasks via the official `Phabricator MCP` server, including tag and workboard-column conventions for boards that use them |
 
-### Tool Skills
-
-Auto-triggered by topic, no dedicated command, formerly always-loaded files under `tools/`.
+### Tool Skills, auto-triggered by topic
 
 | Skill | Purpose |
 | ----- | ------- |
