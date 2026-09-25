@@ -28,6 +28,28 @@ permission:
 - Tests verify behavior through public interfaces, not implementation details. A renamed internal function should not break tests.
 - Mock only at system boundaries (external services, non-deterministic ops). Prefer real implementations or lightweight fakes for internal collaborators.
 
+## Test Authoring Gate
+
+Before writing any test, answer these questions, a missing answer means do not add it yet:
+
+1. What observable behavior, invariant, or contract does it protect?
+2. What credible regression would make it fail?
+3. Why won't an existing test already catch that failure? Prefer extending a table-driven case over adding a near-duplicate test.
+
+Then check the test against these junk patterns, a match means rewrite it or drop it:
+
+- Assertion-free: exercises the code but asserts nothing meaningful.
+- Duplicate: another test already covers the same contract on the same input.
+- Implementation-coupled: asserts internals or private state instead of the public interface, a behavior-preserving refactor would break it.
+- Self-fulfilling mock: the mock implements the exact behavior the test then asserts, proving the mock, not the code.
+- Needs a fake seam: only passes because you added a production-only export, flag, or hook that no real caller needs. Test the real boundary instead.
+- Copy-paste near-duplicate: the same test repeated with different variable names instead of one table-driven case.
+- Trivial wiring: exact source/import greps, or getter/setter round-trips with no logic.
+- Wrong-reason pass: a negative-control or error test that would also pass for an unrelated failure, not the guard under test.
+- Overpromising name: the test name claims more than its assertions actually check.
+
+A bug regression test must fail on the pre-fix code for the intended reason and pass after the fix. If it never demonstrably failed, it proves nothing.
+
 ## Steps
 
 1. Read every file you will change.
