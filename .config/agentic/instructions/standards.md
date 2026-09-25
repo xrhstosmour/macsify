@@ -207,10 +207,9 @@ Manage context actively. Long sessions burn tokens because every API call re-sen
 
 ### Compaction Triggers
 
-- Compact after every 2-3 completed subtasks. Do not batch more work into a bloated context.
 - Compact after every PR merge or major phase transition.
-- Compact before any idle gap longer than 30 minutes. Idle gaps force expensive cache rebuilds on the next turn.
-- Never continue a session across calendar days. Start a fresh session instead. The previous session's summary carries forward.
+- Compact when the session has been idle past the prompt-cache TTL, the `context-guard.sh` hook warns at that boundary.
+- Start a fresh session for unrelated work rather than extending a long one. The previous session's summary carries forward.
 - If the context health warning fires, compact immediately. Do not defer, do not start new work, do not rationalize one more small task first.
 
 ### Token-Saving Best Practices
