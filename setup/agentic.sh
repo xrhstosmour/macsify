@@ -273,9 +273,11 @@ effort: ${effort}" "$HOME/.claude/agents/${agent}.md"
     cp "$AGENTIC_SCRIPT_DIRECTORY/../claude/settings.json" "$HOME/.claude/"
     cp "$AGENTIC_SCRIPT_DIRECTORY/../claude/keybindings.json" "$HOME/.claude/"
 
-    # `claude/settings.json` bakes an absolute `claude-hud` runtime path into `statusLine.command`.
-    # That path is machine and user specific, so re-detect it here instead of trusting whatever
-    # was last committed, otherwise a path from one machine silently breaks the HUD on another.
+    # `claude/settings.json` commits a bare `bun` in `statusLine.command` and this resolves it to
+    # an absolute path, which is what the HUD needs since Claude Code does not run the statusline
+    # through a `mise`-shimmed shell. The committed value stays a bare command name so the file
+    # carries no machine or user specific path, and so an unsubstituted checkout still works
+    # wherever `bun` is on `PATH` instead of pointing at some other machine's home directory.
     # Same `mise`-installed `node`/`bun` gap as `opencode-status-hud` above, not available yet
     # on a first-time install, re-run `install.sh` after `configure.sh` completes to pick it up.
     log_info "Re-detecting claude-hud runtime path..."
@@ -295,7 +297,7 @@ if (settings.statusLine && typeof settings.statusLine.command === "string") {
 }
 ' "$HOME/.claude/settings.json" "$hud_runtime_path"
     else
-        log_warning "No 'bun' or 'node' found, leaving 'claude-hud' statusLine command as committed."
+        log_warning "No 'bun' or 'node' found, leaving 'claude-hud' statusLine command as committed, it falls back to whatever 'bun' resolves to on PATH."
     fi
 
     mkdir -p "$HOME/.claude/plugins/claude-hud"
