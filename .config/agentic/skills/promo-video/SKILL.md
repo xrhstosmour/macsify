@@ -13,7 +13,7 @@ Planning and taste live here. Composition, animation timing, and audio sourcing 
 
 - Node.js 22+ and `ffmpeg` on `PATH`. `ffmpeg` comes from the Brewfile, Node from `mise`. Every Hyperframes call below goes through `mise x node --`, which resolves Node whatever shell it runs in and installs it on demand if missing, a bare `npx` isn't on `PATH` outside an activated shell.
 - Check readiness before starting: `mise x node -- npx hyperframes doctor`. If it fails, report the missing piece and stop, don't try to install `ffmpeg` or Node yourself.
-- Hyperframes reports usage telemetry on an opt-out basis, a hardcoded PostHog key plus a stable install id under `~/.hyperframes/`, linked to a HeyGen account once signed in. `DO_NOT_TRACK` and `HYPERFRAMES_NO_TELEMETRY` are set in `config.fish` and inline on the install command, so fish sessions and the install are covered. A call from some other shell is not, and `~/.hyperframes/config.json` still records `telemetryEnabled`. Don't remove those variables without asking.
+- Hyperframes reports usage telemetry on an opt-out basis, a hardcoded PostHog key plus a stable install id under `~/.hyperframes/`, linked to a HeyGen account once signed in. `HYPERFRAMES_NO_TELEMETRY` is set in `config.fish` and inline on the install command, so fish sessions and the install are covered. A call from some other shell is not, and `~/.hyperframes/config.json` still records `telemetryEnabled`. Don't remove it without asking.
 
 ## Output directory
 
