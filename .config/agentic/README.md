@@ -140,9 +140,7 @@ Skills are loaded by agents and triggered via commands. The `Command` column bel
 | ----- | ------- | ------- |
 | `manage-phabricator-task` | `/manage-phabricator-task` | Create and edit Phabricator tasks via the official `Phabricator MCP` server, including tag and workboard-column conventions for boards that use them |
 
-### Tool Skills
-
-Auto-triggered by topic, no dedicated command, formerly always-loaded files under `tools/`.
+### Tool Skills, auto-triggered by topic
 
 | Skill | Purpose |
 | ----- | ------- |
