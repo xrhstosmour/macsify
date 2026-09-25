@@ -57,7 +57,7 @@ The single biggest driver of "this looks designed" versus "this looks generated.
 
 ### One focal point per view
 
-Every screen has one thing the user came to do. That thing dominates, through size, contrast, position, or the space around it. When everything competes equally, nothing wins and the interface reads like a parking lot. Before building, name the focal element out loud. Then make it win: bigger, higher-contrast, or ringed in whitespace. Demote everything else deliberately.
+Every screen has one thing the user came to do. That thing dominates, through size, contrast, position, or the space around it. When everything competes equally, nothing wins and the interface reads like a parking lot. Before building, name the focal element. Then make it win: bigger, higher-contrast, or ringed in whitespace. Demote everything else deliberately.
 
 ### Type scale is a ratio, and weight beats size
 
@@ -112,7 +112,7 @@ Blur your eyes at the interface. You should still perceive hierarchy, what's abo
 
 ## 8. Before Writing Each Component
 
-Every time you write UI code, even small additions, state:
+Every time you write UI code, even small additions, settle these for yourself first. This is a decision checklist, not output. Don't print it, see the Rules at the end on not narrating process, what reaches the user is the short recommendation in "Suggest and Ask" below.
 
 ```
 Intent:     [who is this human, what must they do, how should it feel]
@@ -124,7 +124,7 @@ Typography: [typeface + the size/weight/color levers, and WHY]
 Spacing:    [base unit + chosen density]
 ```
 
-This checkpoint is mandatory. If you can't explain WHY for each, you're defaulting, stop and think.
+Any line you can't answer with a reason is a line where you defaulted. Go back to "Intent First" and "Product Domain Exploration" for that one before writing the component.
 
 ## 9. Use What Exists
 
