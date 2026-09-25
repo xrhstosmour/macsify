@@ -2,7 +2,7 @@
 
 ## Core
 
-- Think first, then implement in small steps and validate incrementally.
+- Implement in small steps and validate incrementally.
 - Before any user-facing operation, check for a matching skill (Claude Code: `available_skills`/`skill` tool, OpenCode: auto-discovered `SKILL.md`) and invoke it first. Do not hand-roll what a skill covers.
 - Prefer existing patterns over new abstractions.
 - Tests required for behavior changes.
@@ -38,11 +38,7 @@ After implementing code, pause and self-critique: re-read your work, question wh
 
 ### Know Your Limits
 
-If you don't know something, say so explicitly, never invent an answer. Answer only when confident: you can point to specific evidence, a file you read, a command output you saw, a source you cited, that directly supports the claim. Below that bar, prefer silence or a clarifying question over a plausible-sounding guess.
-
-### Think Before Answering
-
-Reason through non-trivial questions step by step before writing the final response, showing your reasoning or a lightweight plan. If your reasoning reveals a gap, stop and address it rather than papering over it.
+If you don't know something, say so explicitly, never invent an answer. Answer only when confident: you can point to specific evidence, a file you read, a command output you saw, a source you cited, that directly supports the claim. Below that bar, prefer silence or a clarifying question over a plausible-sounding guess. If you spot a gap while working, stop and address it rather than papering over it.
 
 ### Cite Your Sources
 
@@ -51,16 +47,6 @@ When answering from documents, files, or external data, find and read the releva
 ### Self-Check Before Output
 
 Re-read your response before sending. Ask: is this factual, can I point to where I got it? If you realize you fabricated something, acknowledge it immediately and correct it.
-
-### Contrastive Boundaries
-
-| Scenario | Do | Don't |
-| -------- | -- | ----- |
-| Asked about an API you have not read the docs for | "I haven't checked the docs for that API yet. Let me look it up." | Invent method signatures or parameter names from memory. |
-| Asked about a file you have not opened | "I haven't read that file. Let me open it first." | Describe the file's contents based on its name or path. |
-| Asked if a bug exists | Read the code and run relevant tests, then answer with evidence. | "Probably not" without checking. |
-| Asked to summarize a document | Read the document first, cite relevant sections. | Summarize from the title or general knowledge. |
-| You are uncertain about the answer | "I'm not confident about this. Here's what I'd need to verify:" | Give a confident-sounding answer with no evidence. |
 
 ## Implementation
 
@@ -135,11 +121,7 @@ Naming and chain-linearity rules for database migration files live in the `migra
 
 ## Planning Protocol
 
-For any complex or multi-step task, follow this sequence before writing code:
-
-1. Context Discovery: Read all relevant files and environment first.
-2. Multi-Approach Proposal: Present 2-3 distinct conceptual approaches before writing a single line of code.
-3. Human Sign-off: Wait for explicit approval before executing.
+Complex and multi-step tasks go through `/scope`, which owns the discovery, approach, and sign-off sequence.
 
 ## Verification Before Code
 
@@ -225,10 +207,9 @@ Manage context actively. Long sessions burn tokens because every API call re-sen
 
 ### Compaction Triggers
 
-- Compact after every 2-3 completed subtasks. Do not batch more work into a bloated context.
 - Compact after every PR merge or major phase transition.
-- Compact before any idle gap longer than 30 minutes. Idle gaps force expensive cache rebuilds on the next turn.
-- Never continue a session across calendar days. Start a fresh session instead. The previous session's summary carries forward.
+- Compact when the session has been idle past the prompt-cache TTL, the `context-guard.sh` hook warns at that boundary.
+- Start a fresh session for unrelated work rather than extending a long one. The previous session's summary carries forward.
 - If the context health warning fires, compact immediately. Do not defer, do not start new work, do not rationalize one more small task first.
 
 ### Token-Saving Best Practices

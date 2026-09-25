@@ -4,7 +4,7 @@ description: Create, review, comment on, or edit a GitHub pull request.
 
 # Manage GitHub PR
 
-Create, review, comment on, or edit a `PR` using the `manage_github_pr` skill instructions.
+Create, review, comment on, or edit a `PR` using the `manage-github-pr` skill instructions.
 
 ## When to use
 

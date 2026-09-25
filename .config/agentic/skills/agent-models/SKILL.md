@@ -129,11 +129,11 @@ Ask the user which variants/effort levels each model supports.
 
 ## Rank per role
 
-Use the capability data collected above to rank models. Do not guess or rely on general knowledge when ranking. Use the capability data collected above.
+Rank models from the capability data collected above. Do not guess or rely on general knowledge when ranking.
 
 | Agent role | Priority | Data to use for ranking |
 | leader, architect | Reasoning strength, context window | Sort by `context_window` descending, then by `reasoning_options` complexity. Larger context + more effort levels = better for planning. |
-| implementor | Code generation quality | Prefer models tagged as code-optimized in models.dev metadata. Fallback: prefer OpenAI-compatible, codex-style, over Anthropic-compatible for code gen. |
+| implementor | Code generation quality | Prefer models tagged as code-optimized in models.dev metadata. If nothing carries that tag, rank by the provider's own published coding guidance fetched in "Research capabilities", never by a general impression of which vendor writes better code. |
 | reviewer | Critical reasoning, analysis | Must be a different vendor or tier than implementor so the review catches blind spots. In single-provider setups, use a higher tier model. |
 | designer | Creative/UX reasoning | Prefer models with broader general knowledge. Context window is secondary. |
 | tester, clarifier | Speed, reliability | Prefer models with higher rate limits or lower cost for uninterrupted work. Still use a capable model, not the absolute cheapest. |
@@ -149,8 +149,6 @@ When building the proposal, show a table with:
 - The capability evidence from `models.dev` or the Go rate table
 - A one-line reason, such as "largest context window", "highest rate limit", or "different vendor from implementor"
 
-Important: Do not assign the same model to adjacent pipeline roles, implementor and reviewer. Use different vendors so the review catches blind spots.
-
 ## Apply
 
 Once the user approves, update `.config/agentic/models.txt`. This is the single source of truth for all model assignments. `setup/agentic.sh` reads it and injects models into both tools.
@@ -162,25 +160,25 @@ Once the user approves, update `.config/agentic/models.txt`. This is the single 
 # Use '-' as value when a field does not apply.
 
 # OpenCode
-opencode:leader:model:opencode/deepseek-v4-flash-free
+opencode:leader:model:<provider>/<model-id>
 opencode:leader:variant:max
-opencode:explore:model:opencode/big-pickle
+opencode:explore:model:<provider>/<cheaper-model-id>
 opencode:explore:variant:-
 
 # Claude Code
-claude:leader:model:sonnet
+claude:leader:model:<alias>
 claude:leader:effort:medium
-claude:tester:model:haiku
+claude:tester:model:<cheaper-alias>
 
 # Codex
-codex:leader:model:gpt-5.6
+codex:leader:model:<model-id>
 codex:leader:effort:medium
-codex:tester:model:gpt-5.6-luna
+codex:tester:model:<cheaper-model-id>
 codex:tester:effort:low
 
 # Copilot CLI
-copilot:leader:model:claude-sonnet-4.5
-copilot:tester:model:claude-haiku-4.5
+copilot:leader:model:<vendor-model-id>
+copilot:tester:model:<cheaper-vendor-model-id>
 ```
 
 ### Fields per tool
@@ -197,7 +195,7 @@ copilot:tester:model:claude-haiku-4.5
 1. Read `.config/agentic/models.txt`.
 2. Update the `<tool>:` lines for whichever tools the user is targeting, `opencode`, `claude`, `codex`, or `copilot`, with the approved model assignments.
 3. Write the updated file.
-4. Run `setup/agentic.sh` to inject models into every configured tool. NOTHING else to edit.
+4. Run `setup/agentic.sh` to inject models into every configured tool. Nothing else to edit.
 
 ### Verify
 

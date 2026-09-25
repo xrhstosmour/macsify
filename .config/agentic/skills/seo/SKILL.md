@@ -12,6 +12,11 @@ description: >
 
 # SEO Analysis
 
+Search behavior changes faster than this file does, and nothing re-checks it. Treat
+the thresholds, crawler tokens, schema type status, and platform claims below as
+unverified: confirm anything load-bearing against the live source before reporting
+it as current.
+
 ## When to use
 
 - The user gives a URL and asks for an SEO audit, health check, or "what's
@@ -329,7 +334,11 @@ walk through four phases before writing the action plan:
 ## Output format
 
 ```
-### SEO Health Score: XX/100
+### SEO Health: <pass | warn | fail>
+
+The overall verdict is the worst category status below, nothing more. Don't compute
+a numeric score, there is no defined formula for one and an invented number reads as
+measured when it isn't.
 
 | Category | Status | Notes |
 |---|---|---|
@@ -346,8 +355,8 @@ walk through four phases before writing the action plan:
 ### Low / backlog
 ```
 
-For a narrow question (just schema, just sitemap, etc.), skip the full score
-and answer directly — don't force a health score onto a single-category ask.
+For a narrow question (just schema, just sitemap, etc.), skip the table and answer
+directly — don't force an overall verdict onto a single-category ask.
 
 ## Error handling
 

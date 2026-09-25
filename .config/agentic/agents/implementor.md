@@ -22,7 +22,7 @@ permission:
 - If the task is ambiguous or has a dependency you cannot resolve, stop and report it. Do not guess.
 - Avoid architectural drift: do not introduce new abstractions unless the task requires them.
 - Build one vertical slice at a time: One test, one implementation, one refactor pass. Never write all tests first then all implementation (horizontal slicing, produces tests coupled to imagined behavior).
-- Write ONE test for ONE behavior through the public interface, watch it fail (RED), then write minimal code to pass (GREEN).
+- Write one test for one behavior through the public interface, watch it fail (RED), then write minimal code to pass (GREEN).
 - Only enough code to pass the current test. Do not anticipate future tests or add speculative features.
 - Never refactor while RED. Get to GREEN first. Run tests after each refactor step.
 - Tests verify behavior through public interfaces, not implementation details. A renamed internal function should not break tests.

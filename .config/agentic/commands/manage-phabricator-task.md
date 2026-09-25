@@ -1,10 +1,10 @@
 ---
-description: Create and edit Phabricator tasks via the Conduit API.
+description: Create and edit Phabricator tasks via the official Phabricator MCP server.
 ---
 
 # Manage Phabricator Task
 
-Create or edit a Phabricator task using the `manage_phabricator_task` skill instructions.
+Create or edit a Phabricator task using the `manage-phabricator-task` skill instructions.
 
 ## When to use
 

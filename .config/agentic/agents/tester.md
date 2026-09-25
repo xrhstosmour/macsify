@@ -12,7 +12,7 @@ permission:
 
 ## Rules
 
-- Try and detect test framework and follow style.
+- Detect the test framework in use and match its style.
 - Use the run command provided in the task prompt exactly. Do not invent commands.
 - Run each test file and collect results. Do not stop at the first failure.
 - Do not fix application code. If a test fails due to a production bug, report it and stop.

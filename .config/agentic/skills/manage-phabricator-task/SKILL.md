@@ -20,7 +20,7 @@ description: >
 - User asks to create, file, open, or submit a Phabricator task or ticket, including a "parent task" with no existing TID given, see "Umbrella tasks" below for that disambiguation.
 - User asks to update, edit, reassign, close, reopen, or change the status/priority/tags/workboard column of an existing Phabricator task.
 - User asks to post a stakeholder-facing status update comment on a task.
-- Do NOT use for just reading existing tasks. Use the `read-phabricator-task` skill for that.
+- Not for just reading existing tasks. Use the `read-phabricator-task` skill for that.
 
 ## Authentication
 

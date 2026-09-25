@@ -4,7 +4,7 @@ description: Produce a structured technical analysis with method-level changes, 
 
 # Technical Analysis
 
-Produce a technical analysis document using the `technical_analysis` skill instructions.
+Produce a technical analysis document using the `technical-analysis` skill instructions.
 
 ## When to use
 
