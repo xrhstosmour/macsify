@@ -59,6 +59,7 @@ Total: <sum> workdays -> ~<weeks> weeks -> ~<sprints> sprints
 2. Notes section: capture constraints, dependencies, side effects, and decisions that affect implementation.
 3. Estimation section: Use `[ ]` (unchecked) so they can be marked done later. One bullet per numbered item above. Add test coverage into each item's estimate. Be conservative, better to finish early than late. Add separate bullets for "Full integration testing" and "Buffer for unknowns". Then split total into "Implementation" and "Testing & buffer" lines, then a "Total" line with workdays, weeks, and sprints.
 4. Estimations must be safe: A single software engineer working without AI assistance should be able to complete the work within the estimated time. Do not assume AI tooling will speed anything up.
+5. Conversions are fixed, don't invent them per analysis: 5 workdays is 1 week, 1 sprint is 2 weeks unless the user states a different sprint length, ask when it isn't already known. Round weeks and sprints up to the nearest half unit, never down.
 
 ## Process
 
