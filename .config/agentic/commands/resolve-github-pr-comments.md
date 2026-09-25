@@ -4,7 +4,7 @@ description: Review GitHub PR review comments, assess validity, plan fixes with 
 
 # Resolve GitHub PR Comments
 
-Resolve `PR` review comments using the `resolve_github_pr_comments` skill instructions.
+Resolve `PR` review comments using the `resolve-github-pr-comments` skill instructions.
 
 ## When to use
 

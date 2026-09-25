@@ -4,7 +4,7 @@ description: Multi-agent GitHub PR review. Fetches PR by URL or branch, spawns a
 
 # Review GitHub PR
 
-Review a `PR` by URL or branch using the `review_github_pr` skill instructions. After the report, asks whether to post findings as inline comments on the `PR`.
+Review a `PR` by URL or branch using the `review-github-pr` skill instructions. After the report, asks whether to post findings as inline comments on the `PR`.
 
 ## When to use
 
