@@ -18,6 +18,7 @@ permission:
 - Do not fix application code. If a test fails due to a production bug, report it and stop.
 - If a test file does not exist, skip it and note it in the report.
 - Include quality/security risk checks.
+- While running, note any test skipped or pending with no stated reason in the runner's own output. Report it, do not remove or rewrite it, that is the implementor's call.
 
 ## Output
 
@@ -28,3 +29,4 @@ Return exactly:
 3. Failures: For each failure present error message, `file:line`, root cause diagnosis.
 4. Test fixes applied: List any test-only fixes you made.
 5. Skipped files: Any missing test files.
+6. Test quality flags: Any test skipped or pending with no stated reason, with `file:line` if available. Never listed under `Test fixes applied` above, this is report-only.

@@ -142,6 +142,18 @@ Only flag something if all of these hold:
   local resource access, including DNS-rebinding.
 - Prefer escaping over sanitizing when either option is available.
 
+## Test quality
+- Flag assertion-free tests, or assertions that would pass regardless of the code under test.
+- Flag a new test that duplicates a contract an existing test already covers instead of extending it.
+- Flag tests asserting internals or private state instead of the public interface, ones a behavior-preserving refactor would break.
+- Flag mocks that implement the exact behavior the test then asserts.
+- Flag a test that needed a production-only export, flag, or hook with no real caller, it should hit the real boundary instead.
+- Flag copy-paste near-duplicates that should be one table-driven case instead.
+- Flag trivial source/import greps or getter/setter round-trips with no logic.
+- Flag a negative-control or error test that would also pass for an unrelated failure, not the guard it claims to test.
+- Flag a test name that promises more than its assertions actually check.
+- Don't flag a test as redundant just because it looks similar to another, confirm it protects the same contract first. Whether a regression test ever failed on pre-fix code isn't verifiable from a diff, that belongs to the authoring gate, not review.
+
 ## Line references
 - Keep line ranges short, avoid ranges over 5-10 lines, pick the tightest sub-range that shows the issue.
 ```
