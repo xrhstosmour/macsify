@@ -117,6 +117,8 @@ Skills are loaded by agents and triggered via commands. The `Command` column bel
 | ----- | ------ | ------- |
 | `promo-video` | `/promo-video` | Plan and produce a short launch video for the current project: inspect, storyboard, tone, share copy, then render locally via `npx hyperframes` |
 
+`promo-video` hands off to Hyperframes' own creation skills, twelve `hyperframes*`/`general-video`/`media-use`/`product-launch-video` directories vendored into `skills/` rather than fetched at runtime, so a fresh machine has them straight after `install.sh`. Apache-2.0, upstream license at `skills/hyperframes/LICENSE`. They report telemetry by default, opt out with `HYPERFRAMES_NO_TELEMETRY=1`. They are not refreshed automatically and there is no version to pin, see "Vendored Hyperframes skills" in `skills/promo-video/SKILL.md` for the provenance, the telemetry detail, and the refresh script.
+
 ### Design Skills
 
 | Skill | Command | Purpose |
