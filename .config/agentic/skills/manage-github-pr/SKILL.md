@@ -45,7 +45,7 @@ Run all checks. Stop and ask on any failure.
 git branch --show-current
 ```
 
-If on `main` or `master`, do NOT proceed. Create a feature branch first, see Phase 3. Never push commits to `main` or `master`.
+If on `main` or `master`, stop. Create a feature branch first, see Phase 3. Never push commits to `main` or `master`.
 
 #### 2.2 Empty PR guard
 
@@ -260,7 +260,7 @@ git rev-parse origin/<branch>
 
 ### 8. PR Creation
 
-Always include `--assignee @me`. Never omit it.
+Always include `--assignee @me`.
 
 ```bash
 pr_url=$(gh pr create \
@@ -274,7 +274,7 @@ pr_number=$(echo "$pr_url" | grep -oE '/pull/[0-9]+$' | grep -oE '[0-9]+')
 
 ### 9. Labels
 
-Required for every PR you create, run it immediately after step 8, in the same turn, before reporting anything back. Applying no label because nothing matched is a valid outcome, treating this as optional detail and moving straight to the summary is not.
+Required for every PR you create, run it immediately after step 8, in the same turn, before reporting anything back. Applying no label because nothing matched is a valid outcome.
 
 Resolve the canonical repo explicitly first. A local `origin` URL left over from a GitHub rename or transfer can silently resolve `gh pr list` to the wrong or an empty repo, with no error, unlike `gh pr create`/`push`, which do surface a "repository moved" warning. Never rely on implicit repo resolution for this step.
 

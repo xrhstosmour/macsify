@@ -28,7 +28,7 @@ A discipline for hard bugs. Skip phases only when explicitly justified.
 
 This is the skill. Everything else is mechanical. If you have a fast, deterministic, agent-runnable pass/fail signal for the bug, you will find the cause. Without one, no amount of staring at code will save you.
 
-Spend disproportionate effort here. Be aggressive. Be creative. Refuse to give up.
+Spend disproportionate effort here, well past the point where the cause feels guessable.
 
 Before building a loop, check Sentry, if the project uses it, see the `read-sentry-issue` skill. Sentry issues provide stack traces, request params, and breadcrumbs that shortcut the reproduction process. Use them to narrow the scope before constructing a loop.
 
