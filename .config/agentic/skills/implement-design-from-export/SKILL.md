@@ -21,9 +21,9 @@ Do not ask the user to authenticate, generate an API key, or set up any credenti
 
 Design exports are static layouts. Hover states, animations, validation, and state management are not part of the export and need to be implemented separately.
 
-When implementing those missing states, apply the `interface-design` skill's motion framework, frequency gate, easing, duration budgets, origin-aware popovers, rather than inventing ad hoc timings.
+When implementing those missing states, apply the `web-app-design` skill's motion framework, frequency gate, easing, duration budgets, origin-aware popovers, rather than inventing ad hoc timings.
 
-Exports often hand-roll dropdowns, modals, toasts, or tooltips as plain styled `div`s. Before wiring these up, check whether the project already has a primitive for it, see `interface-design`'s native → primitive → hand-roll ladder, and use that instead of keeping the exported markup as the real implementation.
+Exports often hand-roll dropdowns, modals, toasts, or tooltips as plain styled `div`s. Before wiring these up, check whether the project already has a primitive for it, see `web-app-design`'s native → primitive → hand-roll ladder, and use that instead of keeping the exported markup as the real implementation.
 
 Before calling the implementation done, exercise every interactive element the export implies, hover, focus, open/close, since a static export can't show whether those states were considered.
 
