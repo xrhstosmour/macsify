@@ -1,5 +1,5 @@
 ---
-name: interface-design
+name: web-app-design
 description: >
   Craft-first interface design for dashboards, admin panels, SaaS apps, tools,
   settings pages, and data interfaces. Use when designing, building, reviewing,
@@ -7,7 +7,7 @@ description: >
   states, or design-system consistency matter.
 ---
 
-# Interface Design
+# Web App Design
 
 Build product interfaces with the craft of a top design team, Linear, Vercel, Stripe, Apple. The difference between those and generic output is not talent. It is that every decision was decided, the hierarchy is unmistakable, and a hundred small details are correct at once. This skill is how you get there.
 
@@ -196,7 +196,7 @@ Motion should be felt, not watched. Fast, purposeful, and never in the way.
 
 ## 12. Design System Persistence
 
-After completing a task, always offer to save the patterns: "Want me to save these for future sessions?" If yes, write to `.interface-design/system.md`:
+After completing a task, always offer to save the patterns: "Want me to save these for future sessions?" If yes, write to `.web-app-design/system.md`, renaming a legacy `.interface-design/system.md` to it first if that's what the project already has:
 
 - Direction and feel
 - Depth strategy (borders/shadows/layered) and spacing base unit
@@ -231,7 +231,7 @@ Then ask: "Does that direction feel right?"
 ## Rules
 
 - Do not announce modes or narrate process. Jump into the work. State suggestions with reasoning.
-- Inspect the existing app, design tokens, component patterns, and `.interface-design/system.md` if present before proposing anything.
+- Inspect the existing app, design tokens, component patterns, and `.web-app-design/system.md` (or the legacy `.interface-design/system.md`) if present before proposing anything.
 - Make the domain exploration concrete before choosing layout, color, type, density, and navigation.
 - Keep user-facing updates short. Don't expose long private design monologues, surface the useful recommendation or decision.
 - Harsh borders, dramatic surface jumps, flat hierarchy, monotone layout, inconsistent spacing, mixed depth strategies, missing states, dramatic drop shadows, large radius on small elements, gradients for decoration, multiple accent colors, different hues for different surfaces, and default typography are all signs of defaults winning. Catch them and fix them.
