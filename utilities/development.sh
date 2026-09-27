@@ -30,6 +30,10 @@ LANGUAGE_NAMES=(
     "bun"
 )
 
+# `Java` is pinned to the latest long term support `Temurin` rather than
+# `latest`, because the Android Gradle plugin only supports a known range and
+# the newest `Temurin` is regularly outside it.
+JAVA_VERSION="temurin-25"
 
 # Import functions and flags.
 source "$DEVELOPMENT_SCRIPT_DIRECTORY/../helpers/ui.sh"
@@ -48,6 +52,11 @@ for i in "${!LANGUAGE_DISPLAY_NAMES[@]}"; do
     fi
 
     message="Do you want to install $display_name?"
+
+    # `Java` is pinned, see `JAVA_VERSION` above.
+    if [ "$mise_name" = "java" ]; then
+        command="mise use --global java@$JAVA_VERSION"
+    fi
 
     # `Ruby` specific requirements needed for installation (`libyaml`, `rust` and `YJIT` support).
     if [ "$mise_name" = "ruby" ]; then
