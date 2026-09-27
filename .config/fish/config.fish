@@ -1,6 +1,12 @@
 # Add `Homebrew`'s binary directory to the `PATH` environment variable.
 fish_add_path "/opt/homebrew/bin/"
 
+# Add `adb` and `fastboot`, which live under the Android SDK root.
+fish_add_path "/opt/homebrew/share/android-commandlinetools/platform-tools"
+
+# Add `dart`, which the `flutter` cask does not symlink.
+fish_add_path "/opt/homebrew/share/flutter/bin"
+
 # Disable `Homebrew` environment update hints.
 set -gx HOMEBREW_NO_ENV_HINTS 1
 
@@ -36,6 +42,9 @@ set -gx HYPERFRAMES_NO_TELEMETRY 1
 # `Node` ecosystem tools (`npm`, `yarn`, `npx`) trust whatever certificates are
 # installed there, such as one presented by a proxy or VPN that terminates TLS.
 set -gx NODE_USE_SYSTEM_CA 1
+
+# Point the Android tooling at the SDK root, a cask cannot export it itself.
+set -gx ANDROID_HOME /opt/homebrew/share/android-commandlinetools
 
 # Activate `mise` environment for `Fish` shell.
 mise activate fish | source
