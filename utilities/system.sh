@@ -139,6 +139,11 @@ apply_system_configuration() {
     log_info "Showing the main window when launching 'Activity Monitor'..."
     defaults write com.apple.ActivityMonitor OpenMainWindow -bool true
 
+    # Open the iOS simulator on the device alone, without `DeviceHub`'s sidebar.
+    # The value is the `JSON` the application writes itself, `kind` 0 is hidden.
+    log_info "Hiding the iOS simulator sidebar..."
+    defaults write com.apple.dt.Devices sidebarColumnVisibility -data 7b226b696e64223a302c2269734175746f6d61746963223a66616c73657d
+
     log_info "Configuring 'Login Items'..."
 
     # Define desired `Login Items`.
