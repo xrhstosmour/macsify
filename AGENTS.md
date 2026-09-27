@@ -10,7 +10,7 @@ This file documents the repository itself. For the agentic (AI assistant) subsys
 | ---- | ------- |
 | `core/` | Shell constants shared across scripts |
 | `helpers/` | Shared shell functions: logging (`logs.sh`), prompts (`ui.sh`), Brewfile parsing (`brewfile.sh`) |
-| `setup/` | Installation steps, `homebrew.sh` and `agentic.sh` run directly by `install.sh`, the rest (developer tools, applications, shell, macOS preferences) run by `configure.sh` |
+| `setup/` | Installation steps, `homebrew.sh` and `agentic.sh` run directly by `install.sh`, the rest (developer tools, mobile toolchain, applications, shell, macOS preferences) run by `configure.sh` |
 | `utilities/` | macOS system preference scripts, one per domain (`dock.sh`, `finder.sh`, `keyboard.sh`, `trackpad.sh`, etc.) |
 | `settings/` | Third-party app config/preference files restored during install (`aerospace.toml`, `flameshot.ini`, `.plist.xml` files) |
 | `packages/` | `Brewfile` (Homebrew), `store_applications_ids.txt` (Mac App Store, via `mas`), `additional_packages.txt` (arbitrary install commands) |
@@ -22,6 +22,16 @@ This file documents the repository itself. For the agentic (AI assistant) subsys
 ## Fish functions
 
 `.config/fish/functions/` holds reusable helpers invoked by abbreviations in `.config/fish/conf.d/abbr.fish`. Notably `git.fish` (rebasing, worktrees, fixups, `GitHub` PR helpers) and `agentic.fish` (`claude_session_list`/`opencode_session_list` and their delete counterparts). Check there before writing new shell logic for `git`/session-management needs.
+
+## Mobile development toolchain
+
+`setup/mobile.sh` owns everything `Flutter` needs to build for Android and iOS. It is opt-in, `configure.sh` asks for it in the developer tools section, right after `utilities/development.sh`, which is why the `Mac App Store` step runs before that section, the iOS half needs `Xcode` already installed.
+It installs the Android SDK packages, accepts their licences, creates the emulator and simulator devices, and points the command line tools at `Xcode`. The `JDK` is not its business, `utilities/development.sh` owns the `Java` pin.
+The Android platform, build tools and `NDK` versions are read out of the installed `Flutter`'s `FlutterExtension.kt` instead of being hardcoded, so a `Flutter` upgrade does not leave the SDK behind. Every path is derived from `brew --prefix`.
+The emulator and simulator device names are the one thing duplicated, between the script's constants and the `open_android_emulator`/`open_ios_emulator` launchers in `.config/fish/functions/emulators.fish`. Change them in both.
+`Xcode` 27 has no `Simulator.app`, `DeviceHub` hosts the simulator window. Its sidebar is hidden through a preference written by `utilities/system.sh`, so `open_ios_emulator` opens on the device alone. The inspector panel and window floating have no preference behind them, set those once by hand and they stay. The simulator itself is switched to the dark appearance when the script creates it, matching `utilities/appearance.sh`.
+SDK packages go through the `android` CLI that replaces the deprecated `sdkmanager`. It accepts each package's licence and writes it under `licenses` as it installs, so there is no separate licence acceptance step. `avdmanager` still creates the emulator, the `android` CLI cannot name an `AVD` or build one from a concrete device profile such as `pixel_10_pro`, only from generic categories.
+The standalone `android-platform-tools` cask is deliberately absent from the Brewfile. The `platform-tools` package installs the `adb` that Gradle and `Flutter` actually invoke inside the SDK, and a second, independently versioned `adb` in `Homebrew`'s binary directory means two `adb` servers fighting over port 5037. It also lets `Flutter` resolve the wrong SDK root, but only when `ANDROID_HOME` is unset, since `Flutter` prefers the environment and falls back to walking `adb` on the `PATH`.
 
 ## Script conventions
 
