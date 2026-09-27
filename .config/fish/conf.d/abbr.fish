@@ -29,6 +29,8 @@ abbr scstp "sudo launchctl unload"
 abbr scd "sudo launchctl unload -w"
 abbr scrr "sudo launchctl kickstart -k"
 abbr des "disable_android_emulators_audio"
+abbr ae "open_android_emulator"
+abbr ie "open_ios_emulator"
 abbr adbp "adb pair"
 
 # Network abbreviations.

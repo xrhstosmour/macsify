@@ -22,6 +22,8 @@ function aliases_cheat_sheet --description "Display all command abbreviations an
     echo "  - cs               Clean system"
     echo "  - ks               Kill audio daemons"
     echo "  - des              Disable emulator audio"
+    echo "  - ae               Launch Android emulator"
+    echo "  - ie               Launch iOS simulator"
     echo "  - adbp ip:port     Pair ADB device"
     echo "  - sm               System monitor"
     echo "  - ado              Enable 'AirDrop' to 'Everyone'"
