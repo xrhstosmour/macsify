@@ -7,6 +7,7 @@
   "includeCoAuthoredBy": false,
   "preferredNotifChannel": "terminal_bell",
   "spinnerTipsEnabled": false,
+  "awaySummaryEnabled": false,
   "autoUpdatesChannel": "stable",
   "cleanupPeriodDays": 15,
   "remoteControlAtStartup": true,
