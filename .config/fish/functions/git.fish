@@ -1062,6 +1062,42 @@ end
 # once. Worktrees are kept in a centralized folder per repo.
 # Usage:
 #   git_worktree_add <branch> [base_branch]
+# Opens a new worktree's pane through `herdr worktree open` so its space
+# carries worktree provenance and nests under the repo's parent space in the
+# sidebar. This lives outside `git_worktree_add` because it is a `herdr`
+# sidebar/UX concern, independent of creating the git worktree itself.
+# A plain `cd` never attaches that provenance, only `herdr worktree
+# create`/`open` do (confirmed against `herdr` 0.9.1 and
+# https://github.com/herdrdev/herdr/issues/3620), which is also why
+# `herdr-workspace-router.sh`'s generic `pane.move` never groups its spaces.
+# `--focus` switches to the new grouped pane instead of `cd`-ing the current
+# shell, so the pane the caller ran `gwta` from is left untouched. Returns
+# success only when the pane was actually opened and grouped.
+function _herdr_open_worktree_pane
+    set repo_root "$argv[1]"
+    set worktree_path "$argv[2]"
+    set branch_slug "$argv[3]"
+    set repo_name "$argv[4]"
+
+    if not test -n "$HERDR_SOCKET_PATH"; or not command -v herdr >/dev/null 2>&1; or not command -v jq >/dev/null 2>&1
+        return 1
+    end
+
+    set parent_workspace (herdr worktree list --cwd "$repo_root" 2>/dev/null | jq -re '.result.source.source_workspace_id // empty')
+    if test -z "$parent_workspace"
+        log_warning "herdr worktree grouping failed, falling back to a plain cd."
+        return 1
+    end
+
+    if not herdr worktree open --workspace "$parent_workspace" --path "$worktree_path" --label "$branch_slug" --focus --trust-repository >/dev/null 2>&1
+        log_warning "herdr worktree grouping failed, falling back to a plain cd."
+        return 1
+    end
+
+    log_success "Opened as a grouped `herdr` pane under `$repo_name`."
+    return 0
+end
+
 function git_worktree_add
     if test -z "$argv[1]"
         log_error "Usage: git_worktree_add <branch> [base_branch]"
@@ -1122,6 +1158,12 @@ function git_worktree_add
                 mise trust --silent "$mise_config"
             end
         end
+    end
+
+    # Opening the worktree as a grouped `herdr` pane is a UX convenience, not
+    # a prerequisite for the worktree itself, so fall back to a plain `cd`.
+    if _herdr_open_worktree_pane "$repo_root" "$worktree_path" "$branch_slug" "$repo_name"
+        return 0
     end
 
     cd "$worktree_path"
