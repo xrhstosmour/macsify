@@ -6,6 +6,7 @@ abbr ehc "code ~/.config/herdr/config.toml"
 
 # System abbreviations.
 abbr sm "btm"
+abbr am "abtop"
 abbr ff "fastfetch"
 abbr kbcs "keybindings_cheat_sheet"
 abbr alcs "aliases_cheat_sheet"

@@ -26,6 +26,7 @@ function aliases_cheat_sheet --description "Display all command abbreviations an
     echo "  - ie               Launch iOS simulator"
     echo "  - adbp ip:port     Pair ADB device"
     echo "  - sm               System monitor"
+    echo "  - am               Agent monitor"
     echo "  - ado              Enable 'AirDrop' to 'Everyone'"
     echo "  - adc              Disable 'AirDrop'"
     echo "  - po               Shutdown system"
