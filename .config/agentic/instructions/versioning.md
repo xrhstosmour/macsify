@@ -160,7 +160,7 @@ Each worktree is a separate directory with its own branch. Agents work in parall
 
 ### Collision Isolation
 
-Before starting work, check `git status` and `git worktree list`. If the current checkout already carries uncommitted changes unrelated to the task at hand, or another worktree or session is already active on the branch you need to touch, do not work directly in that shared checkout.
+Before starting work, check `git status`, `git worktree list`, and whether another agent could already be active on the repo, another `herdr` pane, a separate terminal window, or a different tool (`Claude Code`, `OpenCode`, `Codex`, an IDE agent) entirely. A clean `git status` does not rule this out, a concurrent agent can be mid-edit on files before that edit ever surfaces there. Inside `herdr`, `herdr agent list` reports each active agent's `cwd`, check it against the repo you're about to touch. Outside `herdr` there's no reliable equivalent, `ps aux | grep -iE 'claude|opencode|codex'` lists matching processes but can't attribute one to a repo, so treat it as advisory only and ask the user directly when unsure. If the current checkout already carries uncommitted changes unrelated to the task at hand, another worktree or session is already active on the branch you need to touch, or another agent could plausibly be active on the repo, do not work directly in that shared checkout.
 
 ```bash
 # Isolate the task instead of working in the colliding checkout.
