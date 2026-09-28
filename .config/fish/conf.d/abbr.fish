@@ -38,6 +38,7 @@ abbr adbp "adb pair"
 abbr ip "printf 'IPv4 (en0): %s\n' $(ipconfig getifaddr en0)"
 abbr wrip "witr --port"
 abbr wpi "witr --pid"
+abbr tss "tailscale status"
 
 # Terminal tools abbreviations.
 abbr cat "bat"

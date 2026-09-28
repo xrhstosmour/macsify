@@ -52,6 +52,7 @@ function aliases_cheat_sheet --description "Display all command abbreviations an
     echo "  - ip               Show IP address"
     echo "  - wrip <port>      Show what's running on the specified port"
     echo "  - wpi <pid>        Show what's running with the specified process ID"
+    echo "  - tss              Show Tailscale peers and their addresses"
     echo ""
 
     echo "⌨️  TERMINAL TOOLS:"
