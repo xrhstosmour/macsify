@@ -1,6 +1,6 @@
 ---
 name: manage-github-project
-description: Use for publishing an approved multi-step implementation plan to a GitHub Projects v2 board as one issue per step, assigned to the user, ordered to encode dependencies, plus ongoing status sync and PR linkage back to those issues. Triggered by phrases like "make an agents plan for this in GitHub projects", "break this plan into issues on the board", "put this plan on the project board", "create issues for each step and add them to the project", "track this plan on GitHub Projects", "sync the project board", "mark this in progress/done on the board", "link this PR to the project issue". Not for creating or editing a single standalone issue with no project board involved, see `manage-github-issue`. Not for reading or listing issues/project items without changing anything, see `read-github-issue`. Not for creating or editing the pull request itself, see `manage-github-pr`, this skill only covers the issue side and the board.
+description: Use for creating a new GitHub Projects v2 board with a standard Status setup, or publishing an approved multi-step plan to a board as one issue per step, assigned to the user, plus ongoing status sync and PR linkage. Triggered by phrases like "create a project board like this one", "set up a new GitHub project", "make an agents plan for this in GitHub projects", "break this plan into issues on the board", "put this plan on the project board", "track this in GitHub Projects", "sync the project board", "link this PR to the project issue". Not for a single standalone issue with no project board, see `manage-github-issue`. Not for reading/listing without changing anything, see `read-github-issue`. Not for the pull request itself, see `manage-github-pr`.
 ---
 
 # Manage GitHub Project
@@ -8,12 +8,81 @@ description: Use for publishing an approved multi-step implementation plan to a 
 ## When to use
 
 - `/manage-github-project`, or user says "make an agents plan for this in GitHub projects and issues", "break this into issues on the board", "put this plan on the project board", "publish this plan to the project", "create issues for each step and link them", "track this in GitHub Projects", "sync the project board", "mark this issue in progress/done on the board", "link this PR to the tracking issue".
+- User asks to create a new GitHub Projects v2 board, with or without matching an existing reference board's `Status` setup.
 - After a multi-step implementation plan has been discussed and approved, and the user wants it tracked as one GitHub issue per step on a Projects v2 board.
 - User asks to update an issue's `Status` field on a board, or to record a merged PR against its tracking issue.
 - Not for creating or editing a single issue with no project board involvement, see `manage-github-issue`.
 - Not for just reading or listing issues/project items, see `read-github-issue`.
 - Not for creating or editing the pull request itself, see `manage-github-pr`.
 - Not for a full multi-agent code review, see `review-github-pr`.
+
+## Creating a new project
+
+`gh project create` makes a bare board whose built-in `Status` field (auto-created by GitHub, cannot be renamed) only has default `Todo`/`In Progress`/`Done` options with generic colors and no descriptions. There is no `gh project field-edit` or option-level edit command, matching a reference board's exact `Status` options (names, colors, descriptions) needs one GraphQL mutation right after creation.
+
+### A. Validate Intent
+
+Confirm with the user:
+- Project title and owner (user or org).
+- Whether to use the standard four-option `Status` set below, or a different set they specify. Don't assume the four-option set applies just because a plan-publishing task is coming next, ask.
+
+### B. Preview
+
+```
+Create project "<title>" owned by <owner>.
+Status options:
+  ToDo         yellow  "This item hasn't been started"
+  In Progress  green   "This is actively being worked on"
+  Blocked      red     "This is blocked because of technical or business decisions."
+  Done         purple  "This has been completed"
+```
+
+Ask: "Ready to create this project?" Do NOT create anything without explicit approval.
+
+### C. Create and Configure
+
+```bash
+project_json=$(gh project create --owner <owner> --title "<title>" --format json)
+project_number=$(echo "$project_json" | jq -r '.number')
+
+status_field_id=$(gh project field-list "$project_number" --owner <owner> --format json \
+  --jq '.fields[] | select(.name=="Status") | .id')
+
+query=$(cat <<'EOF'
+mutation($fieldId: ID!) {
+  updateProjectV2Field(input: {
+    fieldId: $fieldId,
+    singleSelectOptions: [
+      {name: "ToDo", color: YELLOW, description: "This item hasn't been started"},
+      {name: "In Progress", color: GREEN, description: "This is actively being worked on"},
+      {name: "Blocked", color: RED, description: "This is blocked because of technical or business decisions."},
+      {name: "Done", color: PURPLE, description: "This has been completed"}
+    ]
+  }) {
+    projectV2Field { ... on ProjectV2SingleSelectField { id name } }
+  }
+}
+EOF
+)
+gh api graphql -f query="$query" -f fieldId="$status_field_id"
+```
+
+The quoted heredoc (`<<'EOF'`) keeps the literal apostrophes and quotes in the option descriptions from being touched by the shell, don't inline this query as a single-quoted string instead, the apostrophe in "hasn't" would break it.
+
+This mutation replaces the field's entire option list in one call. Only run it immediately after creating a brand-new project, while the `Status` field still has its untouched default options and no item has been assigned a status yet. Running it against an existing project's `Status` field discards every option not listed here, along with any items' status values that pointed at a discarded option.
+
+### D. Report
+
+```bash
+gh project view "$project_number" --owner <owner> --json url --jq .url
+```
+
+```
+Created project "<title>" (#<project_number>) for <owner>: <url>
+Status: ToDo, In Progress, Blocked, Done, matching the reference set.
+```
+
+`gh` CLI has no command for configuring additional views. The default view already shows every built-in field (Assignees, Labels, Milestone, Repository, Reviewers, Linked pull requests, Parent issue, Sub-issues progress, Created, Updated, Closed) alongside `Status`, so no extra step is needed to match a reference board there. If the user wants the view itself renamed or laid out differently, that has to be done by hand in the GitHub UI.
 
 ## Publishing a plan as issues
 
@@ -232,5 +301,6 @@ The reference board doesn't use this, every item is a flat issue with prose depe
 - Never mark an item `Done` without confirming the PR actually merged, or the user explicitly confirming completion another way.
 - PRs are not added to the project board as items by default. Only do it if the user explicitly asks.
 - On any command failure: show the exact command and exact error, stop, and ask the user. Never silently retry, skip, or fall back.
-- No remote mutation (issue create, item-add, item-edit, issue edit) without explicit user approval of the preview shown in Phase 4 or Phase 8.
+- No remote mutation (issue create, item-add, item-edit, issue edit, project create, field update) without explicit user approval of the preview shown in Phase 4, Phase 8, or "Creating a new project" Phase B.
+- Only run the `Status` option replacement mutation (Phase C of "Creating a new project") immediately after creating a brand-new project. Running it against an existing project discards every option not listed and any item's status pointing at a discarded option.
 - Follow `~/.config/agentic/instructions/communication.md` for tone in issue bodies and summaries, `~/.config/agentic/instructions/versioning.md` for git-adjacent conventions, and `~/.config/agentic/instructions/standards.md` for the "Stop the Line" and error-handling behavior this skill applies throughout.
