@@ -45,6 +45,18 @@ new_workspace = "prefix+n"
 reload_config = "prefix+r"
 resize_mode = "prefix+shift+r"
 
+# `herdr-reviewr` (installed by `setup/agentic.sh`) ships with no keybinding of
+# its own, only a CLI invoke command, so its diff pane is unreachable without
+# this. `prefix+d` for "diff", kept as a `prefix+<key>` chord like every other
+# binding above instead of a bare `cmd+` chord, `d` is unused above. Addressed
+# by `<plugin_id>.<action_id>`, not the plugin's display name, per the
+# plugin's own `README.md`.
+[[keys.command]]
+key = "prefix+d"
+type = "plugin_action"
+command = "persiyanov.reviewr.toggle"
+description = "Toggle herdr-reviewr diff pane"
+
 [theme]
 # Closest built-in dark theme to start from, overridden below to match
 # `WezTerm`'s palette exactly.

@@ -1,0 +1,10 @@
+# `herdr-reviewr` overrides. See the plugin's `README.md` `Configuration`
+# section for every key (https://github.com/persiyanov/herdr-reviewr), only
+# what diverges from its defaults lives here. Read by the plugin itself, not
+# consumed by anything in this repo, separate from `herdr`'s own
+# `.config/herdr/config.toml`.
+
+# Default is "uncommitted" (working tree vs `HEAD` only), so an agent's
+# already-committed turns stay hidden until pressing `b`. This pane exists to
+# review what an agent did on its branch, open on that diff instead.
+default_scope = "branch"
