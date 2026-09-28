@@ -101,7 +101,7 @@ function git_auto_fix_up
     end
 
     # Get the log of the current branch excluding commits from the upstream branch.
-    set -l commits_list (git log --oneline --pretty=format:'%h | %s' --no-merges $default_branch..$current_branch | string split '\n')
+    set -l commits_list (git log --oneline --reverse --pretty=format:'%h | %s' --no-merges $default_branch..$current_branch | string split '\n')
 
     # Check if the commits list is empty.
     if test -z "$commits_list"
@@ -121,7 +121,7 @@ function git_auto_fix_up
             # Print the commit hash and message.
             echo -e "$BOLD_YELLOW$commit_hash$NO_COLOR $BOLD_GREEN|$NO_COLOR $commit_message"
         end
-    end | fzf --multi --ansi --bind 'enter:execute(git commit --fixup {1} --no-verify)+abort,tab:execute(git diff {1}^! | less -R),?:toggle-preview' --preview '
+    end | fzf --multi --ansi --layout=reverse --bind 'result:last,enter:execute(git commit --fixup {1} --no-verify)+abort,tab:execute(git diff {1}^! | less -R),?:toggle-preview' --preview '
 
         # Keep the commit hash and message.
         set commit_hash {1}
@@ -164,8 +164,10 @@ end
 # Usage:
 #   git_stash_list
 function git_stash_list
-    # Get the stash list as an array.
-    set -l stash_list (git stash list -n 50 --pretty=format:'%h|%s' | string split '\n')
+    # Get the newest 50 stashes as an array, oldest first.
+    # `git stash list` walks the reflog, which rejects `--reverse`, so the order is flipped with `tail -r`.
+    # `tformat` is used over `format` so the last line keeps its newline and survives the flip.
+    set -l stash_list (git stash list -n 50 --pretty=tformat:'%h|%s' | tail -r | string split '\n')
 
     # Check if the stash list is empty.
     if test -z "$stash_list"
@@ -184,7 +186,7 @@ function git_stash_list
 
         # Print the branch related to the stash and its message.
         echo -e "$BOLD_YELLOW$stash_hash$NO_COLOR $BOLD_GREEN|$NO_COLOR $stash_message"
-    end | fzf --ansi --bind 'enter:execute(git stash apply (git log -g stash --format="%h %gd" | grep -m 1 {1} | awk "{print \$2}"))+abort,delete:execute(git stash drop (git log -g stash --format="%h %gd" | grep -m 1 {1} | awk "{print \$2}"))+abort,tab:execute(git stash show -p {1} | less -R),?:toggle-preview' --preview '
+    end | fzf --ansi --layout=reverse --bind 'result:last,enter:execute(git stash apply (git log -g stash --format="%h %gd" | grep -m 1 {1} | awk "{print \$2}"))+abort,delete:execute(git stash drop (git log -g stash --format="%h %gd" | grep -m 1 {1} | awk "{print \$2}"))+abort,tab:execute(git stash show -p {1} | less -R),?:toggle-preview' --preview '
         # Extract stash hash and message from the selection.
         set stash_hash {1}
         set stash_message (echo {2..} | cut -d"|" -f2- | sed "s/^ //")
@@ -243,7 +245,7 @@ function git_log_current_branch
     end
 
     # Get the log of the current branch excluding commits from the upstream branch.
-    set -l log_list (git log --oneline --pretty=format:'%h | %s' $default_branch..$current_branch | string split '\n')
+    set -l log_list (git log --oneline --reverse --pretty=format:'%h | %s' $default_branch..$current_branch | string split '\n')
 
     # Check if the log list is empty.
     if test -z "$log_list"
@@ -259,7 +261,7 @@ function git_log_current_branch
 
         # Print the commit hash and message.
         echo -e "$BOLD_YELLOW$commit_hash$NO_COLOR $BOLD_GREEN|$NO_COLOR $commit_message"
-    end | fzf --ansi --bind 'enter:execute(git reset --hard {1})+abort,tab:execute(git diff {1}^! | less -R),?:toggle-preview' --preview '
+    end | fzf --ansi --layout=reverse --bind 'result:last,enter:execute(git reset --hard {1})+abort,tab:execute(git diff {1}^! | less -R),?:toggle-preview' --preview '
         # Extract commit hash and message from the selection.
         set commit_hash {1}
         set commit_message (echo {2..} | cut -d"|" -f2- | sed "s/^ //")
@@ -310,7 +312,8 @@ function git_list_branches
     # Get the current branch.
     set current_branch (git branch --show-current)
 
-    # Get all local and remote branches as arrays.
+    # Get all local and remote branches as arrays. The order here does not matter,
+    # the assembled list is sorted by last commit time further down.
     set -l all_branches (git branch -a --format='%(refname:short)')
     set -l merged_branches (git branch -a --merged $default_branch | sed 's/^[* ]*//')
     set -l local_branches (git branch --format='%(refname:short)')
@@ -374,13 +377,32 @@ function git_list_branches
         return 1
     end
 
+    # Order the whole list by last commit time, oldest first. One `for-each-ref` call does the
+    # sorting, walking `$final_branches` with a `git log` each would fork once per branch.
+    set -l ordered_refs (git for-each-ref --sort=committerdate --format='%(refname:short)' refs/heads refs/remotes)
+    set -l ordered_branches
+    for b in $ordered_refs
+        if contains -- "$b" $final_branches
+            set ordered_branches $ordered_branches "$b"
+        end
+    end
+
+    # Belt and braces, every name above already comes from a ref `for-each-ref` covers,
+    # this only matters if that ever stops being true.
+    for b in $final_branches
+        if not contains -- "$b" $ordered_branches
+            set ordered_branches $ordered_branches "$b"
+        end
+    end
+    set final_branches $ordered_branches
+
     for line in $final_branches
         if test "$line" = "$current_branch"
             echo -e "$BOLD_YELLOW$line$NO_COLOR"
         else
             echo -e "$BOLD_GREEN$line$NO_COLOR"
         end
-    end | fzf --ansi --bind 'enter:execute(git checkout {1})+abort,delete:execute(git branch -D {1})+abort,tab:execute(git diff {1} | less -R),?:toggle-preview' --preview '
+    end | fzf --ansi --layout=reverse --bind 'result:last,enter:execute(git checkout {1})+abort,delete:execute(git branch -D {1})+abort,tab:execute(git diff {1} | less -R),?:toggle-preview' --preview '
         set branch_name {1}
         set author (git log -1 --pretty=format:"%an" $branch_name)
         set date (git log -1 --pretty=format:"%ad" --date=format-local:"%d/%m/%Y at %H:%M:%S" $branch_name)
@@ -414,7 +436,7 @@ function git_cherry_pick_commit
     set current_branch (git branch --show-current)
 
     # Get the list of commits from all remote branches except the current one.
-    set -l commits_list (git log --oneline --pretty=format:'%h | %s' --all --remotes | grep -v "origin/$current_branch" | string split '\n')
+    set -l commits_list (git log --oneline --reverse --pretty=format:'%h | %s' --all --remotes | grep -v "origin/$current_branch" | string split '\n')
 
     # Check if the commit list is empty.
     if test -z "$commits_list"
@@ -430,7 +452,7 @@ function git_cherry_pick_commit
 
         # Print the commit hash and message.
         echo -e "$BOLD_YELLOW$commit_hash$NO_COLOR $BOLD_GREEN|$NO_COLOR $commit_message"
-    end | fzf --ansi --bind 'enter:execute(git cherry-pick {1})+abort,?:toggle-preview' --preview '
+    end | fzf --ansi --layout=reverse --bind 'result:last,enter:execute(git cherry-pick {1})+abort,?:toggle-preview' --preview '
         # Keep the commit hash and message.
         set commit_hash {1}
         set commit_message (echo {2..} | cut -d"|" -f2- | sed "s/^ //")
@@ -595,8 +617,11 @@ end
 # Usage:
 #   github_pr_reviews
 function github_pr_reviews
-    # Fetch open PRs where user is involved but is not the author.
-    set prs_list (gh pr list --state open --search "involves:@me -author:@me" --json number,title,author,reviews,url --template '{{range .}}{{.number}}|{{.title}}|{{.author.login}}|{{len .reviews}}|{{.url}}{{"\n"}}{{end}}' | string split '\n')
+    # Fetch open PRs where user is involved but is not the author, then flip to oldest first.
+    # The flip has to happen here rather than through a `sort:` qualifier, `gh` caps the result
+    # at 30 and the search API sorts before that cut, so asking for ascending returns the 30
+    # oldest pull requests instead of the 30 newest shown in ascending order.
+    set prs_list (gh pr list --state open --search "involves:@me -author:@me" --json number,title,author,reviews,url --template '{{range .}}{{.number}}|{{.title}}|{{.author.login}}|{{len .reviews}}|{{.url}}{{"\n"}}{{end}}' | tail -r | string split '\n')
 
     # Check if the PR list is empty.
     if test -z "$prs_list"
@@ -613,7 +638,7 @@ function github_pr_reviews
 
         # Print PR info (spaces won't be parsed as delimiters).
         echo -e "\033[1;33m$pr_number\033[0m \033[1;32m|\033[0m \033[1;33m$pr_author\033[0m \033[1;32m|\033[0m $pr_title"
-    end | fzf --ansi --bind 'enter:execute(gh pr view (echo {} | grep -oE "[0-9]+" | head -1) --json url --template "{{.url}}" | xargs open)+abort' --preview '
+    end | fzf --ansi --layout=reverse --bind 'result:last,enter:execute(gh pr view (echo {} | grep -oE "[0-9]+" | head -1) --json url --template "{{.url}}" | xargs open)+abort' --preview '
         # Extract PR number from the line
         set pr_number (echo {} | grep -oE "[0-9]+" | head -1)
 
@@ -651,8 +676,9 @@ function github_my_prs
         return 1
     end
 
-    # Fetch PRs assigned to user with the specified state.
-    set prs_list (gh pr list --state $state --search "$search_query" --json number,title,url --template '{{range .}}{{.number}}|{{.title}}|{{.url}}{{"\n"}}{{end}}' | string split '\n')
+    # Fetch PRs assigned to user with the specified state, then flip to oldest first.
+    # See `github_pr_reviews` for why the flip is not done with a `sort:` qualifier.
+    set prs_list (gh pr list --state $state --search "$search_query" --json number,title,url --template '{{range .}}{{.number}}|{{.title}}|{{.url}}{{"\n"}}{{end}}' | tail -r | string split '\n')
 
     # Check if the PR list is empty.
     if test -z "$prs_list"
@@ -667,7 +693,7 @@ function github_my_prs
 
         # Print PR ID and title.
         echo -e "\033[1;33m$pr_number\033[0m \033[1;32m|\033[0m $pr_title"
-    end | fzf --ansi --bind 'enter:execute(gh pr view (echo {} | grep -oE "[0-9]+" | head -1) --json url --template "{{.url}}" | xargs open)+abort'
+    end | fzf --ansi --layout=reverse --bind 'result:last,enter:execute(gh pr view (echo {} | grep -oE "[0-9]+" | head -1) --json url --template "{{.url}}" | xargs open)+abort'
 end
 
 # Function to create a `GitHub PR` with a predefined template.
@@ -929,7 +955,7 @@ function git_set_coauthors
         set fzf_input $fzf_input "$i|$coauthors[$i]"
     end
 
-    set selected_raw (printf '%s\n' $fzf_input | fzf --multi -d'|' --with-nth 2.. 2>/dev/null)
+    set selected_raw (printf '%s\n' $fzf_input | fzf --multi --layout=reverse -d'|' --with-nth 2.. 2>/dev/null)
     set fzf_status $status
     if test $fzf_status -ne 0; return 1; end
     set selected_raw (string split '\n' -- $selected_raw)
@@ -966,19 +992,15 @@ function git_set_coauthors
 
     echo ""
     log_info "Select commits to add co-author(s) to, use TAB to multi-select and ENTER to confirm:"
-    set selection_commits
-    for idx in (seq (count $display_commits) -1 1)
-        set selection_commits $selection_commits "$display_commits[$idx]"
-    end
 
     read -P "Press Enter to continue... "
     if test $status -ne 0; return 1; end
     echo ""
-    set selected_lines (for line in $selection_commits
+    set selected_lines (for line in $display_commits
         set hash (echo "$line" | awk '{print $1}')
         set subject (echo "$line" | cut -d' ' -f2-)
         echo -e "$BOLD_YELLOW$hash$NO_COLOR $BOLD_GREEN|$NO_COLOR $subject"
-    end | fzf --multi --ansi --bind '?:toggle-preview' --preview '
+    end | fzf --multi --ansi --layout=reverse --bind 'result:last,?:toggle-preview' --preview '
         set commit_hash {1}
         git diff-tree --no-commit-id --name-only -r $commit_hash | while read -l f; echo -e "\e[1;32m-\e[0m $f"; end
     ' --preview-window=right:50%:hidden:wrap)
@@ -1001,7 +1023,7 @@ function git_set_coauthors
 
     echo ""
     log_success "Selected commits:"
-    for line in $selection_commits
+    for line in $display_commits
         set hash (echo "$line" | awk '{print $1}')
         set subject (echo "$line" | cut -d' ' -f2-)
         if contains "$hash" $selected_hashes
@@ -1193,7 +1215,7 @@ function git_worktree_list
         return 1
     end
 
-    set -l display_lines
+    set -l sortable_lines
     for line in $worktree_data
         set path (echo "$line" | cut -d'|' -f1)
         set branch (echo "$line" | cut -d'|' -f2)
@@ -1202,21 +1224,31 @@ function git_worktree_list
             continue
         end
 
+        # `git worktree list` has no ordering option, so each entry is prefixed with the
+        # directory birth time to sort by. A pruned worktree has no directory left to stat.
+        set created (stat -f "%B" "$path" 2>/dev/null)
+        if test -z "$created"
+            set created 0
+        end
+
         if test "$path" = "$PWD"
-            set display_lines $display_lines (echo -e "$path|$BOLD_YELLOW$branch$NO_COLOR")
+            set sortable_lines $sortable_lines (echo -e "$created\t$path|$BOLD_YELLOW$branch$NO_COLOR")
         else
-            set display_lines $display_lines (echo -e "$path|$BOLD_GREEN$branch$NO_COLOR")
+            set sortable_lines $sortable_lines (echo -e "$created\t$path|$BOLD_GREEN$branch$NO_COLOR")
         end
     end
 
-    if test -z "$display_lines"
+    if test -z "$sortable_lines"
         log_error "No worktrees found under `$worktrees_root`!"
         return 1
     end
 
+    # Order oldest first, then drop the sort key.
+    set -l display_lines (printf '%s\n' $sortable_lines | sort -n | cut -f2-)
+
     # `SHELL=/bin/bash` keeps `fzf`'s preview/bind subshells from spawning `fish`,
     # which sources `config.fish` and trips the `sdkman` "no job control" noise.
-    set -l selected (printf '%s\n' $display_lines | env SHELL=/bin/bash fzf --ansi -d'|' --with-nth=2 --bind 'delete:execute(git worktree remove {1} --force)+abort,tab:execute(git -C {1} diff HEAD | less -R),?:toggle-preview' --preview '
+    set -l selected (printf '%s\n' $display_lines | env SHELL=/bin/bash fzf --ansi --layout=reverse -d'|' --with-nth=2 --bind 'result:last,delete:execute(git worktree remove {1} --force)+abort,tab:execute(git -C {1} diff HEAD | less -R),?:toggle-preview' --preview '
         path={1}
         printf "\e[1;33mBranch:\e[0m %s\n" "$(git -C "$path" rev-parse --abbrev-ref HEAD)"
         printf "\e[1;33mPath:\e[0m %s\n" "${path/#$HOME/~}"
