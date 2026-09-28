@@ -25,6 +25,7 @@ brew 'fzf'
 brew 'gemini-cli'
 brew 'getsentry/tools/sentry-cli', trusted: true
 brew 'gh'
+brew 'graykode/tap/abtop', trusted: true
 brew 'helix'
 brew 'herdr'
 brew 'jless'
