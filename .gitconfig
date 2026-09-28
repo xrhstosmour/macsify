@@ -7,6 +7,18 @@
 	autoSetupRemote = true
 [core]
 	editor = code --wait
+	; Fall back when `delta` is missing, `brew bundle` is allowed to fail and this file
+	; is also copied to machines where it has not been installed yet. The branch is picked
+	; before anything runs, an `||` would also catch `delta` exiting non-zero and hand the
+	; fallback an already drained pipe. Quoted because an unquoted `;` starts a comment.
+	pager = "if command -v delta >/dev/null 2>&1; then exec delta; else exec less; fi"
+[interactive]
+	diffFilter = "if command -v delta >/dev/null 2>&1; then exec delta --color-only; else exec cat; fi"
+[delta]
+	dark = true
+	navigate = true
+	line-numbers = true
+	hyperlinks = true
 [http]
 	postBuffer = 524288000
 [tig]
