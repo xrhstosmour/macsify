@@ -20,6 +20,7 @@ Opinionated `macOS` configuration via shell scripts.
 | Menu Bar | `Stege` |
 | Clipboard | `Maccy` |
 | Notes | `Obsidian` |
+| Mesh Network | `Tailscale` |
 | Git Notifications | `Gitify` |
 | Screenshots | `Flameshot` |
 | Keep Awake | `Amphetamine` |
