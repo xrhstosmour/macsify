@@ -12,6 +12,7 @@ description: Use for GitHub pull requests, creating a new PR with a full safety-
 - User asks to comment on or edit an existing PR, its labels, assignees, reviewers, title, or body, or to approve it or leave a quick review comment via `gh pr review`.
 - Not for just reading/viewing a PR, see the `read-github-pr` skill for that.
 - Not for a full multi-agent code review (architecture and quality sub-agents, synthesized findings report), see the `review-github-pr` skill for that.
+- Not for publishing a multi-step plan as tracked issues on a GitHub Projects board, see the `manage-github-project` skill for that.
 - Also applies when a plan step or a delegated subagent prompt already specifies `gh pr create`/`gh pr edit` directly, invoke this skill instead of running that command as written, even if the flags look complete.
 
 ## Reviewing, commenting, or editing an existing PR
@@ -194,6 +195,7 @@ Derive each section:
   - CORRECT: `Resolves [T247574](https://phabricator.example.com/T247574).`
   - WRONG: `Resolves [1234](https://link.example.com/1234). After this change ...`
   Nothing else, no explanation, no context, no extra sentences. Use the tracker's native ID format, like `T247574`, `PROJ-123`, or `#42`. If no link is provided, write one short sentence on the problem the change solves.
+  If the tracker link is a GitHub issue on a Projects v2 board (created via `manage-github-project`), this `Resolves`/`Closes` line is also what auto-links this PR into that issue's `Linked pull requests` field and closes it on merge, same-repo only. Cross-repo issue-to-PR linkage isn't automatic, see `manage-github-project` for the manual step.
 - Testing: List concrete scenarios and cases manually exercised, UI walkthroughs, staging checks, representative edge cases. Never mention test-suite runs, coverage counts, or lint/typecheck results, those are process, not scenarios, and belong to the quality gate already run in Phase 2.9, not the PR body.
   - If the only verification was the existing automated suite with no manual scenario exercised, omit the section entirely, do not describe running the suite as a testing step.
   - WRONG: `1. Run the test suite.`
