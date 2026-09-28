@@ -64,3 +64,16 @@ if ! command -v mise &>/dev/null; then
     log_success "'mise' installed successfully."
     log_divider
 fi
+
+# Trust every workspace under `~/Developer` (worktrees, clones) so `mise`'s
+# `cd` hook doesn't prompt for a trust confirmation.
+if command -v mise &>/dev/null; then
+    if mise settings get trusted_config_paths 2>/dev/null | grep -qF "$HOME/Developer/"; then
+        log_warning "'mise' already trusts '~/Developer'."
+    else
+        log_info "Configuring 'mise' to trust '~/Developer'..."
+        mise settings add trusted_config_paths "$HOME/Developer/"
+        log_success "'mise' trusted config paths configured."
+    fi
+    log_divider
+fi
