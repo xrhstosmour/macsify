@@ -2,8 +2,6 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "model": "sonnet",
   "effortLevel": "high",
-  "autoCompactEnabled": true,
-  "autoCompactWindow": 80000,
   "theme": "dark",
   "outputStyle": "Concise",
   "includeCoAuthoredBy": false,
