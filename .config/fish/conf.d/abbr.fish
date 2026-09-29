@@ -6,6 +6,7 @@ abbr ehc "code ~/.config/herdr/config.toml"
 
 # System abbreviations.
 abbr sm "btm"
+abbr am "abtop"
 abbr ff "fastfetch"
 abbr kbcs "keybindings_cheat_sheet"
 abbr alcs "aliases_cheat_sheet"
@@ -37,6 +38,7 @@ abbr adbp "adb pair"
 abbr ip "printf 'IPv4 (en0): %s\n' $(ipconfig getifaddr en0)"
 abbr wrip "witr --port"
 abbr wpi "witr --pid"
+abbr tss "tailscale status"
 
 # Terminal tools abbreviations.
 abbr cat "bat"

@@ -19,6 +19,9 @@ Opinionated `macOS` configuration via shell scripts.
 | Coding Agent Runtime | `Herdr` (`ehc` to edit config) |
 | Menu Bar | `Stege` |
 | Clipboard | `Maccy` |
+| Notes | `Obsidian` |
+| Mesh Network | `Tailscale` |
+| Git Notifications | `Gitify` |
 | Screenshots | `Flameshot` |
 | Keep Awake | `Amphetamine` |
 | Appearance | Dark mode + custom wallpapers |
