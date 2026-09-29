@@ -3,7 +3,7 @@
   "model": "sonnet",
   "effortLevel": "high",
   "autoCompactEnabled": true,
-  "autoCompactWindow": 600000,
+  "autoCompactWindow": 120000,
   "theme": "dark",
   "outputStyle": "Concise",
   "includeCoAuthoredBy": false,
