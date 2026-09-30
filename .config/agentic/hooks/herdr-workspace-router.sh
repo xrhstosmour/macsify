@@ -198,7 +198,7 @@ try:
         try:
             move_response = rpc(
                 "pane.move",
-                {"pane_id": pane_id, "destination": destination},
+                {"pane_id": pane_id, "destination": destination, "focus": True},
             )
             move_result = move_response.get("move_result", {})
         except Exception:

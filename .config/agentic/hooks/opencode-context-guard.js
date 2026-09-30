@@ -267,7 +267,7 @@ async function routeHerdrWorkspace(info) {
 
       if (destination) {
         try {
-          const moveResponse = await herdrRpc(socketPath, "pane.move", { pane_id: paneId, destination });
+          const moveResponse = await herdrRpc(socketPath, "pane.move", { pane_id: paneId, destination, focus: true });
           const moveResult = moveResponse.move_result ?? {};
           let resolvedWorkspaceId = moveResult.pane?.workspace_id;
           if (moveResult.created_workspace) {
