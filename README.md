@@ -20,8 +20,8 @@ Opinionated `macOS` configuration via shell scripts.
 | Menu Bar | `Stege` |
 | Clipboard | `Maccy` |
 | Notes | `Obsidian` |
-| Mesh Network | `Tailscale` |
-| Git Notifications | `Gitify` |
+| Network | `NordVPN`, `Tailscale` |
+| Version Control | `Gitify`, custom `Git` abbreviations |
 | Screenshots | `Flameshot` |
 | Keep Awake | `Amphetamine` |
 | Appearance | Dark mode + custom wallpapers |
