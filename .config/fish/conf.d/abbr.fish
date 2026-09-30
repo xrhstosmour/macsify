@@ -77,6 +77,9 @@ abbr sdvl "printf '\\033]1337;SetUserVar=%s=%s\\007' tab_color Z3JlZW4="
 abbr hamx "test \"\$HERDR_ENV\" = 1; and printf '\\033]1337;SetUserVar=%s=%s\\007' herdr_maximize dHJ1ZQ=="
 abbr hamn "herdr_move_to_new_workspace"
 abbr hamv "herdr_move_to_workspace"
+abbr hasr "herdr_tab_color 🔴"
+abbr hasy "herdr_tab_color 🟡"
+abbr hasg "herdr_tab_color 🟢"
 
 # `Git` abbreviations.
 abbr egc "code ~/.gitconfig"
