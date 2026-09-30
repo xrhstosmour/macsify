@@ -61,6 +61,7 @@ source $HOME/.config/fish/functions/sleep.fish
 source $HOME/.config/fish/functions/keybindings.fish
 source $HOME/.config/fish/functions/aliases.fish
 source $HOME/.config/fish/functions/agentic.fish
+source $HOME/.config/fish/functions/herdr.fish
 
 # Puppeteer configuration for `M` series `MacBooks`.
 set -gx PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
