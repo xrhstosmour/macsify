@@ -91,6 +91,26 @@ Shared AI configuration for OpenCode, Claude Code, Codex, and Copilot CLI. Model
 
 Codex treats `~/.codex/hooks.json` as a non-managed, user-level hook source: it won't run until reviewed and trusted once per machine via `/hooks` in the Codex CLI (this repo can install the file, it can't pre-trust it for you). Copilot CLI doesn't have this trust-gate for user-level hooks.
 
+## MCP Servers
+
+`setup/agentic.sh` registers each server from these env vars (a server left unset is skipped with a warning, not a hard failure). Never hardcode an organization's actual URL in this repo, set it as an env var instead, for example a fish universal variable:
+
+```bash
+# Sentry MCP URL setup.
+# No URL needed, hardcoded in setup/agentic.sh.
+
+# Phabricator MCP URL setup.
+set -Ux PHABRICATOR_MCP_URL "<url>"
+
+# Grafana MCP URL setup.
+set -Ux GRAFANA_MCP_URL "<url>"
+
+# Metabase MCP URL setup.
+set -Ux METABASE_MCP_URL "<url>"
+```
+
+After registration, each server still needs its own authentication inside the agentic tool itself, `setup/agentic.sh` only wires up the connection.
+
 ## Skills
 
 Skills are loaded by agents and triggered via commands. The `Command` column below maps to a `commands/*.md` slash command, symlinked into Claude Code and OpenCode as-is and into Codex as `~/.codex/prompts/`. Copilot CLI has no distinct commands/prompts concept, it only has skills (invocable directly as `/skill-name`) and custom agents (`/agent`), so there is no Copilot equivalent for this column, intentionally not ported.
