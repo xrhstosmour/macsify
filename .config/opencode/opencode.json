@@ -18,6 +18,16 @@
       "type": "remote",
       "url": "https://mcp.sentry.dev/mcp?skills=inspect",
       "enabled": true
+    },
+    "grafana": {
+      "type": "remote",
+      "url": "{env:GRAFANA_MCP_URL}",
+      "enabled": true
+    },
+    "metabase": {
+      "type": "remote",
+      "url": "{env:METABASE_MCP_URL}",
+      "enabled": true
     }
   },
   "permission": {

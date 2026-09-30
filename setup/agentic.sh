@@ -206,6 +206,12 @@ if brewfile_declares "anomalyco/tap/opencode"; then
     if [ -n "$PHABRICATOR_MCP_URL" ]; then
         sed -i '' "s|{env:PHABRICATOR_MCP_URL}|${PHABRICATOR_MCP_URL}|" "$OPENCODE_CONFIGURATION_PATH"
     fi
+    if [ -n "$GRAFANA_MCP_URL" ]; then
+        sed -i '' "s|{env:GRAFANA_MCP_URL}|${GRAFANA_MCP_URL}|" "$OPENCODE_CONFIGURATION_PATH"
+    fi
+    if [ -n "$METABASE_MCP_URL" ]; then
+        sed -i '' "s|{env:METABASE_MCP_URL}|${METABASE_MCP_URL}|" "$OPENCODE_CONFIGURATION_PATH"
+    fi
 
     log_info "Creating OpenCode symlinks..."
 
@@ -333,6 +339,24 @@ if (settings.statusLine && typeof settings.statusLine.command === "string") {
         log_warning "Skipping Sentry MCP registration, 'claude' CLI not found."
     elif register_mcp_server claude sentry Sentry --transport http sentry "https://mcp.sentry.dev/mcp?skills=inspect" -s user; then
         log_warning "Uncheck everything except 'Inspect Issues & Events' on the consent screen."
+    fi
+
+    # Grafana MCP, requires GRAFANA_MCP_URL to be set.
+    if ! command -v claude &>/dev/null; then
+        log_warning "Skipping Grafana MCP registration, 'claude' CLI not found."
+    elif [ -z "$GRAFANA_MCP_URL" ]; then
+        log_warning "Skipping Grafana MCP registration, no 'GRAFANA_MCP_URL' environment variable."
+    else
+        register_mcp_server claude grafana Grafana --transport http grafana "$GRAFANA_MCP_URL" -s user || true
+    fi
+
+    # Metabase MCP, requires METABASE_MCP_URL to be set.
+    if ! command -v claude &>/dev/null; then
+        log_warning "Skipping Metabase MCP registration, 'claude' CLI not found."
+    elif [ -z "$METABASE_MCP_URL" ]; then
+        log_warning "Skipping Metabase MCP registration, no 'METABASE_MCP_URL' environment variable."
+    else
+        register_mcp_server claude metabase Metabase --transport http metabase "$METABASE_MCP_URL" -s user || true
     fi
 
     # `Herdr`'s own installer merges a `SessionStart` hook into `settings.json` so its
