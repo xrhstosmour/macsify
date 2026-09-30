@@ -74,6 +74,7 @@ abbr hala "herdr agent list"
 abbr sprd "printf '\\033]1337;SetUserVar=%s=%s\\007' tab_color cmVk"
 abbr sstg "printf '\\033]1337;SetUserVar=%s=%s\\007' tab_color eWVsbG93"
 abbr sdvl "printf '\\033]1337;SetUserVar=%s=%s\\007' tab_color Z3JlZW4="
+abbr hamx "test \"\$HERDR_ENV\" = 1; and printf '\\033]1337;SetUserVar=%s=%s\\007' herdr_maximize dHJ1ZQ=="
 
 # `Git` abbreviations.
 abbr egc "code ~/.gitconfig"
