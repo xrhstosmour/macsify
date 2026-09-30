@@ -8,3 +8,9 @@
 # already-committed turns stay hidden until pressing `b`. This pane exists to
 # review what an agent did on its branch, open on that diff instead.
 default_scope = "branch"
+
+# Default is `true` (`src/config.rs`), popping the diff pane open the moment a
+# worktree/reviewr pane is created. Off here so opening a worktree doesn't
+# interrupt with a diff menu before there's anything to review yet, `prefix+d`
+# (see `.config/herdr/config.toml`) still opens it on demand.
+auto_open = false
