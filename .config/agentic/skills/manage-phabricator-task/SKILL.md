@@ -37,8 +37,8 @@ Verified live against this MCP server, don't try to work around these:
 
 - No user directory search. `pha_user_search` returns "not authorized" for every query shape tried, on an account that otherwise has full task read/write access. Treat it as unavailable, `pha_user_whoami` (self) is the only user-lookup tool that works directly. See "Resolve a username to a PHID" below for a working alternative.
 - No subscriber field on `pha_task_create`/`pha_task_update`, not a permissions issue, the field doesn't exist on those tools. `pha_task_update_relationships` only handles `subtask`/`parent` edges. The only way to subscribe someone is indirect: @-mentioning their `PHID-USER-...` in a description or comment auto-subscribes them.
-- Due date field: don't assume it's present or absent, see "Field discovery" below, this instance may have gained or lost it since the last check. The description always carries a `**Due:** <date>` fallback line regardless (see step 6).
-- Reference links do have a real field, `pha_task_update`'s `reference` parameter, but only on `pha_task_update`, `pha_task_create` doesn't accept it. A new task always needs the create-then-update two-call pattern to persist a reference (see step 6). Re-confirm this still holds via "Field discovery" below, schemas can drift.
+- Due date field: don't assume it's present or absent, see "Field discovery" below, this instance may have gained or lost it since the last check. When the real field is found, set only that, no description fallback, see step 6. When it isn't found, the description carries a `**Due:** <date>` line instead.
+- Reference links do have a real field, `pha_task_update`'s `reference` parameter, but only on `pha_task_update`, `pha_task_create` doesn't accept it. A new task always needs the create-then-update two-call pattern to persist a reference (see step 6). Re-confirm this still holds via "Field discovery" below, schemas can drift. When the field is set, the value only goes there, not into the description's `## References` section too.
 
 ## Field discovery
 
@@ -46,9 +46,9 @@ Run once per session, cache the result for the rest of the session, don't re-dis
 
 - Call `ToolSearch` (query like `"phabricator task update"` or `"phabricator task create"`) and inspect the live schema of `pha_task_update`/`pha_task_create` for a due-date-shaped parameter, match by parameter name or description containing due/deadline/date semantics, don't hardcode one exact expected name, it may be a standard param or a custom-field key on this instance.
 - Re-confirm the `reference` parameter still exists on `pha_task_update` the same way, schemas can drift in either direction, not just grow.
-- If a real due-date parameter or custom field is found, pass the normalized `YYYY-MM-DD` value through it directly.
-- Regardless of whether a real field was found, always also keep the `**Due:** <date>` description-line fallback (see step 6), a newly-appeared field could be write-restricted, non-persisting, or display-only on this instance, never rely on it alone.
-- Read and write can be asymmetric: even with no writable due-date parameter on `pha_task_update`/`pha_task_create`, a real value may still show up when *reading* a task, under a custom-fields-style object on `pha_task_get`/`pha_task_search_advanced` responses (key names are instance-specific, inspect the actual response rather than assuming one). If a task already has a real due date set there, e.g. from the Phabricator web UI directly, treat that as the source of truth over the description's `**Due:**` line, don't overwrite or ignore it.
+- If a real due-date parameter or custom field is found, pass the normalized `YYYY-MM-DD` value through it directly, and skip the description's `**Due:**` line entirely, the field is the only place this value goes.
+- Only when no real due-date field exists this session, fall back to the `**Due:** <date>` description-line (see step 6).
+- Read and write can be asymmetric: even with no writable due-date parameter on `pha_task_update`/`pha_task_create`, a real value may still show up when *reading* a task, under a custom-fields-style object on `pha_task_get`/`pha_task_search_advanced` responses (key names are instance-specific, inspect the actual response rather than assuming one). If a task already has a real due date set there, e.g. from the Phabricator web UI directly, treat that as the source of truth, don't overwrite or ignore it.
 
 ## Tag model
 
@@ -129,9 +129,9 @@ Ask all at once in a single message. Status and due date are always asked, never
 - Assignee: default self-assign
 - Subscribers: usernames, resolved to PHIDs, see "Resolve a username to a PHID" above
 - Status: open, in progress, or resolved, default open, see the status keyword table in step 6
-- Due date: optional, any date the user gives, normalize to `YYYY-MM-DD` before using it, see "Field discovery" above, always lands in the description as a fallback, and in the real field too when one exists
+- Due date: optional, any date the user gives, normalize to `YYYY-MM-DD` before using it, see "Field discovery" above, goes in the real field when one exists, the description's `**Due:**` line only when it doesn't
 - Parent task: TID
-- Reference links: goes in the description's `## References` section and, when present, in the real `reference` field too, see step 6
+- Reference links: goes in the real `reference` field when present, the description's `## References` section only when it isn't, see step 6
 - Committed-board column: optional, only when "Workboard columns" above applies, ask which column on the board
 
 Resolve the current user's PHID for self-assignment via `pha_user_whoami`. Use this PHID as the default assignee unless the user names someone else, in which case resolve their username the same way as subscribers.
@@ -162,7 +162,8 @@ Remarkup formatting rule, Phabricator's markup dialect, not GitHub-flavored Mark
 blank line after a `##` header before its content, and a blank line after any line ending in `:` before
 a following list. Remarkup does not reliably render headers or lists without that spacing, headers can
 merge into the paragraph below them, and lists can render as plain text. Apply this to every description
-you generate, not just the examples below.
+you generate, not just the examples below. Both examples show the `## References` section in its
+body-fallback form, step 6 below covers when it's skipped in favor of the real field.
 
 Feature example:
 ```
@@ -197,12 +198,9 @@ The export endpoint failed when the server session expired. Refreshing the sessi
 
 If no code context exists, ask: "What should the description say? I can help draft it."
 
-Always end with a `## References` section, followed by a blank line and then the list. Format every URL
-as a Remarkup hyperlink: `[[https://example.com | Label]]`. Never use bare URLs. Include:
-
-- If a PR exists: `[[<pr_url> | PR #<number>]]`, omit the branch since the PR implies it
-- If no PR exists: Branch `` `<branch-name>` ``
-- Any extra links the user provided
+Don't place the due date or the PR/branch reference yet, that happens in step 6, in that order (due date
+above, reference below), field or body depends on "Field discovery" above. Format every URL as a Remarkup
+hyperlink `[[https://example.com | Label]]` when it does end up in the body, never a bare URL.
 
 Show the generated description and ask for approval before proceeding.
 
@@ -235,8 +233,8 @@ Ask: "Ready to create?" Do NOT execute without explicit confirmation.
 `pha_task_create` only accepts `title`, `description`, and `owner_phid`, nothing else, so this is always two calls, not one:
 
 1. If any subscribers were resolved, append one `@<phid>` mention per person to the end of the description, that's what auto-subscribes them, there's no separate field for it.
-2. If a due date was given, prepend a `**Due:** <YYYY-MM-DD>` line to the top of the description, followed by a blank line, this always happens regardless of whether a real field is also available. See "Field discovery" above, if a real field was found, plan to set it too in step 5.
-3. If a reference link was given, make sure it's in the description's `## References` section, then plan to also set it via the real `reference` parameter in step 5.
+2. If a due date was given and "Field discovery" above found no real field, append a `**Due:** <YYYY-MM-DD>` line to the bottom of the description, after a blank line. If a real field was found, skip this and set it directly in step 5 instead.
+3. Work out the PR/branch reference value, `[[<pr_url> | PR #<number>]]` if a PR exists, otherwise Branch `` `<branch-name>` ``. When "Field discovery" above found a real `reference` field, set that value there in step 5 instead of the description, unless the user also gave extra links beyond the PR/branch, the field holds one value only, so those still go in the description. When no real field was found, the PR/branch value goes in the description too, alongside any extra links. Whenever anything from this step lands in the description, append it as a `## References` section at the very bottom, after the `**Due:**` line from step 2 if that's present too, every URL a Remarkup hyperlink `[[https://example.com | Label]]`, never bare.
 4. `pha_task_create(title=..., description=..., owner_phid=<assignee-phid>)`. On success it returns the created task's `id`/`phid`, report the task back as `$PHAB/T<id>`. New tasks default to priority "Needs Triage" and status "open", not Normal, and to no project tag at all.
 5. A tag, non-default priority, non-open status, a reference link, or a due-date parameter found in step 2, needs a follow-up `pha_task_update(task_id=<phid from step 4>, ...)` to set it, a task created without this call is missing its tag, reference, and due date. Two exceptions go through a different tool, never `pha_task_update`: a parent task, via `pha_task_update_relationships`, see the field table below and "Umbrella tasks" above for the exact call shape and the verification step after it, and a committed-board column, via `pha_workboard_move_task` as described in "Workboard columns" above, a task created with a column requested is left off the board entirely without this call.
 
@@ -247,7 +245,7 @@ Ask: "Ready to create?" Do NOT execute without explicit confirmation.
 | Assignee | `owner_phid` |
 | Status | `status`: `open`, `inprogress`, `resolved` |
 | Reference link | `reference` |
-| Due date | see "Field discovery" above, use the real field if one was found this session, falls back to the description's `**Due:** <date>` line regardless |
+| Due date | see "Field discovery" above, use the real field if one was found this session, the description's `**Due:** <date>` line only when it wasn't |
 | Parent task | use `pha_task_update_relationships` instead, `relationship_type="parent"`, `target_ids` is a comma-separated string of PHIDs, not an array |
 | Committed-board column | use `pha_workboard_move_task` instead, see "Workboard columns" above |
 
@@ -270,8 +268,8 @@ Fetch the task first via `pha_task_get`, by numeric ID, to confirm you have the 
 
 Then apply the change via `pha_task_update`, passing the task PHID and the field(s) to update: `status`, `title`, `description`, `owner_phid`, `priority`, `projects_add`/`projects_remove`/`projects_set`.
 
-- Reference link: set the real `reference` parameter directly, and also make sure the link is in the description's `## References` section, add it there if it's missing.
-- Due date: fetch the current description with `pha_task_get`, add or replace the `**Due:** <date>` line yourself, and write the whole description back, this always happens regardless of whether a real field is also available. See "Field discovery" above, if a real field was found this session, set it directly too.
+- Due date: when "Field discovery" above found a real field, set it directly, no description change needed. Only when it wasn't found, fetch the current description with `pha_task_get`, append or replace a `**Due:** <date>` line at the bottom, and write the whole description back.
+- Reference link: set the real `reference` parameter directly when "Field discovery" found it, no description change needed, unless the user also gave extra links beyond it, those still go in a `## References` section at the very bottom. Only when the field wasn't found, make sure the PR/branch value is in that `## References` section too, add it if missing. Either way, the `## References` section sits below the `**Due:**` line, never above it.
 - Committed-board column: see "Workboard columns" above.
 - Stakeholder status update: see "Status update comment" above, don't use a plain comment for this.
 
