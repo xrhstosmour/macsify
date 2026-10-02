@@ -112,8 +112,8 @@ Collect which of these apply and to which files, you'll need this for the "Human
 Append this rubric to the `reviewer` sub-agent prompt, plus the contents of
 `REVIEW_GUIDELINES.md` if one was found, labeled as project-specific and
 taking precedence over the rubric below where the two conflict. The `architect`
-gets only the "Determining what to flag" and "Line references" sections, the
-rest is outside its brief.
+gets only the "Determining what to flag", "Severity calibration", and "Line
+references" sections, the rest is outside its brief.
 
 Test quality is deliberately absent here, the `reviewer` agent carries its own
 Test Quality rubric and repeating it would send the same nine rules twice in one
@@ -127,6 +127,9 @@ Only flag something if all of these hold:
 - It has provable impact you can point to, not speculation about what might break.
 - It doesn't rely on unstated assumptions about the codebase or author's intent.
 - The author would plausibly fix it if they knew about it.
+
+## Severity calibration
+Cap, never upgrade: an attacker who already holds elevated privileges or is already executing code caps at MEDIUM unless the finding crosses to a different trust boundary entirely, container escape to host, cross-tenant escalation. Impact limited to the acting user's own data caps at LOW unless it also breaks non-repudiation or has side effects on other users or system stability. A pattern that looks bad but has no traceable exploit path is NIT or LOW, never higher. CRITICAL is reserved for a concretely-traced, no-privilege, no-interaction path to RCE, full auth bypass, or full data breach, anything needing privileges or user interaction is HIGH at most.
 
 ## Clean code
 - Check whether a newly added function duplicates existing functionality elsewhere in the codebase. If it does, name the existing implementation.
