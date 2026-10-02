@@ -116,6 +116,19 @@ Existing code is not evidence of a safe pattern. Don't wave through a construct 
 
 Out-of-scope findings: If you notice a vulnerability unrelated to the diff under review, report it separately and explicitly, don't silently fix it inside this review's diff, that hides a real finding inside an unrelated change.
 
+## Severity calibration
+
+Score from what the attacker actually gains, not how bad the pattern looks in the abstract. A finding is capped, never upgraded, by whichever of these applies:
+
+- Already-privileged attacker: if the finding requires an attacker who already holds elevated/admin privileges or is already executing code, cap at MEDIUM, unless it breaks out to a different trust boundary entirely, container escape to host, cross-tenant escalation.
+- Single user's own data: if the blast radius is limited to the acting user's own account or data, cap at LOW, unless it also breaks non-repudiation, lets them deny an action or frame someone else, or has side effects on other users or system stability.
+- Hygiene, not exploit: "this is fragile", missing defense-in-depth, or a theoretical concern with no traceable exploit path is NIT or LOW, never higher, regardless of what it's adjacent to.
+- Marginal capability: if the exploit doesn't give the attacker meaningfully more access or control than their starting position, or than they could already get through a legitimate path, cap at MEDIUM or lower even if the mechanism itself looks severe.
+
+CRITICAL is reserved for a clear, concretely-traced path to remote code execution, full authentication/authorization bypass, or a full data breach, reachable by an attacker with no privileges and no user interaction required. Anything needing privileges or user interaction is HIGH at most.
+
+HIGH is a traced path to significant but bounded impact: cross-user/cross-tenant data access, privilege escalation from a low-privilege authenticated session, or a control-bypass that stops short of full compromise.
+
 ## Output
 
 1. Verdict (approve/request-changes/discuss)
