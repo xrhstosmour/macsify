@@ -278,13 +278,13 @@ After presenting the review, ask the user what they want to do with it:
 
 Keep each comment to at most one paragraph, and keep any inline code under 3 lines. When you're confident in a concrete, minimal fix, add a ```suggestion block containing only the replacement code, no commentary inside it, and preserve the exact leading whitespace of the lines it replaces. Skip the suggestion block for anything speculative or multi-part.
 
-Determine the review event from the findings buckets in "Synthesize findings":
+Determine the review event from the findings buckets in "Synthesize findings", this mapping is final, not a suggestion to confirm:
 
 - CRITICAL section has entries -> event = `REQUEST_CHANGES`
 - CRITICAL is empty, MEDIUM has entries -> event = `COMMENT`
 - CRITICAL and MEDIUM both empty -> event = `APPROVE`
 
-State the recommended event and a one-line reason, e.g. "Recommending APPROVE, no CRITICAL/HIGH/MEDIUM findings." Ask the user to confirm or pick a different event before posting. Do not post until confirmed.
+State the event and a one-line reason, e.g. "Recommending APPROVE, no CRITICAL/HIGH/MEDIUM findings." then proceed to post, findings always go up together as inline comments in the same review call regardless of event, LOW/NIT findings included as minor comments on an `APPROVE`.
 
 The top-level review body posted to GitHub is a short headline, not the full Summary paragraph from "Synthesize findings". One short line, like a human reviewer signing off, no restating findings, no emojis, no bullet list. Match tone to the event and how much there is to flag, be creative rather than reusing the same phrase every time:
 
