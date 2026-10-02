@@ -1095,6 +1095,12 @@ end
 # `--focus` switches to the new grouped pane instead of `cd`-ing the current
 # shell, so the pane the caller ran `gwta` from is left untouched. Returns
 # success only when the pane was actually opened and grouped.
+# `herdr` has been observed returning a `source_workspace_id` for a given
+# `--cwd` that belongs to a different repo's workspace, which silently groups
+# the new worktree's pane (and its on-disk content) under the wrong repo. The
+# `repo_root` the same JSON payload reports for that `--cwd` is checked
+# against `$repo_root` before trusting the grouping, since it costs no extra
+# `herdr` call.
 function _herdr_open_worktree_pane
     set repo_root "$argv[1]"
     set worktree_path "$argv[2]"
@@ -1105,8 +1111,10 @@ function _herdr_open_worktree_pane
         return 1
     end
 
-    set parent_workspace (herdr worktree list --cwd "$repo_root" 2>/dev/null | jq -re '.result.source.source_workspace_id // empty')
-    if test -z "$parent_workspace"
+    set source_json (herdr worktree list --cwd "$repo_root" 2>/dev/null)
+    set parent_workspace (echo "$source_json" | jq -re '.result.source.source_workspace_id // empty')
+    set source_repo_root (echo "$source_json" | jq -re '.result.source.repo_root // empty')
+    if test -z "$parent_workspace"; or test "$source_repo_root" != "$repo_root"
         log_warning "herdr worktree grouping failed, falling back to a plain cd."
         return 1
     end
@@ -1268,4 +1276,27 @@ function git_worktree_list
 
     set -l path (echo "$selected" | cut -d'|' -f1)
     cd "$path"
+end
+
+# Wraps `git checkout` so a branch already checked out in another worktree
+# lands you there instead of just failing, worktrees are the normal way this
+# setup works on more than one branch of a repo at once, see `gwta`/`gwtl`.
+function git_checkout
+    set -l output (git checkout $argv 2>&1)
+    set -l checkout_status $status
+
+    if test $checkout_status -eq 0
+        printf '%s\n' $output
+        return 0
+    end
+
+    set -l worktree_path (printf '%s\n' $output | string match -rg "already used by worktree at '([^']+)'")
+    if test -n "$worktree_path"
+        log_info "Branch already checked out in another worktree, switching to `$worktree_path`."
+        cd "$worktree_path"
+        return $status
+    end
+
+    printf '%s\n' $output >&2
+    return $checkout_status
 end
