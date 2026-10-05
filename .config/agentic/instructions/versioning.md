@@ -131,18 +131,7 @@ Commit locally each tested increment per the increment cycle in rules.md. Commit
 
 ## Change Summaries
 
-After any modification, provide a structured summary:
-
-``` text
-CHANGES MADE:
-- src/path/to/file: What was changed and why
-
-THINGS I DIDN'T TOUCH (intentionally):
-- src/other/file: Has a similar issue but out of scope
-
-POTENTIAL CONCERNS:
-- Any risks, trade-offs, or open questions
-```
+For a non-trivial change, state what changed per file in one line each. Use the Flagging Convention (`instructions/standards.md`) for anything intentionally left untouched or any open risk, don't repeat it in a separate block. Skip the summary entirely for a trivial, single-purpose change, the diff already shows what changed.
 
 ## Worktrees
 

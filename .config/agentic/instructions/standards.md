@@ -16,6 +16,17 @@
 - Never fabricate findings. If nothing is wrong, say so explicitly.
 - Add only essential code comments, no fluff.
 
+## Flagging Convention
+
+Several rules here, and the Change Summaries rule in `versioning.md`, ask you to tell the user about something adjacent to the task: out of scope, dead, or risky. Use one shared format for all of them instead of a bespoke block per situation:
+
+``` text
+FLAGGED:
+- [what]: [why it matters], [what you need, ok to remove? / fyi only / needs a decision]
+```
+
+Skip it entirely when there's nothing to flag. One line per item, no block at all for a trivial change with nothing adjacent worth noting.
+
 ## Code Style
 
 ### Comments
@@ -62,13 +73,7 @@ Build in vertical slices, one complete path through the stack at a time. After e
 
 Touch only what the task requires. Do not clean up adjacent code, refactor unrelated imports, add non requested features, or remove comments you don't fully understand.
 
-If you notice something worth improving outside scope, note it, don't fix it:
-
-``` text
-NOTICED BUT NOT TOUCHING:
-- src/utils/format has an unused import (unrelated)
-- The auth middleware could use better error messages (separate task)
-```
+If you notice something worth improving outside scope, note it with the Flagging Convention, don't fix it.
 
 ### Simplicity
 
@@ -92,16 +97,7 @@ Before changing or removing anything, understand why it exists. What calls it, w
 
 ### Dead Code Hygiene
 
-After refactoring, identify code that became unreachable or unused. List it explicitly and ask before deleting:
-
-``` text
-DEAD CODE IDENTIFIED:
-- formatLegacyDate() in src/utils/date: replaced by formatDate()
-- OldWidget in src/widgets/ replaced by Widget
--> Safe to remove these?
-```
-
-Don't leave dead code lying around, it confuses future readers and agents. Don't silently delete things you're not sure about.
+After refactoring, identify code that became unreachable or unused. Flag it with the Flagging Convention and ask before deleting. Don't leave dead code lying around, it confuses future readers and agents. Don't silently delete things you're not sure about.
 
 ### Comment and Test Hygiene
 
@@ -183,23 +179,16 @@ When writing rules for agents or yourself: pair every prohibition with a concret
 
 When encountering inconsistencies, conflicting requirements, or unclear specifications: stop, don't proceed with a guess. Name the specific confusion ("I see X in the spec but Y in the existing code"), present the tradeoff or ask the clarifying question, and wait for resolution before continuing.
 
-Surface assumptions before implementing:
+For a multi-step or ambiguous task, surface assumptions and the plan together before executing, so the user can correct either in one pass:
 
 ``` text
-ASSUMPTIONS I'M MAKING:
-1. [assumption about requirements]
-2. [assumption about architecture]
-3. [assumption about scope]
-```
-
-For multi-step tasks, emit a lightweight plan before executing:
-
-``` text
+ASSUMPTIONS: [requirement/architecture/scope assumptions, only if any]
 PLAN:
 1. [first step]
 2. [second step]
-3. [third step]
 ```
+
+Skip this for a clear, single-step task, the Flagging Convention already covers surfacing anything adjacent once you're done.
 
 ## Context Management
 
