@@ -6,7 +6,8 @@
   "instructions": [
     "~/.config/opencode/instructions/standards.md",
     "~/.config/opencode/instructions/versioning.md",
-    "~/.config/opencode/instructions/communication.md"
+    "~/.config/opencode/instructions/communication.md",
+    "~/.config/opencode/instructions/privacy.md"
   ],
   "mcp": {
     "phabricator": {
