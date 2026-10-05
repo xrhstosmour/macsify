@@ -18,6 +18,7 @@ Shared AI configuration for OpenCode, Claude Code, Codex, and Copilot CLI. Model
 ├── instructions/                  # Core instructions (loaded always)
 │   ├── communication.md
 │   ├── privacy.md
+│   ├── security.md
 │   ├── standards.md
 │   └── versioning.md
 ├── hooks/                         # Injected every turn/message
@@ -77,6 +78,7 @@ Shared AI configuration for OpenCode, Claude Code, Codex, and Copilot CLI. Model
 | ---- | ------- |
 | `communication.md` | Communication style guidelines |
 | `privacy.md` | PII handling rules |
+| `security.md` | Shell command and endpoint security practices |
 | `standards.md` | Core implementation rules, safety, error handling |
 | `versioning.md` | `Git` conventions and commit rules |
 
