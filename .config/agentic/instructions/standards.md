@@ -107,6 +107,22 @@ When two files explain the same fact or incident, only one should carry the full
 
 Apply the same check to tests. A test that only reproves something an earlier test in the same file already guarantees adds no coverage and should be dropped, not kept for its own sake.
 
+### Test Junk Patterns
+
+Before writing or flagging a test, check it against these patterns, a match means rewrite it or drop it when authoring, flag it when reviewing:
+
+- Assertion-free: exercises the code but asserts nothing meaningful.
+- Duplicate: another test already covers the same contract on the same input.
+- Implementation-coupled: asserts internals or private state instead of the public interface, a behavior-preserving refactor would break it.
+- Self-fulfilling mock: the mock implements the exact behavior the test then asserts, proving the mock, not the code.
+- Needs a fake seam: only passes because of a production-only export, flag, or hook that no real caller needs. Test the real boundary instead.
+- Copy-paste near-duplicate: the same test repeated with different variable names instead of one table-driven case.
+- Trivial wiring: exact source/import greps, or getter/setter round-trips with no logic.
+- Wrong-reason pass: a negative-control or error test that would also pass for an unrelated failure, not the guard under test.
+- Overpromising name: the test name claims more than its assertions actually check.
+
+Don't flag a test just because it looks similar to another, verify it protects a distinct contract or risk before calling it redundant. A bug regression test must fail on the pre-fix code for the intended reason and pass after the fix, if it never demonstrably failed, it proves nothing. Whether a regression test ever failed on the pre-fix code isn't verifiable from a diff though, that check belongs to the authoring gate, not review.
+
 ### Implementation Rules
 
 One thing at a time, don't mix refactors with features in the same commit. Gate incomplete features behind a flag so you can merge increments safely. New code should be opt-in and conservative. Each increment should be independently revertable, prefer additive changes, and keep the project compilable, must build and tests must pass after each increment.

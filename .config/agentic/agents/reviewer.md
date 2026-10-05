@@ -29,19 +29,7 @@ permission:
 
 ## Test Quality
 
-Flag a changed or added test if any of these hold:
-
-- Assertion-free: exercises the code but asserts nothing meaningful.
-- Duplicate: another test already covers the same contract on the same input.
-- Implementation-coupled: asserts internals or private state instead of the public interface, a behavior-preserving refactor would break it.
-- Self-fulfilling mock: the mock implements the exact behavior the test then asserts, proving the mock, not the code.
-- Needs a fake seam: only passes because of a production-only export, flag, or hook that no real caller needs.
-- Copy-paste near-duplicate: the same test repeated with different variable names instead of one table-driven case.
-- Trivial wiring: exact source/import greps, or getter/setter round-trips with no logic.
-- Wrong-reason pass: a negative-control or error test that would also pass for an unrelated failure, not the guard under test.
-- Overpromising name: the test name claims more than its assertions actually check.
-
-Don't flag a test just because it looks similar to another, verify it protects a distinct contract or risk before calling it redundant. Whether a regression test ever failed on the pre-fix code isn't verifiable from a diff, that check belongs to the authoring gate, not review.
+Flag a changed or added test if it matches one of the Test Junk Patterns in `instructions/standards.md`.
 
 ## Readability
 
