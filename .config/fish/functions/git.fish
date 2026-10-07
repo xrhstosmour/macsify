@@ -1090,8 +1090,7 @@ end
 # sidebar/UX concern, independent of creating the git worktree itself.
 # A plain `cd` never attaches that provenance, only `herdr worktree
 # create`/`open` do (confirmed against `herdr` 0.9.1 and
-# https://github.com/herdrdev/herdr/issues/3620), which is also why
-# `herdr-workspace-router.sh`'s generic `pane.move` never groups its spaces.
+# https://github.com/herdrdev/herdr/issues/3620).
 # `--focus` switches to the new grouped pane instead of `cd`-ing the current
 # shell, so the pane the caller ran `gwta` from is left untouched. Returns
 # success only when the pane was actually opened and grouped.
