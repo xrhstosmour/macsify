@@ -13,15 +13,6 @@ the thresholds, crawler tokens, schema type status, and platform claims below as
 unverified: confirm anything load-bearing against the live source before reporting
 it as current.
 
-## When to use
-
-- The user gives a URL and asks for an SEO audit, health check, or "what's
-  wrong with this page for SEO".
-- The user asks about a specific slice: technical SEO, schema/structured
-  data, content quality/E-E-A-T, sitemap, image optimization, or AI-search
-  visibility (GEO/AEO/AI Overviews).
-- The user pastes HTML, a sitemap, or robots.txt and wants it checked.
-
 Not for keyword research, paid ad campaigns, or backlink acquisition — this
 skill covers on-site and technical factors only (see "Backlinks" for why
 off-site link data is out of scope).

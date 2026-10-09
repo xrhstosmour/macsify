@@ -15,10 +15,7 @@ Turn something learned or built in this conversation into a durable, generalized
 an external, git-tracked knowledge-base repository ("second brain"), without leaking anything
 proprietary or personal into it.
 
-## When to use
-
-- User says "capture knowledge", "update knowledge base", "update notes", "update second brain", "save this to my notes", "remember this for later", together with a target repository path.
-- Never trigger this automatically at the end of a task. This is a deliberate, user-initiated action, not a silent background capture, judging what's "worth remembering" is exactly the step that needs a human in the loop.
+Never trigger this automatically at the end of a task. It is a deliberate, user-initiated action, judging what is worth remembering is the step that needs a human in the loop.
 
 ## 1. Resolve the target repository
 

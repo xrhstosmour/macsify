@@ -7,10 +7,7 @@ description: Use for creating a GitHub Projects v2 board, or publishing an appro
 
 ## When to use
 
-- `/manage-github-project`, or user says "make an agents plan for this in GitHub projects and issues", "break this into issues on the board", "put this plan on the project board", "publish this plan to the project", "create issues for each step and link them", "track this in GitHub Projects", "sync the project board", "mark this issue in progress/done on the board", "link this PR to the tracking issue".
-- User asks to create a new GitHub Projects v2 board, with or without matching an existing reference board's `Status` setup.
-- After a multi-step implementation plan has been discussed and approved, and the user wants it tracked as one GitHub issue per step on a Projects v2 board.
-- User asks to update an issue's `Status` field on a board, or to record a merged PR against its tracking issue.
+- Creating a Projects v2 board, publishing an approved plan as one issue per step, updating a `Status` field, or recording a merged PR against its tracking issue.
 - Not for creating or editing a single issue with no project board involvement, see `manage-github-issue`.
 - Not for just reading or listing issues/project items, see `read-github-issue`.
 - Not for creating or editing the pull request itself, see `manage-github-pr`.
