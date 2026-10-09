@@ -21,7 +21,7 @@ Shared AI configuration for OpenCode, Claude Code, Codex, and Copilot CLI. Model
 │   ├── security.md
 │   ├── standards.md
 │   └── versioning.md
-├── hooks/                         # Injected every turn/message
+├── hooks/                         # Run per prompt or tool call, only context-guard.sh injects text, and only after an idle gap
 │   ├── context-guard.sh           # Claude Code UserPromptSubmit hook
 │   ├── webfetch-guard.sh          # Claude Code PreToolUse hook, blocks WebFetch when not needed
 │   ├── bash-output-cap.sh         # Claude Code PreToolUse hook, caps unbounded Bash stdout
@@ -86,7 +86,7 @@ Shared AI configuration for OpenCode, Claude Code, Codex, and Copilot CLI. Model
 
 | File | Wired into | Purpose |
 | ---- | ---------- | ------- |
-| `context-guard.sh` | Claude Code, Codex, Copilot CLI | `UserPromptSubmit` hook. When the session's transcript is large or idle, instructs the model to inform the user and advise compacting, handoff, or a new session, it never invokes anything itself. A cooldown marker in the OS temp directory stops it from re-nudging every single turn. Confirmed working for Codex, plain `stdout` on `UserPromptSubmit` is documented as added developer context (`developers.openai.com/codex/hooks.md`). Wired into Copilot CLI too, but unverified in practice, its own hooks reference notes that command-hook output on this event may be dropped outside SDK-programmatic hooks, empirically test before relying on it there, drop the entry if it turns out inert |
+| `context-guard.sh` | Claude Code, Codex, Copilot CLI | `UserPromptSubmit` hook. When the session has been idle past the 1 hour prompt-cache TTL, instructs the model to inform the user and advise compacting, handoff, or a new session, it never invokes anything itself. Fires on every prompt while the idle gap holds, there is no cooldown marker, and the next prompt resets it. Confirmed working for Codex, plain `stdout` on `UserPromptSubmit` is documented as added developer context (`developers.openai.com/codex/hooks.md`). Wired into Copilot CLI too, but unverified in practice, its own hooks reference notes that command-hook output on this event may be dropped outside SDK-programmatic hooks, empirically test before relying on it there, drop the entry if it turns out inert |
 | `webfetch-guard.sh` | Claude Code, Copilot CLI | `PreToolUse` hook, matcher: `WebFetch`. Denies fetches to `github.com`, `sentry.io`, and self-hosted `Phabricator`/`Grafana` hostnames with an actionable reason pointing at the right skill/CLI/MCP. `github.com`/`sentry.io` are also in `claude/settings.json`'s static `permissions.deny` as a fallback; self-hosted `Phabricator`/`Grafana` hostnames can't be expressed as a static domain rule, so those rely on this hook alone. Not wired into Codex, it has no built-in URL-fetch tool to gate, its `web_search` tool returns query snippets rather than a fetched URL. Copilot CLI reads it via a PascalCase `PreToolUse` event name, which opts into its documented Claude-format matcher/payload compatibility mode, no script changes needed |
 | `auto-session-title.sh` | Claude Code only | `UserPromptSubmit` hook, generates a session title via a headless `claude -p` call and writes Claude Code's own `custom-title` transcript format. Fundamentally Claude-specific, not portable |
 | `bash-output-cap.sh` | Claude Code | `PreToolUse` hook, matcher: `Bash`. Rewrites unbounded commands to redirect their combined stdout+stderr to a temp file and `head -c 20000` it before execution, this is the only stage that can affect Bash output at all, `PostToolUse` can't rewrite a tool's result. Uses a brace group and a temp file rather than piping straight through `head`, a pipe would run the command in a subshell (breaking `cd`/`export` persistence across calls) and risk `SIGPIPE`-killing it mid-run once `head` has its bytes. Never sets `permissionDecision`, so the rewritten command still goes through the normal `allow`/`deny`/`ask` flow. Exempts multi-line/commented commands (unsafe to wrap by string concatenation), dangerous commands already covered by `settings.json`'s `deny`/`ask` lists (rewriting could defeat an end-anchored pattern like `git push *--force* main`), commands already piped/redirected/backgrounded, and ones where the full output is the point (`cat`, `git diff/log/show/blame`, `diff`) |
@@ -113,6 +113,12 @@ set -Ux METABASE_MCP_URL "<url>"
 ```
 
 After registration, each server still needs its own authentication inside the agentic tool itself, `setup/agentic.sh` only wires up the connection.
+
+Slack is not registered here. `Claude Code` cannot do local OAuth for it, it comes from the `claude.ai` Slack connector (`mcp__claude_ai_Slack__*` tools, discovered through `ToolSearch`), and `claude/settings.json` allowlists only its read tools. `privacy.md` applies to anything read from or written to Slack, no PII.
+
+## Advisor
+
+`/advisor <model>` (or the `advisorModel` setting) lets the main model consult a stronger one at decision points. Each call is billed at the advisor's rates on the full transcript, uncached. It is not a replacement for the `reviewer` agent, Claude decides when to call it. Off by default, try it on the `implementor` before making it a default.
 
 ## Skills
 
