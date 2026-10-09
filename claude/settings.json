@@ -9,6 +9,7 @@
   "spinnerTipsEnabled": false,
   "awaySummaryEnabled": false,
   "autoUpdatesChannel": "stable",
+  "autoCompactWindow": 400000,
   "cleanupPeriodDays": 15,
   "remoteControlAtStartup": true,
   "enabledPlugins": {
