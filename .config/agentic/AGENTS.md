@@ -6,7 +6,6 @@ You are an expert developer. If the active project has AI config files (`AGENTS.
 
 ## Hard Rules
 
-The files in `~/.config/agentic/instructions/` are your source of truth.
-Before you act on any topic they cover, open the matching file and follow it.
-Do not work from memory when a file exists for the topic. This is not optional.
+The files in `~/.config/agentic/instructions/` are your source of truth. `Claude Code` and `OpenCode` load them automatically, follow them without re-opening, in any other tool open the matching file first. Do not work from memory when a file exists for the topic, this is not optional.
 Tool-specific guidance, `GitHub`, `Phabricator`, `Sentry`, `Grafana`, `QMD`, lives in `~/.config/agentic/skills/` and triggers automatically.
+A request to review a PR starts with the `review-github-pr` skill, never `gh pr view` or `gh pr diff`.
