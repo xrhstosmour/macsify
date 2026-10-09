@@ -161,6 +161,31 @@
       }
     ]
   },
+  "deniedMcpServers": [
+    { "serverName": "claude.ai Claude Docs" },
+    { "serverName": "claude.ai Context7" },
+    { "serverName": "claude.ai Datadog" },
+    { "serverName": "claude.ai Dovetail" },
+    { "serverName": "claude.ai Figma" },
+    { "serverName": "claude.ai Gmail" },
+    { "serverName": "claude.ai Google Calendar" },
+    { "serverName": "claude.ai Google Drive" },
+    { "serverName": "claude.ai Sentry" }
+  ],
+  "skillOverrides": {
+    "agent-models": "user-invocable-only",
+    "capture-knowledge": "user-invocable-only",
+    "caveman": "user-invocable-only",
+    "craft-design-prompt": "user-invocable-only",
+    "eli5": "user-invocable-only",
+    "humanize": "user-invocable-only",
+    "implement-design-from-export": "user-invocable-only",
+    "mobile-app-design": "name-only",
+    "promo-video": "user-invocable-only",
+    "seo": "user-invocable-only",
+    "technical-analysis": "user-invocable-only",
+    "web-app-design": "name-only"
+  },
   "claudeMdExcludes": [
     "**/node_modules/**/CLAUDE.md",
     "**/vendor/**/CLAUDE.md",
