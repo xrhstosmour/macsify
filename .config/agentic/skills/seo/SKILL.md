@@ -1,13 +1,9 @@
 ---
 name: seo
 description: >
-  Technical SEO, content quality/E-E-A-T, schema markup, sitemap, image SEO,
-  and AI-search (GEO/AEO) analysis for any URL or page content. Use when the
-  user says "SEO", "SEO audit", "technical SEO", "Core Web Vitals", "schema
-  markup", "structured data", "JSON-LD", "sitemap", "robots.txt", "E-E-A-T",
-  "content quality", "alt text", "image SEO", "AI Overviews", "GEO", "AEO",
-  "llms.txt", "AI citations", or asks to audit/optimize a page or site for
-  search engines.
+  Technical SEO, E-E-A-T, schema markup, sitemap, image SEO, and AI-search (GEO/AEO)
+  analysis for a URL or page content. Use for "SEO audit", "Core Web Vitals",
+  "structured data", "sitemap", "llms.txt", or optimizing a page for search engines.
 ---
 
 # SEO Analysis
@@ -16,15 +12,6 @@ Search behavior changes faster than this file does, and nothing re-checks it. Tr
 the thresholds, crawler tokens, schema type status, and platform claims below as
 unverified: confirm anything load-bearing against the live source before reporting
 it as current.
-
-## When to use
-
-- The user gives a URL and asks for an SEO audit, health check, or "what's
-  wrong with this page for SEO".
-- The user asks about a specific slice: technical SEO, schema/structured
-  data, content quality/E-E-A-T, sitemap, image optimization, or AI-search
-  visibility (GEO/AEO/AI Overviews).
-- The user pastes HTML, a sitemap, or robots.txt and wants it checked.
 
 Not for keyword research, paid ad campaigns, or backlink acquisition — this
 skill covers on-site and technical factors only (see "Backlinks" for why

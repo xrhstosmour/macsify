@@ -1,16 +1,13 @@
 ---
 name: manage-github-project
-description: Use for creating a new GitHub Projects v2 board with a standard Status setup, or publishing an approved multi-step plan to a board as one issue per step, assigned to the user, plus ongoing status sync and PR linkage. Triggered by phrases like "create a project board like this one", "set up a new GitHub project", "make an agents plan for this in GitHub projects", "break this plan into issues on the board", "put this plan on the project board", "track this in GitHub Projects", "sync the project board", "link this PR to the project issue". Not for a single standalone issue with no project board, see `manage-github-issue`. Not for reading/listing without changing anything, see `read-github-issue`. Not for the pull request itself, see `manage-github-pr`.
+description: Use for creating a GitHub Projects v2 board, or publishing an approved multi-step plan to a board as one issue per step, plus status sync and PR linkage. Not for a single issue with no board (`manage-github-issue`), reading (`read-github-issue`), or the PR itself (`manage-github-pr`).
 ---
 
 # Manage GitHub Project
 
 ## When to use
 
-- `/manage-github-project`, or user says "make an agents plan for this in GitHub projects and issues", "break this into issues on the board", "put this plan on the project board", "publish this plan to the project", "create issues for each step and link them", "track this in GitHub Projects", "sync the project board", "mark this issue in progress/done on the board", "link this PR to the tracking issue".
-- User asks to create a new GitHub Projects v2 board, with or without matching an existing reference board's `Status` setup.
-- After a multi-step implementation plan has been discussed and approved, and the user wants it tracked as one GitHub issue per step on a Projects v2 board.
-- User asks to update an issue's `Status` field on a board, or to record a merged PR against its tracking issue.
+- Creating a Projects v2 board, publishing an approved plan as one issue per step, updating a `Status` field, or recording a merged PR against its tracking issue.
 - Not for creating or editing a single issue with no project board involvement, see `manage-github-issue`.
 - Not for just reading or listing issues/project items, see `read-github-issue`.
 - Not for creating or editing the pull request itself, see `manage-github-pr`.

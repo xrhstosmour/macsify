@@ -9,18 +9,26 @@
   "spinnerTipsEnabled": false,
   "awaySummaryEnabled": false,
   "autoUpdatesChannel": "stable",
+  "autoCompactWindow": 400000,
   "cleanupPeriodDays": 15,
   "remoteControlAtStartup": true,
   "enabledPlugins": {
     "ruby-lsp@claude-plugins-official": true,
     "swift-lsp@claude-plugins-official": true,
-    "claude-hud@claude-hud": true
+    "claude-hud@claude-hud": true,
+    "html-plan@claude-community": true
   },
   "extraKnownMarketplaces": {
     "claude-hud": {
       "source": {
         "source": "github",
         "repo": "jarrodwatts/claude-hud"
+      }
+    },
+    "claude-community": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-community"
       }
     }
   },
@@ -63,6 +71,9 @@
       "Bash(gh issue *)",
       "Bash(gh label *)",
       "Bash(gh pr *)",
+      "Bash(gh run view*)",
+      "Bash(gh run list*)",
+      "Bash(gh run watch*)",
       "Bash(gh repo view*)",
       "Bash(brew *)",
       "Bash(opencode --version)",
@@ -81,7 +92,13 @@
       "mcp__phabricator__pha_project_search",
       "mcp__phabricator__pha_project_get",
       "mcp__phabricator__pha_user_whoami",
-      "mcp__phabricator__pha_workboard_search_columns"
+      "mcp__phabricator__pha_workboard_search_columns",
+      "mcp__claude_ai_Slack__slack_read_channel",
+      "mcp__claude_ai_Slack__slack_read_thread",
+      "mcp__claude_ai_Slack__slack_read_user_profile",
+      "mcp__claude_ai_Slack__slack_search_public",
+      "mcp__claude_ai_Slack__slack_search_channels",
+      "mcp__claude_ai_Slack__slack_search_users"
     ],
     "deny": [
       "Read(**/.env)",
@@ -103,6 +120,15 @@
       "Bash(git reset --hard *)",
       "Bash(git clean -f *)",
       "Bash(git branch -D *)",
+      "Bash(git checkout .)",
+      "Bash(git checkout -- .)",
+      "Bash(git restore .)",
+      "Bash(git push * main)",
+      "Bash(git push * master)",
+      "Bash(git push *:main*)",
+      "Bash(git push *:master*)",
+      "Bash(git push * main *)",
+      "Bash(git push * master *)",
       "Bash(gh pr merge*)"
     ]
   },
@@ -141,6 +167,31 @@
         ]
       }
     ]
+  },
+  "deniedMcpServers": [
+    { "serverName": "claude.ai Claude Docs" },
+    { "serverName": "claude.ai Context7" },
+    { "serverName": "claude.ai Datadog" },
+    { "serverName": "claude.ai Dovetail" },
+    { "serverName": "claude.ai Figma" },
+    { "serverName": "claude.ai Gmail" },
+    { "serverName": "claude.ai Google Calendar" },
+    { "serverName": "claude.ai Google Drive" },
+    { "serverName": "claude.ai Sentry" }
+  ],
+  "skillOverrides": {
+    "agent-models": "user-invocable-only",
+    "capture-knowledge": "user-invocable-only",
+    "caveman": "user-invocable-only",
+    "craft-design-prompt": "user-invocable-only",
+    "eli5": "user-invocable-only",
+    "humanize": "user-invocable-only",
+    "implement-design-from-export": "user-invocable-only",
+    "mobile-app-design": "name-only",
+    "promo-video": "user-invocable-only",
+    "seo": "user-invocable-only",
+    "technical-analysis": "user-invocable-only",
+    "web-app-design": "name-only"
   },
   "claudeMdExcludes": [
     "**/node_modules/**/CLAUDE.md",

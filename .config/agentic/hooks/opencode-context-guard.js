@@ -3,11 +3,10 @@
 //   - Blocks WebFetch on service URLs that have a dedicated CLI, since OpenCode
 //     cannot deny WebFetch by host in config (Claude uses permissions.deny).
 //   - Warns once a session has been idle for a while, mirroring Claude Code's
-//     idle-only context-guard.sh (same threshold, using the session API's
-//     `time.updated` instead of a transcript file's mtime). A byte/token size
-//     check was dropped from both scripts: it was an unreliable estimate of
-//     actual context usage, and the host's own context indicator already
-//     covers that accurately.
+//     context-guard.sh's one hour idle rule (using the session API's
+//     `time.updated` instead of a transcript file's mtime). The token count
+//     context-guard.sh adds to its message is not ported, it reads usage from a
+//     Claude transcript, and the host's own context indicator already covers that.
 //   - Caps oversized `bash` stdout+stderr post-execution, mirroring Claude
 //     Code's bash-output-cap.sh (same 20000-byte cap and the same "full
 //     output is the point" command exemptions), but through
@@ -27,7 +26,7 @@
 //     output is otherwise uncapped. This is a gap Claude Code's Bash tool
 //     shares too, hence bash-output-cap.sh existing at all.
 //
-// Static instructions (communication/standards/versioning) load via opencode.json's
+// Static instructions (communication/standards/versioning/privacy/security) load via opencode.json's
 // `instructions` array instead, no hook needed for those.
 //
 // experimental.chat.system.transform is not on opencode.ai/docs. Source of truth:
@@ -112,7 +111,7 @@ export const AgenticReminderPlugin = async ({ client }) => {
             lastWarned.set(sessionID, { updatedAt });
             const idleMinutes = Math.round(idleSeconds / 60);
             output.system.push(
-              `# Context Health Warning\n\nThis session has been idle for ~${idleMinutes} minutes. Long idle gaps force an expensive full cache rebuild on the next turn.\nFinish responding to the user's current request first. Then inform them the session has been idle a while, and advise compacting, handoff, or a new session.\nDo not interrupt the current answer to do this, and do not invoke anything yourself, only inform and advise.`,
+              `# Context Health Warning\n\nThis session has been idle for ~${idleMinutes} minutes.\nThe prompt cache has likely expired, so the next turn rebuilds the full context at full price.\nFinish responding to the user's current request first. Then inform them the session has been idle a while, and advise compacting, handoff, or a new session.\nDo not interrupt the current answer to do this, and do not invoke anything yourself, only inform and advise.`,
             );
           }
         }

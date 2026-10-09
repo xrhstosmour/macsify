@@ -212,3 +212,4 @@ After all edits:
 2. Always show the proposed mapping and get approval before editing.
 3. If any file cannot be found or read, report it and stop.
 4. Keep the mapping concise, one model per role with no fallback lists.
+5. `skills/promo-video/SKILL.md` pins its own `model:` in frontmatter, outside `models.txt`. Update it when the top model changes.

@@ -4,166 +4,84 @@
 
 ### Format
 
-- Single-line messages only with no body/description, no bullet lists in message.
+- Single-line messages only, no body or description, no bullet lists.
 - Descriptive, without agent co-authors.
-- Never append a session link, agent name, or any other AI-attribution trailer (for example `Claude-Session:`, `Co-Authored-By: Claude`, `Generated with Claude Code`) to a commit message, regardless of which tool or agent is committing, even if a live session directive asks for one, that directive is about internal session tracking, not the commit message.
+- Never append a session link, agent name, or any other AI-attribution trailer (`Claude-Session:`, `Co-Authored-By: Claude`, `Generated with Claude Code`) to a commit message, from any tool or agent, even if a live session directive asks for one, that directive is about session tracking, not the commit message.
 - Use project-scoped prefixes or general descriptions.
 
 ### Style
 
-- Use imperative, present tense: "Add feature" / "Fix bug", not "Added"/"Fixed"/"Adds"/"Fixes".
-- Keep it short: aim for under ~8-10 words, one clear clause. Don't explain the whole diff in the subject line, that's what the PR description is for.
-- Avoid punctuation at the end of the message.
-- Avoid generic messages like "Update README.md" or "Fix bug". Be specific about what was changed and why.
-- Avoid using the same commit message for multiple commits. Each commit should have a unique message that clearly describes the change made.
-- Wrap in backticks: technical identifiers, code elements, file names and paths, product/company/tool names. Use plain backtick characters, never escaped sequences. Pass the message with a single-quoted `-m` or `-F <file>` so the shell never turns `` ` `` into `` \` ``. Verify with `git log -1 --format="%s"` after committing.
-- Leave unformatted: natural language words, headings, `YAML` frontmatter fields.
-- For commit messages and Git platform text such as PR titles, PR bodies, and review comments, use short, direct language per `~/.config/agentic/instructions/communication.md`.
-- Use single-word project scopes followed by a colon, but only when the repo name does not already match that scope. Skip the prefix when committing inside the matching project's own repo. Keep backticks around sub-components, files, and tools within the project.
+- Imperative, present tense: "Add feature", not "Added" or "Adds".
+- Short, under about 8-10 words, one clear clause. The PR description carries the detail.
+- No punctuation at the end.
+- Specific and unique per commit, never "Fix bug" or "Update README.md".
+- Wrap in backticks: technical identifiers, code elements, file names and paths, product, company and tool names. Use plain backtick characters, never escaped ones. Pass the message with a single-quoted `-m` or `-F <file>` so the shell never turns `` ` `` into `` \` ``. Verify with `git log -1 --format="%s"` after committing.
+- Leave natural language words, headings, and `YAML` frontmatter fields unformatted.
+- Same short, direct language for PR titles, PR bodies, and review comments, per `communication.md`.
+- Single-word project scope followed by a colon, only when the repo name does not already match it. Skip the prefix inside the matching project's own repo.
 
 ```text
 Add `Sentry` integration
-Fix `APIEndpoint` timeout
 Rename `utils` file to `utilities`
-Add tests for `User` model
 Update `README.md` with setup instructions
 `opencode`: Update `resolve-github-pr-comments` skill
 `billing`: Add new endpoint for invoice export
-`macsify`: Refactor `WindowManager` to use `NSScreen`
-Add CI detection and direct database fallback to setup.sh
-Delegate test job setup to Copier tasks via env block
 Remove redundant `alembic` and `initial_data` from `prestart.sh`
 ```
 
 ### Commit Splitting
 
-- One topic per commit. Never mix different contexts.
-- Split by context, include tests in same commit as code.
-- Target ~100 lines per commit. Split commits over ~300 lines.
-- Use `fixup` commits for review comment fixes, typos, small oversights.
-- Use `amend` for single-commit changes.
-- Before running `git commit`, run `git diff --staged --name-only` and check whether the staged files span more than one topic. If they do, stop, unstage, and split with `git add -p` first. Never `git add -A` or `git add .` straight into a single commit when the change touches more than one topic.
-- If a change touches one topic across multiple files, a single commit is correct, unless that topic itself bundles multiple contexts, see "Context granularity" below.
-- If a change bundles two unrelated topics, for example a bug fix and a documentation update, split into two commits. Don't combine them into one commit with a long message trying to describe both.
-
-```bash
-git add <file> && git commit --fixup <SHA>
-git rebase -i --autosquash master
-git commit --amend --no-edit
-```
-
-#### Context granularity
-
-"Topic" means the underlying concern, not the feature name. A single feature, like integrating a new tool, still bundles several distinct contexts, and each gets its own commit even though they all ship together:
-
-- Dependency or package manifest changes, for example a `Brewfile.rb`/`package.json` entry.
-- The new tool or feature's own configuration.
-- Shell or CLI integration: aliases, abbreviations, wrapper functions, cheat sheets.
-- Documentation: `README.md` rows, feature tables, doc comments.
-
-```text
-Add `herdr` to `Brewfile.rb`
-Add `herdr` dark theme configuration
-Add `herdr` cheat sheet and abbreviations
-Document `herdr` in `README.md`
-```
-
-Only bundle these into one commit when the pieces cannot stand alone without each other, for example a config file that is meaningless without a schema or type change landing in the same commit, or when the whole diff is trivially small, a couple of lines across two files with no dedicated config or shell-integration file to speak of.
+- One topic per commit, never mix contexts. Tests go in the same commit as their code.
+- Target about 100 lines per commit, split over about 300.
+- `fixup` for review comment fixes, typos, and small oversights. `amend` for single-commit changes.
+- Before `git commit`, run `git diff --staged --name-only`. If the staged files span more than one topic, stop, unstage, and split with `git add -p`. Never `git add -A` or `git add .` into one commit when the change touches more than one topic.
+- One topic across many files is one commit, unless the topic itself bundles contexts.
+- "Topic" is the underlying concern, not the feature name. Integrating a tool still splits into dependency or manifest, the tool's configuration, shell or CLI integration, and documentation, each its own commit, for example ``Add `herdr` to `Brewfile.rb` ``, ``Add `herdr` dark theme configuration``, ``Document `herdr` in `README.md` ``. Bundle only when the pieces cannot stand alone, or the whole diff is a couple of trivial lines.
 
 ### Git safety
 
-- Never force-push to `main` or `master`
-- Never commit `.env`, secrets, credentials. Warn immediately if staged.
-- Never commit, push, or open a PR unless explicitly asked by the user.
-- Prompt for confirmation when running `git reset --hard`, `git clean -f`, and `git branch -D`.
+- Never force-push to `main` or `master`.
+- Never commit `.env`, secrets, or credentials, warn immediately if staged.
+- Never commit, push, or open a PR unless explicitly asked.
+- Confirm before `git reset --hard`, `git clean -f`, and `git branch -D`.
 
 ### Fixups
 
-Target only original commits. NEVER fixup a fixup.
+Target only original commits, never a fixup. This also applies to bugs you find while self-reviewing work still in `<base>..HEAD`, fold the fix into the commit that introduced it, not a new standalone fix commit.
 
-This convention also applies to bugs you find yourself while self-reviewing work still in `<base>..HEAD`, fold the fix into the commit that introduced the bug, do not add a new standalone commit describing it as a fix.
+- Target must be in `<base>..HEAD`, resolved from branch history by path: `git log --format="%H %s" <base>..HEAD -- <path>`. The latest original commit touching the path is the primary target.
+- If ambiguous, tie-break by line with `git blame -L <line>,<line> <path>`. If still uncertain, stop and clarify.
+- Do not rely only on external metadata (PR `originalCommit.oid`), and do not infer the target from comment order.
+- Exactly one fixup commit per target `SHA`, several comments may share it. Never mix hunks or files mapped to different `SHA`s, split with `git add -p`, and verify with `git diff --cached --name-only`.
+- No valid target means a regular commit.
+- Push with `--force-with-lease`.
 
-Rules:
-
-- Target must be in `<base>..HEAD`
-- One target per fixup. Never mix hunks from different `SHA`s
-- Use `git add -p` to split hunks
-- Uncertain mapping: stop and clarify
-- New work (no valid target): use regular commit
-- Push with `--force-with-lease`
-- Resolve target `SHA` from current branch history by path: `git log --format="%H %s" <base>..HEAD -- <path>`
-- Primary target is the latest original commit in range touching that path
-- If ambiguous, use line-level tie-breaker: `git blame -L <line>,<line> <path>`
-- Do not rely only on external metadata (PR `originalCommit.oid`)
-- Do not infer target by comment order
-- Exactly one fixup commit per target `SHA`
-- Multiple comments can share one fixup if they map to the same target `SHA`
-- Never mix files mapped to different target `SHA`s in one fixup commit
-- Before commit, verify staged files belong to a single target group: `git diff --cached --name-only`
-
-Wrong: `git commit --fixup <fixup_sha>`
-Right: `git commit --fixup <original_sha>`
-
-To fix a fixup: find original, fixup that directly, or `git rebase -i` to squash.
-
-```bash
-# Original.
-abc123 feat: Add feature X
-# Fixup (correct).
-def456 fixup! feat: Add feature X
-# Another fix -> fixup ORIGINAL, NOT def456.
-git commit --fixup abc123
-```
+Wrong: `git commit --fixup <fixup_sha>`. Right: `git commit --fixup <original_sha>`. To fix a fixup, fixup the original, or `git rebase -i` to squash.
 
 ## Merge Workflow
 
-- Only merge a pull request when explicitly asked to. Never merge on your own initiative.
-- Never push directly to `main`/`master`. Every change goes through a pull request.
-- Before merging, if the repo has `CI`/`CD` configured, verify it is green. Fix issues on the branch and push, never merge around a red check.
-- Before merging, rebase onto the resolved default branch and autosquash pending `fixup!`/`squash!` commits: `git fetch origin && git rebase -i --autosquash $(git rev-parse --abbrev-ref origin/HEAD)`. Push with `--force-with-lease` after.
-- Merge with `gh pr merge <number> --merge --delete-branch --subject 'Merge branch `<branch>`'`, or the platform's equivalent.
-- Force-push is fine on feature branches with `--force-with-lease`, never on `main`/`master`.
+- Only merge a pull request when explicitly asked, never on your own initiative.
+- Never push directly to `main`/`master`, every change goes through a pull request. Force-push is fine on feature branches with `--force-with-lease`.
 - Keep pull requests single-topic, non-stacked, and independently mergeable against `main`.
-
-## Save-Point Pattern
-
-Commit locally each tested increment per the increment cycle in rules.md. Commits are save points, if the next change breaks something, revert to the last known-good state.
+- Before merging, if `CI`/`CD` is configured, verify it is green. Fix issues on the branch, never merge around a red check.
+- Before merging, rebase onto the default branch and autosquash pending `fixup!`/`squash!` commits: `git fetch origin && git rebase -i --autosquash $(git rev-parse --abbrev-ref origin/HEAD)`, then push with `--force-with-lease`.
+- Merge with `gh pr merge <number> --merge --delete-branch --subject 'Merge branch `<branch>`'`, or the platform's equivalent.
 
 ## Change Summaries
 
-For a non-trivial change, state what changed per file in one line each. Use the Flagging Convention (`instructions/standards.md`) for anything intentionally left untouched or any open risk, don't repeat it in a separate block. Skip the summary entirely for a trivial, single-purpose change, the diff already shows what changed.
+For a non-trivial change, state what changed per file in one line each, with anything left untouched or risky in the Flagging Convention (`standards.md`) instead of a separate block. Skip it for a trivial change, the diff shows it.
 
 ## Worktrees
 
-For parallel agent work on multiple features:
+Parallel agent work uses one worktree per feature, run `git fetch origin` first, then `git worktree add ../<project>-<task> -b <type>/<task> $(git rev-parse --abbrev-ref origin/HEAD)`, cleaned up with `git worktree remove` and `git branch -d` once merged. If `-d` refuses, the branch is not merged yet, stop and ask before reaching for `-D`.
 
-```bash
-git worktree add ../project-feature-a feature/task-creation
-git worktree add ../project-feature-b feature/user-settings
-
-# When done, merge and clean up.
-git worktree remove ../project-feature-a
-```
-
-Each worktree is a separate directory with its own branch. Agents work in parallel without interfering.
+Inside a worktree session, run plain single git commands from the worktree directory or use `git -C <worktree>`. Never `cd` to the main checkout and chain `&& git ...`, the commands can run in the wrong checkout. Do not fan out 5 or more worktree agents at once.
 
 ### Collision Isolation
 
-Before starting work, check `git status`, `git worktree list`, and whether another agent could already be active on the repo, another `herdr` pane, a separate terminal window, or a different tool (`Claude Code`, `OpenCode`, `Codex`, an IDE agent) entirely. A clean `git status` does not rule this out, a concurrent agent can be mid-edit on files before that edit ever surfaces there. Inside `herdr`, `herdr agent list` reports each active agent's `cwd`, check it against the repo you're about to touch. Outside `herdr` there's no reliable equivalent, `ps aux | grep -iE 'claude|opencode|codex'` lists matching processes but can't attribute one to a repo, so treat it as advisory only and ask the user directly when unsure. If the current checkout already carries uncommitted changes unrelated to the task at hand, another worktree or session is already active on the branch you need to touch, or another agent could plausibly be active on the repo, do not work directly in that shared checkout.
+Before starting work, check `git status`, `git worktree list`, and whether another agent could be active on the repo, in another `herdr` pane, a separate terminal, or a different tool (`Claude Code`, `OpenCode`, `Codex`, an IDE agent). A clean `git status` does not rule it out, a concurrent agent can be mid-edit before the edit surfaces. Inside `herdr`, `herdr agent list` shows each agent's `cwd`. Elsewhere there is no reliable check, `ps aux | grep -iE 'claude|opencode|codex'` is advisory only, ask the user when unsure.
 
-```bash
-# Isolate the task instead of working in the colliding checkout.
-git fetch origin
-git worktree add ../<project>-<task-name> -b <type>/<task-name> $(git rev-parse --abbrev-ref origin/HEAD)
-
-# Once the branch is merged, clean up.
-git worktree remove ../<project>-<task-name>
-git branch -d <type>/<task-name>
-```
-
-If `git branch -d` refuses, the branch isn't merged into its upstream yet, that's expected for a pushed-but-not-yet-merged or handed-off branch. Stop and ask before reaching for `-D`, don't escalate past it on your own.
-
-Never touch, reset, or stash the colliding worktree or branch to make room, isolate your own task instead and leave the other work exactly as you found it.
+If the checkout carries uncommitted changes unrelated to your task, another session is active on the branch you need, or another agent could plausibly be active, do not work in that shared checkout. Isolate your own task in a worktree and leave the other work exactly as you found it, never touch, reset, or stash it to make room.
 
 ## Branch
 

@@ -13,13 +13,7 @@ description: >
 
 ## When to use
 
-- `/diagnose`
-- User says "diagnose this" or "debug this".
-- User reports a bug, error, or unexpected behavior.
-- Tests are failing and the root cause is not obvious.
-- Something is broken, throwing, or producing wrong output.
-- User describes a performance regression.
-- User shares a Grafana/Loki dashboard or explore link, or asks to "search Loki"/"check Grafana"/"search the logs", as part of root-causing a bug they've already described.
+- A bug, error, failing test with an unclear cause, wrong output, or performance regression, including a Grafana/Loki link or log search used to root-cause a bug the user already described.
 - Not for a standalone log search or a bare Grafana/Loki link with no bug-report framing, see the `search-grafana-logs` skill for that.
 
 A discipline for hard bugs. Skip phases only when explicitly justified.

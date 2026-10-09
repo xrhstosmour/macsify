@@ -221,9 +221,9 @@ if brewfile_declares "anomalyco/tap/opencode"; then
     create_symlink "$AGENTIC_DIRECTORY/skills"       "$HOME/.config/opencode/skills"
     create_symlink "$AGENTIC_DIRECTORY/AGENTS.md"    "$HOME/.config/opencode/AGENTS.md"
 
-    # OpenCode auto-loads plugins from its plugin directory. This plugin re-injects the routing reminder
-    # each turn and blocks `WebFetch` on service hosts. `Claude Code` does the same via the `UserPromptSubmit`
-    # hook and permissions.deny in `settings.json`.
+    # OpenCode auto-loads plugins from its plugin directory. This plugin injects the idle context warning,
+    # blocks `WebFetch` on service hosts and caps Bash output. `Claude Code` does the same via hooks and
+    # permissions.deny in `settings.json`.
     mkdir -p "$HOME/.config/opencode/plugin"
     create_symlink "$AGENTIC_DIRECTORY/hooks/opencode-context-guard.js" "$HOME/.config/opencode/plugin/agentic-reminder.js"
 
@@ -275,8 +275,26 @@ effort: ${effort}" "$HOME/.claude/agents/${agent}.md"
         fi
     done
 
+    # `autoMode` holds this machine's trusted repos and org details, Claude Code writes it, and
+    # `skipDangerousModePermissionPrompt` is a per-machine acknowledgement. Neither belongs in
+    # the committed file, so carry them across the overwrite below.
+    preserved_settings=""
+    if [ -f "$HOME/.claude/settings.json" ] && command -v jq >/dev/null 2>&1; then
+        preserved_settings=$(jq -c '{autoMode, skipDangerousModePermissionPrompt} | with_entries(select(.value != null))' "$HOME/.claude/settings.json" 2>/dev/null || true)
+    fi
+
     log_info "Copying Claude Code settings..."
     cp "$AGENTIC_SCRIPT_DIRECTORY/../claude/settings.json" "$HOME/.claude/"
+
+    if [ -n "$preserved_settings" ] && [ "$preserved_settings" != "{}" ]; then
+        merged_settings=$(mktemp)
+        if jq --argjson keep "$preserved_settings" '. + $keep' "$HOME/.claude/settings.json" > "$merged_settings"; then
+            mv "$merged_settings" "$HOME/.claude/settings.json"
+        else
+            rm -f "$merged_settings"
+            log_warning "Could not restore autoMode in ~/.claude/settings.json, add it back by hand."
+        fi
+    fi
     cp "$AGENTIC_SCRIPT_DIRECTORY/../claude/keybindings.json" "$HOME/.claude/"
 
     # `claude/settings.json` commits a bare `bun` in `statusLine.command` and this resolves it to

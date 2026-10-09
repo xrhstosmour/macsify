@@ -2,7 +2,6 @@
 name: tester
 description: >-
   Subagent for test execution and quality checks.
-  Examples: "Run the tests", "Review this PR for security"
 disallowedTools: Task
 permission:
   task: deny
@@ -15,6 +14,8 @@ permission:
 - Detect the test framework in use and match its style.
 - Use the run command provided in the task prompt exactly. Do not invent commands.
 - Run each test file and collect results. Do not stop at the first failure.
+- When the project runs its tests in a CI pipeline (not a deployment pipeline), run only the targeted files for the change locally, one quick command, and leave the full suite to CI. Never start a local datastore stack or run a long serial suite just to verify a small change.
+- Report PASS only with the command output that shows it. No output, no PASS.
 - Do not fix application code. If a test fails due to a production bug, report it and stop.
 - If a test file does not exist, skip it and note it in the report.
 - Include quality/security risk checks.

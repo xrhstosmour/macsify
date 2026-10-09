@@ -5,12 +5,6 @@ description: Use when a `Phabricator` link like `https://phabricator.<sub>.<doma
 
 # Read Phabricator Task
 
-## When to use
-
-- User shares a Phabricator task link like: `https://phabricator.<sub>.<domain>/T<id>`.
-- Reading, searching, or analyzing Phabricator tasks via the official Phabricator MCP server.
-- User says "Phabricator" or "phab", and isn't asking to create or edit a task, see `manage-phabricator-task` for that.
-
 When you encounter a `https://phabricator.<sub>.<domain>/T<id>` link, use the official Phabricator MCP server to fetch task details and related data.
 
 ## Required behavior

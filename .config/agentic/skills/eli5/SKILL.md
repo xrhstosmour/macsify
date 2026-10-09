@@ -1,14 +1,9 @@
 ---
 name: eli5
 description: >
-  Explain a concept, error, or piece of code in dead-simple terms, by default
-  as if to a 5 year old, or matching a specific audience/expertise level the
-  user names. Use when the user says "ELI5", "explain like I'm 5", "explain
-  like I am/to <someone>", "I don't understand this", "break this down for
-  me", "dumb this down", "explain this simply", asks to explain code or a
-  concept they don't understand, asks for an explanation written as if they
-  already have expertise in the topic, or asks to go deeper or simpler on an
-  explanation just given.
+  Explain a concept, error, or code in dead-simple terms, by default as to a 5 year
+  old, or at a named audience level. Use for "ELI5", "explain like I'm...", "I don't
+  understand this", "break this down", "dumb this down", or going deeper or simpler.
 ---
 
 # ELI5

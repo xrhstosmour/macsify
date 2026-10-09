@@ -9,19 +9,7 @@ description: >
 
 # GitHub PR Review Orchestrator
 
-## Purpose
-
-Run a structured, multi-agent code review on a GitHub pull request by delegating
-architecture and quality concerns to specialist sub-agents and synthesizing
-their findings into a single actionable report.
-
-## When to use
-
-- `/review-github-pr <url_or_branch>`
-- User says "review my PR", "review this PR", "review the PR", or "code review `<branch>`".
-- A PR has been created and the user wants quality feedback before merging.
-- The user asks "is this ready to merge?" or "is this PR good?".
-- After `/manage-github-pr` completes and the user wants a review pass.
+Delegates architecture and quality review to sub-agents and synthesizes one report.
 
 ## Fetch the PR
 
@@ -51,6 +39,14 @@ gh pr view --json number,title,body,headRepository,url
 ```
 
 Store the PR title, description, and `owner/repo/number`.
+
+Check whether the PR already has a review, so the same PR is not reviewed twice from scratch:
+
+```bash
+gh pr view <pr_number> --repo <owner>/<repo> --json reviews --jq '.reviews[] | {author: .author.login, state}'
+```
+
+If a review by the user (`gh api user --jq .login`) already exists and commits were pushed after it, or the user says the fixups are done, tell the user and treat this as a re-review, see the re-review exception under "Post inline comments". Reviews by bots or other people do not count.
 
 ## Fetch changed files and diff
 
@@ -113,11 +109,9 @@ Append this rubric to the `reviewer` sub-agent prompt, plus the contents of
 `REVIEW_GUIDELINES.md` if one was found, labeled as project-specific and
 taking precedence over the rubric below where the two conflict. The `architect`
 gets only the "Determining what to flag", "Severity calibration", and "Line
-references" sections, the rest is outside its brief.
-
-Test quality is deliberately absent here, the `reviewer` agent carries its own
-Test Quality rubric and repeating it would send the same nine rules twice in one
-request.
+references" sections, the rest is outside its brief. The `reviewer` gets all
+sections except "Severity calibration" and "Untrusted input", its own agent file
+already carries both, and Test Quality is absent for the same reason.
 
 ```
 ## Determining what to flag
@@ -157,7 +151,7 @@ Cap, never upgrade: an attacker who already holds elevated privileges or is alre
 
 ## Spawn sub-agents in parallel
 
-Invoke two sub-agents via the Task tool, running them concurrently:
+Invoke two sub-agents via the Task tool, running them concurrently. Skip the `architect` and run only the `reviewer` when the diff is under about 150 changed lines and touches no migrations, config, or routes, the two re-read the same files and the architect adds little on a small diff.
 
 ### Architect agent
 
@@ -206,7 +200,9 @@ Prompt the `reviewer` agent with:
 
 ```
 Review this PR for quality, security, and performance. Follow your
-built-in review framework, execution multiplier, N+1, injection, secrets.
+built-in review framework. Work from the diff below, do not re-run
+`gh pr diff` or sweep the repo with `git log` or recursive greps, read a
+file only for context the diff lacks, and stop within about 25 tool calls.
 
 ## PR Under Review
 Title: {pr_title}
@@ -286,6 +282,8 @@ Determine the review event from the findings buckets in "Synthesize findings", t
 - CRITICAL section has entries -> event = `REQUEST_CHANGES`
 - CRITICAL is empty, MEDIUM has entries -> event = `COMMENT`
 - CRITICAL and MEDIUM both empty -> event = `APPROVE`
+
+Re-review exception: when the user already reviewed the PR and the author pushed fixups since, or the user says the fixups are done, do not be strict. If CRITICAL (which includes HIGH) is empty, the event is `APPROVE` even with MEDIUM entries, and the MEDIUM findings go up as minor comments. Only a HIGH or CRITICAL finding blocks a re-review.
 
 State the event and a one-line reason, e.g. "Recommending APPROVE, no CRITICAL/HIGH/MEDIUM findings." then proceed to post, findings always go up together as inline comments in the same review call regardless of event, LOW/NIT findings included as minor comments on an `APPROVE`.
 

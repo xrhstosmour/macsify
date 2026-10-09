@@ -3,7 +3,6 @@ name: implementor
 description: >-
   Subagent for implementation and fixes. Handles all code changes including
   features, bug fixes, refactors, and tester-reported failures.
-  Examples: "Implement circuit breaker", "Fix data consistency", "Fix failing test"
 disallowedTools: Task
 permission:
   task: deny

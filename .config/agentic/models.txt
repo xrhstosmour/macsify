@@ -12,15 +12,15 @@ opencode:implementor:model:opencode/nemotron-3.5-lightning-free
 opencode:implementor:variant:-
 opencode:clarifier:model:opencode/big-pickle
 opencode:clarifier:variant:-
-opencode:tester:model:opencode/mimo-v2.5-free
+opencode:tester:model:opencode/mimo-v2.6-flash-free
 opencode:tester:variant:-
-opencode:designer:model:opencode/mimo-v2.5-free
+opencode:designer:model:opencode/mimo-v2.6-flash-free
 opencode:designer:variant:-
 opencode:reviewer:model:opencode/nemotron-3-ultra-free
 opencode:reviewer:variant:-
 opencode:explore:model:opencode/big-pickle
 opencode:explore:variant:-
-opencode:compaction:model:opencode/mimo-v2.5-free
+opencode:compaction:model:opencode/mimo-v2.6-flash-free
 opencode:compaction:variant:-
 
 # Claude Code
@@ -33,7 +33,7 @@ claude:implementor:effort:medium
 claude:clarifier:model:sonnet
 claude:clarifier:effort:medium
 claude:tester:model:haiku
-claude:tester:effort:-
+claude:tester:effort:low
 claude:designer:model:sonnet
 claude:designer:effort:medium
 claude:reviewer:model:opus
@@ -56,10 +56,10 @@ codex:reviewer:model:gpt-5.6
 codex:reviewer:effort:high
 
 # Copilot CLI
-copilot:leader:model:claude-sonnet-5
-copilot:architect:model:claude-sonnet-5
-copilot:implementor:model:claude-sonnet-5
-copilot:clarifier:model:claude-sonnet-5
-copilot:tester:model:claude-haiku-4.5
-copilot:designer:model:claude-sonnet-5
-copilot:reviewer:model:claude-opus-5
+copilot:leader:model:claude-sonnet-5.5
+copilot:architect:model:claude-sonnet-5.5
+copilot:implementor:model:claude-sonnet-5.5
+copilot:clarifier:model:claude-sonnet-5.5
+copilot:tester:model:claude-haiku-5.5
+copilot:designer:model:claude-sonnet-5.5
+copilot:reviewer:model:claude-opus-5.5

@@ -1,23 +1,17 @@
 ---
 name: humanize
 description: >
-  Rewrite AI-sounding text so it reads as natural human writing, in English or Greek.
-  Detects the source language, strips buzzwords/filler/structural tells specific to that
-  language, and preserves facts, names, numbers, quotes, code, and the requested register.
-  Use when the user says "humanize this", "make this sound less AI", "make this sound more
-  human", "sound less robotic", "remove AI tells", "de-AI this", "rewrite this so it doesn't
-  sound like ChatGPT", "ανθρωποποίησε αυτό το κείμενο", "κάνε το πιο ανθρώπινο", "να μην
-  ακούγεται σαν να το έγραψε AI", or pastes text and asks it to sound less robotic/generated.
+  Rewrite AI-sounding text as natural human writing, in English or Greek, keeping
+  facts, names, numbers, quotes, code, and register. Use for "humanize this",
+  "less AI", "sound less robotic", "ανθρωποποίησε αυτό το κείμενο", or pasted text
+  to de-AI.
 ---
 
 # Humanize
 
 ## When to use
 
-- `/humanize`
-- User says "humanize this", "make this sound less AI", "make this sound more human", "sound less robotic", "remove AI tells", "de-AI this", "rewrite this so it doesn't sound like ChatGPT".
-- Greek equivalents: "ανθρωποποίησε αυτό το κείμενο", "κάνε το πιο ανθρώπινο", "να μην ακούγεται σαν να το έγραψε AI", "αφαίρεσε τα σημάδια AI".
-- User pastes a paragraph, email, post, or document and asks it to sound less generated, without asking for a summary or a translation.
+Text the user hands over and wants to sound less generated, in English or Greek.
 
 Not for: translating between languages, summarizing, or rewriting Claude's own live chat replies, `~/.config/agentic/instructions/communication.md` already governs that. This skill targets arbitrary text the user hands over, in English or Greek.
 

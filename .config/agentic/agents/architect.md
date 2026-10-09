@@ -2,7 +2,6 @@
 name: architect
 description: >-
   Subagent for architecture decisions and technical trade-offs only.
-  Examples: "Design a notification system", "Push or pull sync?"
 disallowedTools: Write, Edit, Bash, Task
 permission:
   edit: deny

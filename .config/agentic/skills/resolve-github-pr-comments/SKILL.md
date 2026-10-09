@@ -7,14 +7,6 @@ description: Review GitHub PR review comments, assess validity, propose or make 
 
 # Resolve GitHub PR Comments
 
-## When to use
-
-- `/resolve-github-pr-comments <pr_url>`
-- User says "resolve pr comments" or "fix pr comments".
-- The user mentions there are review comments to address on an open PR.
-- The user says "there's feedback on my PR", "reviewer left comments", or "I got a review".
-- The user is on a PR branch and asks to "handle the review" or "address the comments".
-
 ## 0. Resolve the PR
 
 If the user provides a GitHub PR URL, extract `owner`, `repo`, and `pr_number`:
@@ -65,9 +57,16 @@ Store `owner/repo/pr_number`.
    gh api repos/<owner>/<repo>/issues/<pr_number>/comments --jq '.[] | {id, user: .user.login, body, created_at, node_id}'
    ```
 
-5. Filter comments:
+5. Fetch review bodies. An APPROVED or COMMENTED review can carry a body with notes (often in an expandable details block) that is not in any thread:
+
+   ```bash
+   gh api repos/<owner>/<repo>/pulls/<pr_number>/reviews --jq '.[] | select(.body != "") | {id, user: .user.login, state, body, submitted_at, html_url}'
+   ```
+
+6. Filter comments:
    - Review threads: `isResolved == false` AND there is no reply from this agent (treat bot authors like any other author for review threads).
    - Standalone comments: no reply from this agent AND the author is not a bot. Bot standalone comments are skipped: do not reply, react, or resolve.
+   - Review bodies: non-empty body, author is neither a bot nor this agent's user, and no standalone comment from this agent quotes its `html_url`. Treat them like standalone comments, whatever the review state, including APPROVED.
 
    ```bash
    # Check replies to review comment.
@@ -78,7 +77,7 @@ Store `owner/repo/pr_number`.
 
 ## 2. Assess
 
-For each comment, present (author, date, `file:line`, content) and assess:
+For each comment, review bodies included, present (author, date, `file:line` when there is one, content) and assess:
 
 - VALID: Include a concise fix approach and the target `SHA` (the target commit must be within `<base>..HEAD`).
 - NOT VALID: Include a concise reason why no code change is required.
@@ -118,6 +117,7 @@ Reaction policy:
 - VALID standalone non-bot comments: React with `+1`.
 - NOT VALID standalone non-bot comments: React with `eyes`.
 - Bot standalone comments: Do not react.
+- Review bodies: Reviews have no reactions endpoint, skip the reaction and verification for them.
 
 Verification (required before Step 7/8):
 
@@ -156,7 +156,7 @@ Get user confirmation to commit.
 Create fixup commits locally first. Do not push until the user explicitly approves.
 Resolve target `SHA`s from the current branch history, and group changes by target `SHA`.
 Never mix different target `SHA`s in a single fixup commit.
-For further details, re-read `~/.config/agentic/instructions/versioning.md` in full before committing.
+Follow the Fixups section of `versioning.md`, already loaded in the agentic harness, so don't re-read it there.
 
 ```bash
 # Example: create fixup commits grouped by target SHA
@@ -216,6 +216,12 @@ echo '{"body":"https://github.com/<owner>/<repo>/commit/<sha>"}' | gh api "repos
 echo '{"body":"> <original_comment_text>\n\nhttps://github.com/<owner>/<repo>/commit/<sha>"}' | gh api "repos/<owner>/<repo>/issues/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
 ```
 
+Review bodies have no reply endpoint and cannot be resolved. Answer each one with a standalone PR comment that quotes the relevant note and links the review `html_url`, followed by the fixup SHA URL(s) when valid or the reason when not valid:
+
+```bash
+echo '{"body":"<review_html_url>\n\n> <quoted_note>\n\nhttps://github.com/<owner>/<repo>/commit/<sha>"}' | gh api "repos/<owner>/<repo>/issues/<pr_number>/comments" -X POST -H "Accept: application/vnd.github+json" --input -
+```
+
 Resolve review threads, after replying:
 
 ```bash
@@ -228,6 +234,7 @@ Before posting or resolving any not-valid thread, ensure Step 3 reactions were a
 
 For review thread comments from any author: Reply with concise reason + resolve.
 For standalone comments from non-bot authors only: Quote reply with reason. Bot standalones are skipped, no reply, no resolve.
+For review bodies: Answer with a standalone PR comment as in Step 7.
 
 ```bash
 # Review thread comment, reply with reason + resolve, for both human and bot review comments.
@@ -242,10 +249,12 @@ echo '{"body":"> <original_comment_text>\n\n<reason>"}' | gh api "repos/<owner>/
 1. Re-request reviews (skip reviewers who already approved, and skip bots):
 
    ```bash
+   scratch=$(mktemp -d)
+
    # Get approved reviewers.
    gh pr view <pr_number> --json reviews \
      --jq '.reviews[] | select(.state=="APPROVED") | .author.login' \
-     | sort -u > /tmp/approved.txt
+     | sort -u > "$scratch/approved.txt"
 
    # Get all non-bot reviewers who commented (excluding self).
    gh api repos/<owner>/<repo>/pulls/<pr_number>/comments \
@@ -255,13 +264,13 @@ echo '{"body":"> <original_comment_text>\n\n<reason>"}' | gh api "repos/<owner>/
      | while read login; do
          type=$(gh api "users/$login" --jq '.type' 2>/dev/null)
          if [ "$type" != "Bot" ]; then echo "$login"; fi
-       done > /tmp/reviewers.txt
+       done > "$scratch/reviewers.txt"
 
    # Re-request only non-approved reviewers.
-   comm -23 /tmp/reviewers.txt /tmp/approved.txt \
+   comm -23 "$scratch/reviewers.txt" "$scratch/approved.txt" \
      | xargs -I {} gh pr edit <pr_number> --add-reviewer {}
 
-   rm /tmp/approved.txt /tmp/reviewers.txt
+   rm -r "$scratch"
    ```
 
 2. Summary: `PR` link, resolved `SHA`s, not-valid reasons
@@ -274,6 +283,7 @@ echo '{"body":"> <original_comment_text>\n\n<reason>"}' | gh api "repos/<owner>/
 - Reactions are mandatory: `+1` for valid, `eyes` for not valid, except for bot standalone comments.
 - Verify reactions exist before posting any reply or resolve actions.
 - Reply to review comments (not the PR body) when applicable.
+- Never report that all comments are handled before the review bodies (Step 1, item 5) are covered, an approved review with notes still needs an answer.
 - On command failure: show the error, stop, and ask the user.
 - For valid comments: reply with just the SHA URL(s), no extra text.
 - For not-valid comments: reply with a concise reason.
