@@ -13,7 +13,8 @@
 - Use absolute paths, or verify them, before destructive commands.
 - Inform the user of long-running processes.
 - Apply all explicit user-provided context (links, images, constraints), and don't skip it unless it conflicts with safety.
-- Never fabricate findings. If nothing is wrong, say so explicitly.
+- Never fabricate. If you don't know, say so. Answer only with evidence you can point to, a file you read, a command output you saw, a source you cited. Read the source before quoting it, and if it doesn't support your answer, say so. If nothing is wrong, say so explicitly.
+- Never claim work is done without the command output that proves it.
 - Add only essential code comments, no fluff.
 
 ## Flagging Convention
@@ -44,20 +45,6 @@ Prefer single, whole words for variables, constants, functions, parameters, file
 ## Self-Critique
 
 After implementing code, pause and self-critique: re-read your work, question whether there's a better approach, and fix concerns before moving on. Max 3 iterations, then ask the user for help. If you realize you made a mistake or ignored a rule, acknowledge it immediately, revert, and explain.
-
-## Hallucination Prevention
-
-### Know Your Limits
-
-If you don't know something, say so explicitly, never invent an answer. Answer only when confident: you can point to specific evidence, a file you read, a command output you saw, a source you cited, that directly supports the claim. Below that bar, prefer silence or a clarifying question over a plausible-sounding guess. If you spot a gap while working, stop and address it rather than papering over it.
-
-### Cite Your Sources
-
-When answering from documents, files, or external data, find and read the relevant source material first, then quote or reference it directly, never paraphrase from memory what you can read from the source. If the source material doesn't support your intended answer, say so.
-
-### Self-Check Before Output
-
-Re-read your response before sending. Ask: is this factual, can I point to where I got it? If you realize you fabricated something, acknowledge it immediately and correct it.
 
 ## Implementation
 
@@ -93,19 +80,19 @@ Three similar lines of code is better than a premature abstraction. Implement th
 
 ### Chesterton's Fence
 
-Before changing or removing anything, understand why it exists. What calls it, what does it call, what are the edge cases? Check git blame if needed. If you can't answer these, read more context first.
+Before changing or removing anything, understand why it exists. What calls it, what does it call, what are the edge cases? Check git blame if needed. If you can't answer these, read more context first. A function with tests can be refactored safely, a function with no tests is not deleted or renamed without asking.
 
 ### Dead Code Hygiene
 
-After refactoring, identify code that became unreachable or unused. Flag it with the Flagging Convention and ask before deleting. Don't leave dead code lying around, it confuses future readers and agents. Don't silently delete things you're not sure about.
+After refactoring, identify code that became unreachable or unused. Flag it with the Flagging Convention and ask before deleting. Don't leave dead code lying around, and don't silently delete things you're not sure about.
 
 ### Comment and Test Hygiene
 
-Comments go stale the same way code does, and the moment to catch it is the same self-critique pass you already run after writing or changing code, not only after a refactor. A comment can be born stale the first time you write it near existing documentation, not just left behind later when code moves. As part of that pass, reread the comments near the code you touched, not just the code itself. A comment that explained a shape which moved or disappeared becomes orphaned, still sitting where it always was, still reading as true. This shows up most in codebases with dense per function or per test documentation, where one behavior change forces edits in several places and the old wording is easy to leave standing.
+Comments go stale the same way code does, including at birth, when written near existing documentation. In the self-critique pass, reread the comments near the code you touched, not just the code. A comment that explained a shape which moved or disappeared is orphaned, still reading as true.
 
-When two files explain the same fact or incident, only one should carry the full explanation. Point the other one at it by name instead of retelling it. Two independent tellings of the same fact drift apart the next time either one is edited, and nobody notices until they disagree.
+When two files explain the same fact or incident, only one should carry the full explanation. Point the other one at it by name instead of retelling it, two tellings drift apart.
 
-Apply the same check to tests. A test that only reproves something an earlier test in the same file already guarantees adds no coverage and should be dropped, not kept for its own sake.
+Apply the same check to tests. A test that only reproves something an earlier test in the same file already guarantees adds no coverage and should be dropped.
 
 ### Test Junk Patterns
 
@@ -139,21 +126,18 @@ Complex and multi-step tasks go through `/scope`, which owns the discovery, appr
 
 Before writing any code: confirm you understand the requirement (ask if unsure), verify the target file exists and is the right one, check for existing patterns in the codebase, run lint/typecheck early to establish a baseline, and verify unfamiliar library APIs against official docs first rather than assuming they exist.
 
-After writing code: run lint/typecheck to catch style issues immediately, run relevant tests before moving on, and review changes with `git diff` before presenting.
+After writing code: run lint/typecheck to catch style issues immediately, review changes with `git diff` before presenting, and run tests as follows.
+
+- If the project runs its tests in a CI pipeline (a test job on the branch or PR, not a deployment pipeline), run only a targeted test locally (the single file or spec for the change, one quick command) and leave the full suite to that pipeline after the push. Do not run a long or serial suite locally, and do not start a local datastore stack just to run it.
+- If the project has no CI test pipeline, run the relevant tests locally before moving on.
 
 ## Skills Priority
 
-When a skill covers an operation, always invoke it. Never use ad-hoc commands for operations that have a skill. This is not limited to the terminal step. Skills encode safety guardrails, consistency, and quality gates that ad-hoc tool usage lacks.
+When a skill covers an operation, always invoke it first, never an ad-hoc command, and not only for the terminal step. Skills encode safety guardrails, consistency, and quality gates that ad-hoc tool usage lacks. This holds in Plan Mode (invoking a skill is read-only), and no matter which skill, command, or subagent chain is driving the session.
 
-When a request could match more than one skill, for example a project skill in `~/.config/agentic/skills/` and a same-topic plugin/marketplace skill, prefer the project skill. It encodes this repo's specific workflow and trigger phrasing.
+When a request could match more than one skill, for example a project skill in `~/.config/agentic/skills/` and a same-topic plugin/marketplace skill, prefer the project skill. When a skill defines a checklist, apply every item before finishing.
 
-When a skill defines a checklist, apply every item before finishing, never a subset.
-
-This applies in Plan Mode too. Invoking a matching skill is a read-only action, do it directly before any codebase exploration, regardless of the Plan Mode phase you are in.
-
-This applies no matter which skill or command is currently driving the session, `/scope`, `/code`, `/test`, another skill's workflow, or a subagent chain, none of these override or suppress a different skill's coverage.
-
-When writing a plan step or a subagent/delegation prompt for a skill-covered action, name the skill to invoke, never the raw command it wraps. Spelling out the exact CLI flags in a plan or subagent prompt bypasses the skill, because whoever executes that step just runs the literal instruction instead of re-matching triggers. This holds even when the flags already look correct, knowing the flags is exactly what makes it tempting to skip the skill.
+When writing a plan step or a subagent/delegation prompt for a skill-covered action, name the skill to invoke, never the raw command it wraps, even when the flags already look correct, knowing the flags is exactly what makes it tempting to skip the skill.
 
 - Wrong: plan step 'Push the branch and open a PR via `gh pr create` with a Summary/Test plan body.'
 - Right: plan step 'Push the branch, then invoke the `manage-github-pr` skill to open the PR.'
@@ -174,26 +158,13 @@ When commands fail: show the exact command that failed and the exact error outpu
 
 When code fails: report the failure with root cause, show the failing test output or stack trace, propose a fix approach before implementing, then re-test after the fix.
 
+Empty logs or output do not mean it is working, state that the root state is unknown.
+
 ## Stop the Line
 
-When anything unexpected happens, STOP adding features. Preserve evidence (error output, logs, repro steps). Diagnose using the `diagnose` skill. Fix the root cause, not the symptom. Guard with a regression test. Resume only after verification passes.
+When anything unexpected happens, STOP adding features. Preserve evidence (error output, logs, repro steps). Diagnose using the `diagnose` skill. Fix the root cause, not the symptom. Guard with a regression test. Resume only after verification passes. Do not push past a failing test or broken build to work on the next feature.
 
-Do not push past a failing test or broken build to work on the next feature.
-
-## Boundary Definition
-
-Vague "do not" rules fail under complex instructions. Use contrastive binary examples to define sharp, unbreakable boundaries:
-
-- If the error shows `Connection Refused` → infer a network configuration problem.
-- If the logs are entirely empty → do NOT assume it is working. Output that the root state is unknown.
-- If a function has tests → refactor safely.
-- If a function has no tests → do NOT delete or rename it without asking first.
-
-When writing rules for agents or yourself: pair every prohibition with a concrete "do/don't" example so the boundary is unambiguous.
-
-## Confusion Management
-
-When encountering inconsistencies, conflicting requirements, or unclear specifications: stop, don't proceed with a guess. Name the specific confusion ("I see X in the spec but Y in the existing code"), present the tradeoff or ask the clarifying question, and wait for resolution before continuing.
+When requirements or code conflict or are unclear, stop, don't proceed with a guess. Name the confusion ("I see X in the spec but Y in the existing code"), present the tradeoff or ask, and wait.
 
 For a multi-step or ambiguous task, surface assumptions and the plan together before executing, so the user can correct either in one pass:
 
@@ -204,41 +175,16 @@ PLAN:
 2. [second step]
 ```
 
-Skip this for a clear, single-step task, the Flagging Convention already covers surfacing anything adjacent once you're done.
+Skip this for a clear, single-step task.
 
 ## Context Management
 
-Manage context actively. Long sessions burn tokens because every API call re-sends the full conversation history, a session that runs for days with hundreds of messages will always balloon.
+Every API call re-sends the full conversation history, so long sessions burn tokens.
 
-### Compaction Triggers
-
-- Compact after every PR merge or major phase transition.
-- Compact when the session has been idle past the prompt-cache TTL, the `context-guard.sh` hook warns at that boundary.
-- Start a fresh session for unrelated work rather than extending a long one. The previous session's summary carries forward.
-- If the context health warning fires, compact immediately. Do not defer, do not start new work, do not rationalize one more small task first.
-
-### Token-Saving Best Practices
-
-- Use the `explore` subagent for code discovery instead of reading large files directly in the main context. The subagent returns only the answer, not the full file content.
-- Read files with `offset`/`limit` when you only need a specific section, not the entire file.
-- Prefer `grep`/`glob` over `read` for searching patterns. Read only the matching files/sections.
-- Avoid re-reading the same files across turns. Cache findings in your mental model or notes.
-- To view a match in context, grep for the line number first, then `Read` that file with `offset`/`limit`. Do not chain `grep`/`sed` into one compound shell command (semicolons, command substitution), it costs the same tool calls, and multi-statement shell strings often fail the harness's read-only auto-approval parser, forcing a manual permission prompt that a plain `grep` or `Read` would have skipped.
-
-### Manual Output Compression
-
-Compression happens at invocation time or in how you carry a result forward, never automatically.
-
-- Shape the command to be selective before running it, not after: `grep -c` for a count, `jq` filters for specific fields, `rg` with `-m`/`-A`/`-B` bounds, `sed -n` ranges, instead of dumping everything and trimming afterward.
-- When a result is still large and repetitive, long log dumps, big `JSON` arrays, wide diffs, do not paste it verbatim into your response or carry it forward untouched. Keep only the unique or salient lines, errors, matches, changed lines, and state how many lines were elided.
-- Never silently drop information that changes the answer. If you elide repetitive lines, say so and note that the full output is one command away if truly needed.
-
-## Context Anti-Patterns
-
-| Anti-Pattern | Fix |
-| --- | --- |
-| Agent invents APIs, ignores conventions | Load rules file and relevant source files before each task |
-| Agent loses focus with too much context | Include only what is relevant to the current task |
-| Agent guesses when it should ask | Surface ambiguity explicitly |
-| Agent invents new style instead of following yours | Include one example of the pattern to follow |
-| Agent doesn't know project-specific rules | Write it down in rules files, if it's not written, it doesn't exist |
+- Compact after every PR merge or major phase transition, and when the context health warning fires, immediately.
+- After an idle gap past the prompt-cache TTL, or an overnight break, compact or `/handoff` and start fresh instead of resuming a 100K to 500K context, the whole history is re-cached at full price.
+- Start a fresh session for unrelated work.
+- Use the `explore` subagent for code discovery instead of reading large files in the main context.
+- Read files with `offset`/`limit` when you only need a section, prefer `grep`/`glob` over `read` for searching, and don't re-read the same file across turns.
+- Do not chain `grep`/`sed` into one compound shell command (semicolons, command substitution), multi-statement strings often fail the harness's read-only auto-approval parser and force a manual prompt.
+- Shape commands to be selective before running them: `grep -c`, `jq` filters, `rg -m/-A/-B`, `sed -n` ranges. For a large repetitive result, keep only the unique or salient lines and say how many were elided, never silently drop information that changes the answer.
