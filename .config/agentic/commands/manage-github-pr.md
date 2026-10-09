@@ -1,16 +1,5 @@
 ---
-description: Create, review, comment on, or edit a GitHub pull request.
+description: Create a GitHub pull request, or comment on, approve, or edit an existing one.
 ---
 
-# Manage GitHub PR
-
-Create, review, comment on, or edit a `PR` using the `manage-github-pr` skill instructions.
-
-## When to use
-
-- `/manage-github-pr`
-- User says "ship it", "create PR", "make a PR", or "open a pull request".
-- Implementation work is complete and the user signals intent to share or merge it.
-- The user says "push this", "I'm done", "let's merge", or similar shipping language.
-- After `/code` or `/test` complete and the user confirms they want to proceed.
-- User asks to review, comment on, or edit an existing PR.
+Invoke the `manage-github-pr` skill and follow it for the request.

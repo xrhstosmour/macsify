@@ -2,12 +2,4 @@
 description: Create and edit Phabricator tasks via the official Phabricator MCP server.
 ---
 
-# Manage Phabricator Task
-
-Create or edit a Phabricator task using the `manage-phabricator-task` skill instructions.
-
-## When to use
-
-- `/manage-phabricator-task`
-- User explicitly mentions Phabricator or "phab": "create phab task/ticket/issue", "update phab task", "edit phab task".
-- User says "reassign", "close", or "reopen" a Phabricator task.
+Invoke the `manage-phabricator-task` skill and follow it for the request.
