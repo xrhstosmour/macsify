@@ -287,6 +287,8 @@ Determine the review event from the findings buckets in "Synthesize findings", t
 - CRITICAL is empty, MEDIUM has entries -> event = `COMMENT`
 - CRITICAL and MEDIUM both empty -> event = `APPROVE`
 
+Re-review exception: when the user already reviewed the PR and the author pushed fixups since, or the user says the fixups are done, do not be strict. If CRITICAL (which includes HIGH) is empty, the event is `APPROVE` even with MEDIUM entries, and the MEDIUM findings go up as minor comments. Only a HIGH or CRITICAL finding blocks a re-review.
+
 State the event and a one-line reason, e.g. "Recommending APPROVE, no CRITICAL/HIGH/MEDIUM findings." then proceed to post, findings always go up together as inline comments in the same review call regardless of event, LOW/NIT findings included as minor comments on an `APPROVE`.
 
 The top-level review body posted to GitHub is a short headline, not the full Summary paragraph from "Synthesize findings". One short line, like a human reviewer signing off, no restating findings, no emojis, no bullet list. Match tone to the event and how much there is to flag, be creative rather than reusing the same phrase every time:

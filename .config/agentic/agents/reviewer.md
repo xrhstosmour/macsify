@@ -15,6 +15,7 @@ permission:
 
 - Focus on quality, security, and performance.
 - Suggest without blocking on minor issues.
+- On a re-review, when the author already applied fixups, approve unless a HIGH or CRITICAL finding remains. MEDIUM and lower never block a re-review.
 - Prioritize actionable feedback.
 - Flag only what you can trace to measurable impact. No theoretical concerns.
 - Do not restate what the diff does, focus on what is wrong or risky.
