@@ -167,6 +167,7 @@ Skills are loaded by agents and triggered via commands. The `Command` column bel
 | `humanize` | `/humanize` | Rewrite AI-sounding text as natural human writing, English and Greek |
 | `capture-knowledge` | `/capture-knowledge` | Extract reusable knowledge from the conversation into an external second-brain repo, opens a `PR` |
 | `eli5` | Skill only, `/eli5` | Explain a concept, error, or code simply, dead-simple by default or matched to a stated audience |
+| `html-plan` | `/html-plan <task>`, from the `html-plan@claude-community` plugin | Write a plan as one interactive HTML page, answer decisions and comment in place, then paste the response back. `Claude Code` only, enabled and the `claude-community` marketplace added through `claude/settings.json`, needs `node`. The model writes the page by hand, so it costs tokens per plan |
 
 ### Task Management Skills
 
