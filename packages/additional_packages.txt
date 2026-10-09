@@ -1,5 +1,2 @@
 # https://github.com/tobi/qmd
 ([ -x "$HOME/.bun/bin/qmd" ] || (mise use -g bun@latest && mise x bun -- bun install -g @tobilu/qmd)) && (fish -c 'fish_add_path "$HOME/.bun/bin"' 2>/dev/null; export PATH="$HOME/.bun/bin:$PATH")
-
-# https://github.com/heygen-com/hyperframes
-HYPERFRAMES_NO_TELEMETRY=1 NODE_USE_SYSTEM_CA=1 mise x node@lts -- npx --yes hyperframes skills update </dev/null
