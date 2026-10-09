@@ -63,7 +63,7 @@ esac
 # suffix would defeat that anchor, letting a rewritten command slip past
 # the permission check it was supposed to hit.
 case "$command" in
-  *"sudo "*|*"dd "*|*"mkfs"*|*"git push"*|*"git filter-branch"*|*"git reset --hard"*|*"git clean -f"*|*"git branch -D"*|*"gh pr merge"*)
+  *"sudo "*|*"dd "*|*"mkfs"*|*"git push"*|*"git filter-branch"*|*"git reset --hard"*|*"git clean -f"*|*"git branch -D"*|*"git checkout ."*|*"git checkout -- ."*|*"git restore ."*|*"gh pr merge"*)
     exit 0
     ;;
 esac
