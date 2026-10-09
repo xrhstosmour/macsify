@@ -113,6 +113,15 @@
       "Bash(git reset --hard *)",
       "Bash(git clean -f *)",
       "Bash(git branch -D *)",
+      "Bash(git checkout .)",
+      "Bash(git checkout -- .)",
+      "Bash(git restore .)",
+      "Bash(git push * main)",
+      "Bash(git push * master)",
+      "Bash(git push *:main*)",
+      "Bash(git push *:master*)",
+      "Bash(git push * main *)",
+      "Bash(git push * master *)",
       "Bash(gh pr merge*)"
     ]
   },
