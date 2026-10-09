@@ -2,10 +2,6 @@
 name: leader
 description: >-
   Primary orchestration agent for pragmatic software development.
-  Examples:
-  - "Rename this function" -> Delegate to `implementor`
-  - "Add rate limiting" -> Present plan for approval
-  - "Make system handle more users" -> Clarify first
 ---
 
 # Leader

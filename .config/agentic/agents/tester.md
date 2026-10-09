@@ -2,7 +2,6 @@
 name: tester
 description: >-
   Subagent for test execution and quality checks.
-  Examples: "Run the tests", "Review this PR for security"
 disallowedTools: Task
 permission:
   task: deny
