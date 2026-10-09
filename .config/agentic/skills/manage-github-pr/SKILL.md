@@ -107,7 +107,7 @@ If matches found, stop immediately. Warn the user that secrets may be staged.
 
 #### 2.9 Quality gate
 
-Find the project's lint, typecheck, and test commands, check `package.json` scripts, a `Makefile`, `justfile`, CI config, project skills, or `AGENTS.md`/`CLAUDE.md` for the actual commands, they vary per project and language. Run whichever apply.
+Find the project's lint, typecheck, and test commands, check `package.json` scripts, a `Makefile`, `justfile`, CI config, project skills, or `AGENTS.md`/`CLAUDE.md` for the actual commands, they vary per project and language. Run lint and typecheck, and only the targeted tests for the changed files. If the project runs its tests in a CI pipeline, leave the full suite to it, per `standards.md`.
 
 If any fail, stop and present the failure. Do not proceed without the user's approval.
 
@@ -160,8 +160,8 @@ Use this template. Omit sections with no content.
 ```markdown
 **What**:
 
-1. **<item>**: <Description>
-2. **<item>**: <Description>
+1. <Plain sentence starting with the action verb>
+2. <Plain sentence starting with the action verb>
 
 **Why**:
 
@@ -169,8 +169,8 @@ Resolves [<issue_or_task_id>](<url>). The link can point to a Sentry, Phabricato
 
 **Testing**:
 
-1. <step>
-2. <step>
+1. <scenario>
+2. <scenario>
 
 **Monitoring**:
 
@@ -183,6 +183,8 @@ Or use the above queries:
 
 <query block>
 ```
+
+The numbered lists above show the two-or-more case. With exactly one item in What, Testing, or Monitoring, write one plain sentence under the heading, no list, no leading `1.`.
 
 Follow style in `~/.config/agentic/instructions/communication.md` for tone and formatting.
 
@@ -201,8 +203,10 @@ Derive each section:
   - WRONG: `1. Run the test suite.`
   - WRONG: `1. Confirmed via existing test coverage.`
   - CORRECT: Omit the `**Testing**:` heading entirely.
+  - A single scenario is one plain sentence under the heading. WRONG: `1. In a production console, checked that three orders ...` as a one-item list. CORRECT: `In a production console, checked that three orders ...`.
+  - Use a numbered list only when there are two or more scenarios.
   - When in doubt, omit.
-- Monitoring: From relevant dashboards, Sentry boards, or observability queries.
+- Monitoring: From relevant dashboards, Sentry boards, or observability queries. One board or query is a plain sentence, no list.
 
 Rules:
 
