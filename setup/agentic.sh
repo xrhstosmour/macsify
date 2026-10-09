@@ -221,9 +221,9 @@ if brewfile_declares "anomalyco/tap/opencode"; then
     create_symlink "$AGENTIC_DIRECTORY/skills"       "$HOME/.config/opencode/skills"
     create_symlink "$AGENTIC_DIRECTORY/AGENTS.md"    "$HOME/.config/opencode/AGENTS.md"
 
-    # OpenCode auto-loads plugins from its plugin directory. This plugin re-injects the routing reminder
-    # each turn and blocks `WebFetch` on service hosts. `Claude Code` does the same via the `UserPromptSubmit`
-    # hook and permissions.deny in `settings.json`.
+    # OpenCode auto-loads plugins from its plugin directory. This plugin injects the idle context warning,
+    # blocks `WebFetch` on service hosts and caps Bash output. `Claude Code` does the same via hooks and
+    # permissions.deny in `settings.json`.
     mkdir -p "$HOME/.config/opencode/plugin"
     create_symlink "$AGENTIC_DIRECTORY/hooks/opencode-context-guard.js" "$HOME/.config/opencode/plugin/agentic-reminder.js"
 
