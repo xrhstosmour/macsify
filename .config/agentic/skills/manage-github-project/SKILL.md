@@ -1,6 +1,6 @@
 ---
 name: manage-github-project
-description: Use for creating a new GitHub Projects v2 board with a standard Status setup, or publishing an approved multi-step plan to a board as one issue per step, assigned to the user, plus ongoing status sync and PR linkage. Triggered by phrases like "create a project board like this one", "set up a new GitHub project", "make an agents plan for this in GitHub projects", "break this plan into issues on the board", "put this plan on the project board", "track this in GitHub Projects", "sync the project board", "link this PR to the project issue". Not for a single standalone issue with no project board, see `manage-github-issue`. Not for reading/listing without changing anything, see `read-github-issue`. Not for the pull request itself, see `manage-github-pr`.
+description: Use for creating a GitHub Projects v2 board, or publishing an approved multi-step plan to a board as one issue per step, plus status sync and PR linkage. Not for a single issue with no board (`manage-github-issue`), reading (`read-github-issue`), or the PR itself (`manage-github-pr`).
 ---
 
 # Manage GitHub Project

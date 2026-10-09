@@ -1,6 +1,6 @@
 ---
 name: promo-video
-description: Turn the current project into a short, shareable launch video. Reads the project's own design system, interviews you on what the film should include, plans the story and storyboard, reviews real frames with you, then renders locally with the free, open-source Hyperframes CLI (`mise x node -- npx hyperframes`, Apache-2.0, no account or fees). Use when the user says "make a launch video", "promo video", "brag about this", "turn this into a video", or wants to share what they built.
+description: Turn the current project into a short launch video, planned with the user and rendered locally with the Hyperframes CLI. Use for "make a launch video", "promo video", "brag about this".
 ---
 
 # Promo Video

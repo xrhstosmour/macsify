@@ -1,16 +1,11 @@
 ---
 name: manage-phabricator-task
 description: >
-  Create and edit Phabricator tasks via the official Phabricator MCP server: new
-  tasks, or updating an existing task's status, title, description, owner, priority,
-  project tags, workboard column, or subscribers, added indirectly via @-mention,
-  resolved from a username where possible. Also posts stakeholder-facing status
-  update comments on a task.
-  Triggered when the user explicitly mentions Phabricator or "phab": "create phab
-  task/ticket/issue", "create a parent/umbrella task", "update/edit phab task",
-  "reassign/close/reopen task T<id>", "change priority on T<id>", "tag T<id>",
-  "move T<id> to <column>", "post a status update on T<id>", "write an update
-  for stakeholders", or "/manage-phabricator-task".
+  Create and edit Phabricator tasks via the Phabricator MCP server: new tasks, or
+  updating status, title, description, owner, priority, tags, workboard column, or
+  subscribers. Also posts stakeholder status updates. Use when the user mentions
+  Phabricator or "phab" with create, update, reassign, close, tag, move, or status
+  update on a task.
 ---
 
 # Manage Phabricator Task

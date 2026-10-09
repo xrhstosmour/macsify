@@ -1,13 +1,9 @@
 ---
 name: seo
 description: >
-  Technical SEO, content quality/E-E-A-T, schema markup, sitemap, image SEO,
-  and AI-search (GEO/AEO) analysis for any URL or page content. Use when the
-  user says "SEO", "SEO audit", "technical SEO", "Core Web Vitals", "schema
-  markup", "structured data", "JSON-LD", "sitemap", "robots.txt", "E-E-A-T",
-  "content quality", "alt text", "image SEO", "AI Overviews", "GEO", "AEO",
-  "llms.txt", "AI citations", or asks to audit/optimize a page or site for
-  search engines.
+  Technical SEO, E-E-A-T, schema markup, sitemap, image SEO, and AI-search (GEO/AEO)
+  analysis for a URL or page content. Use for "SEO audit", "Core Web Vitals",
+  "structured data", "sitemap", "llms.txt", or optimizing a page for search engines.
 ---
 
 # SEO Analysis

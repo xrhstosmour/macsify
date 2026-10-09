@@ -1,13 +1,10 @@
 ---
 name: capture-knowledge
 description: >
-  Extracts generalizable, reusable knowledge from the current conversation and adds it as
-  notes to an external "second brain" knowledge-base repository, following that repository's own
-  conventions and scrubbing sensitive/personal/company data. Opens a feature branch,
-  commits, and a PR for review, never pushes or merges without approval. Activate with:
-  "capture knowledge", "update knowledge base", "update notes", "update second brain",
-  "save this to my notes", "remember this for later", each with a target path,
-  e.g. "update second brain in `~/Developer/notes`".
+  Extract reusable knowledge from the conversation into an external second-brain notes
+  repo, scrubbing sensitive data, then open a branch, commit, and PR, never pushing
+  without approval. Use for "capture knowledge", "update second brain", "save this to
+  my notes", with a target path.
 ---
 
 # Capture Knowledge
