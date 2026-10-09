@@ -144,7 +144,7 @@ Skills are loaded by agents and triggered via commands. The `Command` column bel
 
 | Skill | Command | Purpose |
 | ----- | ------ | ------- |
-| `promo-video` | `/promo-video` | Plan and produce a short launch video for the current project: inspect, storyboard, tone, share copy, then render locally via `mise x node -- npx hyperframes`, whose creation skills `packages/additional_packages.txt` installs |
+| `promo-video` | `/promo-video` | Plan and produce a short launch video for the current project: inspect, storyboard, tone, share copy, then render locally from HTML scenes with headless Chrome and `ffmpeg` through the bundled `scripts/promo.py` (one command, Python 3 standard library only), no packages to install, works natively on macOS, Linux, and Windows. Runs on the model pinned in its `SKILL.md` for the turn it is invoked |
 
 ### Design Skills
 
