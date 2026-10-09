@@ -106,15 +106,6 @@ Right: `git commit --fixup <original_sha>`
 
 To fix a fixup: find original, fixup that directly, or `git rebase -i` to squash.
 
-```bash
-# Original.
-abc123 feat: Add feature X
-# Fixup (correct).
-def456 fixup! feat: Add feature X
-# Another fix -> fixup ORIGINAL, NOT def456.
-git commit --fixup abc123
-```
-
 ## Merge Workflow
 
 - Only merge a pull request when explicitly asked to. Never merge on your own initiative.
@@ -127,7 +118,7 @@ git commit --fixup abc123
 
 ## Save-Point Pattern
 
-Commit locally each tested increment per the increment cycle in rules.md. Commits are save points, if the next change breaks something, revert to the last known-good state.
+Commit locally each tested increment per the increment cycle in `standards.md`. Commits are save points, if the next change breaks something, revert to the last known-good state.
 
 ## Change Summaries
 
@@ -146,6 +137,8 @@ git worktree remove ../project-feature-a
 ```
 
 Each worktree is a separate directory with its own branch. Agents work in parallel without interfering.
+
+Inside a worktree session, run plain single git commands from the worktree directory, or use `git -C <worktree>`. Never `cd` to the main checkout and chain `&& git ...`, the session guard refuses it. Do not fan out 5 or more worktree agents at once.
 
 ### Collision Isolation
 
