@@ -211,15 +211,17 @@ git log --format="%H %s" -n <fixup_commit_count>
 
 Reply and resolve review thread comments (for both human and bot authors) by posting the fixup commit URL(s) and then resolving the thread. For standalone comments from non-bot authors, post a quoted reply including fixup SHA(s). Skip bot standalone comments (no reply, no resolve).
 
+Every reply body, in this step and in Step 8, starts with `@<author_login>` of the comment being answered (its `author.login` for review threads, `user.login` for standalone comments and review bodies), then a blank line, so the author is notified. Bot authors are tagged too when a reply is posted to them. Review body comments tag the review author.
+
 ```bash
-echo '{"body":"https://github.com/<owner>/<repo>/commit/<sha>"}' | gh api "repos/<owner>/<repo>/pulls/<pr_number>/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
-echo '{"body":"> <original_comment_text>\n\nhttps://github.com/<owner>/<repo>/commit/<sha>"}' | gh api "repos/<owner>/<repo>/issues/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
+echo '{"body":"@<author_login>\n\nhttps://github.com/<owner>/<repo>/commit/<sha>"}' | gh api "repos/<owner>/<repo>/pulls/<pr_number>/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
+echo '{"body":"@<author_login>\n\n> <original_comment_text>\n\nhttps://github.com/<owner>/<repo>/commit/<sha>"}' | gh api "repos/<owner>/<repo>/issues/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
 ```
 
 Review bodies have no reply endpoint and cannot be resolved. Answer each one with a standalone PR comment that quotes the relevant note and links the review `html_url`, followed by the fixup SHA URL(s) when valid or the reason when not valid:
 
 ```bash
-echo '{"body":"<review_html_url>\n\n> <quoted_note>\n\nhttps://github.com/<owner>/<repo>/commit/<sha>"}' | gh api "repos/<owner>/<repo>/issues/<pr_number>/comments" -X POST -H "Accept: application/vnd.github+json" --input -
+echo '{"body":"@<author_login>\n\n<review_html_url>\n\n> <quoted_note>\n\nhttps://github.com/<owner>/<repo>/commit/<sha>"}' | gh api "repos/<owner>/<repo>/issues/<pr_number>/comments" -X POST -H "Accept: application/vnd.github+json" --input -
 ```
 
 Resolve review threads, after replying:
@@ -238,10 +240,10 @@ For review bodies: Answer with a standalone PR comment as in Step 7.
 
 ```bash
 # Review thread comment, reply with reason + resolve, for both human and bot review comments.
-echo '{"body":"<reason>"}' | gh api "repos/<owner>/<repo>/pulls/<pr_number>/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
+echo '{"body":"@<author_login>\n\n<reason>"}' | gh api "repos/<owner>/<repo>/pulls/<pr_number>/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
 gh api graphql -f query='mutation($threadId:ID!){resolveReviewThread(input:{threadId:$threadId}){thread{isResolved}}}' -F threadId=<thread_id>
 # Standalone comment, non-bot only, quote reply with reason, no resolve.
-echo '{"body":"> <original_comment_text>\n\n<reason>"}' | gh api "repos/<owner>/<repo>/issues/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
+echo '{"body":"@<author_login>\n\n> <original_comment_text>\n\n<reason>"}' | gh api "repos/<owner>/<repo>/issues/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
 ```
 
 ## 9. Finish
