@@ -65,7 +65,7 @@ An umbrella is a normal task carrying the umbrella tag. "Parent task" with no TI
 - Owner is a hard requirement when the umbrella tag is applied. At the step 5 preview, if owner would be unset, stop and say why, an unowned umbrella vanishes from every downstream view.
 - Title format `☂️ Name`, or `☂️ <flag emoji> Name` for a specific market or region. A default suggestion, show the drafted title and confirm.
 - File real work as subtasks: `pha_task_update_relationships(task_id=<child PHID>, relationship_type="parent", target_ids="<umbrella PHID>")`. The tool doesn't say which side becomes parent, so the direction is inferred. Right after, re-fetch the child with `pha_task_get(task_id=<numeric ID>)` and check the live response for the parent relationship before reporting success. If it isn't clear, say so and ask the user to check in Phabricator.
-- An umbrella plus several children in one request: gather shared fields once (domain tag, assignee, uniform due date), show one combined preview, take one confirmation for the set, still ask titles and descriptions per child. Create the umbrella first, then each child, linking it as you go.
+- An umbrella plus several children in one request: gather shared fields once (domain tag, assignee, uniform due date, default today), show one combined preview, take one confirmation for the set, still ask titles and descriptions per child. Create the umbrella first, then each child, linking it as you go.
 
 ## Workboard columns
 
@@ -100,14 +100,14 @@ A distinct, opt-in action, not a generic comment. Some workflows rely on the lit
 
 ### 2. Gather optional fields
 
-Ask all at once in a single message. Status and due date are always asked, never silently defaulted.
+Ask all at once in a single message. Status is always asked, never silently defaulted. Due date defaults to today when the user says nothing else.
 
 - Description: generate from git? y/n.
 - Priority: P0 to P4.
 - Assignee: default self, resolved with `pha_user_whoami`, or another username per "Resolve a username to a PHID".
 - Subscribers: usernames.
 - Status: open, in progress, or resolved, default open.
-- Due date: any format, normalize to `YYYY-MM-DD`.
+- Due date: default today's date when the user gives none, any format, normalize to `YYYY-MM-DD`.
 - Parent task: TID.
 - Reference links.
 - Committed-board column: only when "Workboard columns" applies.
@@ -149,7 +149,7 @@ Priority:    <priority>
 Assignee:    <username>, default self, required when the umbrella tag is set
 Subscribers: <usernames>, or none
 Status:      <status>
-Due date:    <date>, or none
+Due date:    <date>, default today
 Column:      <board column>, or none
 Parent:      T<id>
 
