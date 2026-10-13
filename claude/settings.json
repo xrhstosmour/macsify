@@ -10,6 +10,7 @@
   "awaySummaryEnabled": false,
   "autoUpdatesChannel": "stable",
   "autoCompactWindow": 400000,
+  "subagentPromptCacheTtl": "1h",
   "cleanupPeriodDays": 15,
   "remoteControlAtStartup": true,
   "enabledPlugins": {
