@@ -17,6 +17,12 @@ Assess scope, present approach, and iterate based on feedback until user approve
 
 When the task touches three or more files, or has several decisions the user must make, and the `html-plan` skill is available, invoke it for steps 2 and 3 instead of writing the approaches in chat. The user answers the decisions in the page and pastes the response back, which counts as the sign-off. Do not invoke it for small or single-file tasks, it costs extra tokens. If the skill is not available, present the approaches in chat as usual.
 
+## Big Tasks Tracked on a Board
+
+When the approved plan has three or more discrete, orderable steps that will span several sessions or pull requests, offer once to track it on a `GitHub` project board. Invoke the `manage-github-project` skill to publish one issue per step, it owns the preview, the confirmation, and the status sync. Never create issues or a board without the user's approval, and skip the offer for work that fits one session or one pull request.
+
+While the plan runs, each step's pull request closes its issue with a `Resolves` line, per `manage-github-pr`, and the `manage-github-project` skill moves the status as steps start and merge.
+
 ## Entry Criteria
 
 - User has a task/feature/bug to address.
