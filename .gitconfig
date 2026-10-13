@@ -2,6 +2,8 @@
 	rebase = true
 [merge]
 	conflictstyle = diff3
+[advice]
+	skippedCherryPicks = false
 [push]
 	default = current
 	autoSetupRemote = true

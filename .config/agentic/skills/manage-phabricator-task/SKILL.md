@@ -65,7 +65,7 @@ An umbrella is a normal task carrying the umbrella tag. "Parent task" with no TI
 - Owner is a hard requirement when the umbrella tag is applied. At the step 5 preview, if owner would be unset, stop and say why, an unowned umbrella vanishes from every downstream view.
 - Title format `☂️ Name`, or `☂️ <flag emoji> Name` for a specific market or region. A default suggestion, show the drafted title and confirm.
 - File real work as subtasks: `pha_task_update_relationships(task_id=<child PHID>, relationship_type="parent", target_ids="<umbrella PHID>")`. The tool doesn't say which side becomes parent, so the direction is inferred. Right after, re-fetch the child with `pha_task_get(task_id=<numeric ID>)` and check the live response for the parent relationship before reporting success. If it isn't clear, say so and ask the user to check in Phabricator.
-- An umbrella plus several children in one request: gather shared fields once (domain tag, assignee, uniform due date), show one combined preview, take one confirmation for the set, still ask titles and descriptions per child. Create the umbrella first, then each child, linking it as you go.
+- An umbrella plus several children in one request: gather shared fields once (domain tag, assignee, uniform due date, default today), show one combined preview, take one confirmation for the set, still ask titles and descriptions per child. Create the umbrella first, then each child, linking it as you go.
 
 ## Workboard columns
 
@@ -100,14 +100,14 @@ A distinct, opt-in action, not a generic comment. Some workflows rely on the lit
 
 ### 2. Gather optional fields
 
-Ask all at once in a single message. Status and due date are always asked, never silently defaulted.
+Ask all at once in a single message. Status is always asked, never silently defaulted. Due date defaults to today when the user says nothing else.
 
 - Description: generate from git? y/n.
 - Priority: P0 to P4.
 - Assignee: default self, resolved with `pha_user_whoami`, or another username per "Resolve a username to a PHID".
 - Subscribers: usernames.
 - Status: open, in progress, or resolved, default open.
-- Due date: any format, normalize to `YYYY-MM-DD`.
+- Due date: default today's date when the user gives none, any format, normalize to `YYYY-MM-DD`.
 - Parent task: TID.
 - Reference links.
 - Committed-board column: only when "Workboard columns" applies.
@@ -118,7 +118,7 @@ If generating, gather context with `git log` and `git diff --stat` against the r
 
 Tone: conversational and direct, no jargon or acronyms, short sentences with one idea each, describe the user-facing problem and impact, not code changes.
 
-Remarkup is Phabricator's dialect, not GitHub Markdown: leave a blank line after every `##` header and after any line ending in `:` before a list, or headers merge into the paragraph and lists render as plain text. Format every URL as `[[https://example.com | Label]]`, never bare.
+Remarkup is Phabricator's dialect, not GitHub Markdown: leave a blank line after every `##` header and after any line ending in `:` before a list, or headers merge into the paragraph and lists render as plain text. Write every URL bare, never in `[[https://example.com | Label]]` form.
 
 ```
 ## Why
@@ -131,7 +131,7 @@ Settings now live on one page in the sidebar, with a search bar.
 
 ## References
 
-- [[https://github.com/org/repo/pull/123 | PR #123]]
+- https://github.com/org/repo/pull/123
 ```
 
 A bug task uses `## How to reproduce` (numbered steps) and `## What we found` instead of Why and What. The due date and the reference are placed in step 6, not here. Show the description and get approval.
@@ -149,7 +149,7 @@ Priority:    <priority>
 Assignee:    <username>, default self, required when the umbrella tag is set
 Subscribers: <usernames>, or none
 Status:      <status>
-Due date:    <date>, or none
+Due date:    <date>, default today
 Column:      <board column>, or none
 Parent:      T<id>
 
@@ -162,7 +162,7 @@ Ask "Ready to create?" and do not execute without explicit confirmation.
 
 1. Append one `@<phid>` per subscriber to the end of the description, that auto-subscribes them.
 2. Due date: with a real field, set it in step 5 below. Without one, append `**Due:** <YYYY-MM-DD>` after a blank line at the bottom.
-3. Reference value: `[[<pr_url> | PR #<number>]]` if a PR exists, otherwise Branch `` `<branch-name>` ``. With a real `reference` field it goes there in step 5, with any extra links still in the description. Without one, it goes in the description with any extra links. Whatever lands in the description goes in a `## References` section at the very bottom, below the `**Due:**` line.
+3. Reference value: the bare `<pr_url>` if a PR exists, otherwise Branch `` `<branch-name>` ``. With a real `reference` field it goes there in step 5, with any extra links still in the description. Without one, it goes in the description with any extra links. Whatever lands in the description goes in a `## References` section at the very bottom, below the `**Due:**` line.
 4. `pha_task_create(title=..., description=..., owner_phid=<assignee PHID>)`. It returns `id` and `phid`, report the task as `$PHAB/T<id>`. New tasks default to "Needs Triage", status open, and no project tag.
 5. Follow up with `pha_task_update(task_id=<phid>, ...)` for tag, non-default priority, non-open status, reference, and a real due-date field, a task without this call is missing them. Two cases use other tools: a parent via `pha_task_update_relationships` (see "Umbrella tasks" for the call and verification) and a board column via `pha_workboard_move_task`, without it the task is left off the board.
 
