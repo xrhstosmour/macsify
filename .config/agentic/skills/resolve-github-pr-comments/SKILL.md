@@ -57,7 +57,7 @@ Store `owner/repo/pr_number`.
    gh api repos/<owner>/<repo>/issues/<pr_number>/comments --jq '.[] | {id, user: .user.login, body, created_at, node_id}'
    ```
 
-5. Fetch review bodies. An APPROVED or COMMENTED review can carry a body with notes (often in an expandable details block) that is not in any thread:
+5. Fetch review bodies. An APPROVED or COMMENTED review can carry a body with notes (often in an expandable details block) that may not be in any thread:
 
    ```bash
    gh api repos/<owner>/<repo>/pulls/<pr_number>/reviews --jq '.[] | select(.body != "") | {id, user: .user.login, state, body, submitted_at, html_url}'
@@ -66,7 +66,7 @@ Store `owner/repo/pr_number`.
 6. Filter comments:
    - Review threads: `isResolved == false` AND there is no reply from this agent (treat bot authors like any other author for review threads).
    - Standalone comments: no reply from this agent AND the author is not a bot. Bot standalone comments are skipped: do not reply, react, or resolve.
-   - Review bodies: non-empty body, author is neither a bot nor this agent's user, and no standalone comment from this agent quotes its `html_url`. Treat them like standalone comments, whatever the review state, including APPROVED.
+   - Review bodies: non-empty body, author is neither a bot nor this agent's user, and no standalone comment from this agent quotes its `html_url`. Treat them like standalone comments, whatever the review state, except for bodies with no note of their own: approval, praise, or a pointer to inline comments ("LGTM", "Nice one", "Left two small nits, none blocking"). Those need no response, the inline threads carry the notes and get answered there. Judge the full body, details blocks included, a body is pointer-only only when every note it mentions lives in an inline thread.
 
    ```bash
    # Check replies to review comment.
@@ -93,7 +93,12 @@ VALID (N):
 
 NOT VALID (N):
 #3: @author - <reason>
+
+NO RESPONSE (N):
+#4: @author review body - <approve-only, praise, or pointer to inline comments>
 ```
+
+A review-body note that repeats or maps to a thread in the review-threads list is listed under NO RESPONSE as covered by that thread, so each thread gets one reply. NO RESPONSE items get no reaction, no reply, and no resolve.
 
 Get explicit user confirmation before proceeding with code changes.
 
@@ -218,7 +223,7 @@ echo '{"body":"@<author_login>\n\nhttps://github.com/<owner>/<repo>/commit/<sha>
 echo '{"body":"@<author_login>\n\n> <original_comment_text>\n\nhttps://github.com/<owner>/<repo>/commit/<sha>"}' | gh api "repos/<owner>/<repo>/issues/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
 ```
 
-Review bodies have no reply endpoint and cannot be resolved. Answer each one with a standalone PR comment that quotes the relevant note and links the review `html_url`, followed by the fixup SHA URL(s) when valid or the reason when not valid:
+Review bodies have no reply endpoint and cannot be resolved. Answer inline whenever possible: a note that maps to a review thread is answered by that thread's own reply above, never with a second reply or a standalone comment. Only a review body with an actionable note that has no thread anywhere gets a standalone PR comment that quotes the note and links the review `html_url`, followed by the fixup SHA URL(s) when valid or the reason when not valid:
 
 ```bash
 echo '{"body":"@<author_login>\n\n<review_html_url>\n\n> <quoted_note>\n\nhttps://github.com/<owner>/<repo>/commit/<sha>"}' | gh api "repos/<owner>/<repo>/issues/<pr_number>/comments" -X POST -H "Accept: application/vnd.github+json" --input -
@@ -236,7 +241,7 @@ Before posting or resolving any not-valid thread, ensure Step 3 reactions were a
 
 For review thread comments from any author: Reply with concise reason + resolve.
 For standalone comments from non-bot authors only: Quote reply with reason. Bot standalones are skipped, no reply, no resolve.
-For review bodies: Answer with a standalone PR comment as in Step 7.
+For review bodies: Answer inline when a thread exists, otherwise with a standalone PR comment, as in Step 7.
 
 ```bash
 # Review thread comment, reply with reason + resolve, for both human and bot review comments.
@@ -275,7 +280,7 @@ echo '{"body":"@<author_login>\n\n> <original_comment_text>\n\n<reason>"}' | gh 
    rm -r "$scratch"
    ```
 
-2. Summary: `PR` link, resolved `SHA`s, not-valid reasons
+2. Summary: `PR` link, resolved `SHA`s, not-valid reasons, skipped NO RESPONSE items
 
 ## Rules
 
@@ -286,7 +291,9 @@ echo '{"body":"@<author_login>\n\n> <original_comment_text>\n\n<reason>"}' | gh 
 - Reactions are mandatory: `+1` for valid, `eyes` for not valid, except for bot standalone comments.
 - Verify reactions exist before posting any reply or resolve actions.
 - Reply to review comments (not the PR body) when applicable.
-- Never report that all comments are handled before the review bodies (Step 1, item 5) are covered, an approved review with notes still needs an answer.
+- Never report that all comments are handled before the review bodies (Step 1, item 5) are covered, an approved review with an actionable note of its own still needs an answer.
+- Never answer approve-only, praise-only, or pointer-only review bodies, not even with a standalone comment.
+- For review bodies, answer through the review thread whenever one exists, a standalone PR comment is the last resort.
 - On command failure: show the error, stop, and ask the user.
 - For valid comments: reply with just the SHA URL(s), no extra text.
 - For not-valid comments: reply with a concise reason.
