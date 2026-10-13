@@ -67,6 +67,8 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 test -f "$REPO_ROOT/REVIEW_GUIDELINES.md" && cat "$REPO_ROOT/REVIEW_GUIDELINES.md"
 ```
 
+A useful `REVIEW_GUIDELINES.md` covers what the project does and where untrusted input enters, the components that matter most and least, what is out of scope, how this project rates severity, for example whether a post-auth injection is HIGH or CRITICAL, and what to leave alone. If the repo has none and the user asks for one, draft it along those lines.
+
 If the file exists, store its contents and append them to both sub-agent
 prompts, see "Spawn sub-agents in parallel" below, labeled as project rules
 that take precedence over the general rubric when they conflict. If the file
