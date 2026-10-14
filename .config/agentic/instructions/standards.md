@@ -138,7 +138,7 @@ PLAN:
 
 Every API call re-sends the whole history, so cost is context size times turns. Most spend is on turns past 200K tokens.
 
-- When the `context-guard.sh` warning fires, tell the user and hand off or compact before taking on new work.
+- When the `context-guard.sh` warning fires, finish the current request, then tell the user and advise a handoff or compaction before new work. Only inform and advise, never run `/handoff` or `/compact` yourself.
 - Split sessions at natural boundaries, after a PR merge or a phase change, and `/handoff` or `/compact` near 150K tokens. Start fresh for unrelated work.
 - After an idle gap or an overnight break, `/handoff` and start fresh instead of resuming a 100K to 500K context, the whole history is re-cached at full price, the cache lasts 1 hour on a subscription.
 - Use the explore subagent for code discovery instead of reading large files in the main context.
