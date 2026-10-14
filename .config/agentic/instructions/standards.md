@@ -28,12 +28,22 @@ Skip it when there is nothing to flag, one line per item, no block for a trivial
 ## Code Style
 
 - All code comments end with a period and go above the code they describe, not inline to the right.
+- Documentation comments on new methods match the style of the neighbouring ones.
 - Respect `editor.rulers` as the max line length, project `.vscode/settings.json` first, then the user's VS Code settings. Without rulers, 80 soft and 100 hard.
 - Prefer single, whole words for names, never abbreviate (`documents` not `docs`, `reference` not `ref`, `temporary` not `tmp`, `error` not `err`, `message` not `msg`, `configuration` not `config`). Common acronyms (`ID`, `URL`, `API`, `HTTP`) are fine.
 
 ## Self-Critique
 
 After implementing code, re-read your work, question whether there is a better approach, and fix concerns before moving on. Max 3 iterations, then ask the user. If you realize you made a mistake or ignored a rule, acknowledge it immediately, revert, and explain.
+
+Before pushing, check the diff against this list, reviewers keep finding the same classes:
+
+- New tests follow the test authoring rules under Test Junk Patterns.
+- Queries eager-load what they read in a loop, no N+1.
+- A multi-step write sits in a transaction, or a failure in the middle cannot leave half the change.
+- An existing helper does not already do it, search for it before adding one.
+- Null, empty, and ambiguous-match inputs are handled, an arbitrary pick among several matches has a tiebreak.
+- A dependency outage on the new path is handled or surfaced, not swallowed.
 
 ## Implementation
 
@@ -71,6 +81,11 @@ Before writing or flagging a test, check these, a match means rewrite or drop it
 - Trivial wiring: source or import greps, getter and setter round-trips with no logic.
 - Wrong-reason pass: a negative-control or error test that would also pass for an unrelated failure.
 - Overpromising name: the name claims more than the assertions check.
+
+Test authoring rules, apply them on top of the patterns above:
+
+- A test with several assertions groups them with the framework's multiple-failure feature, so one failure does not hide the rest.
+- Every new branch of production code has a test that reaches it.
 
 Don't flag a test just for looking similar, verify it protects a distinct contract first. A bug regression test must fail on the pre-fix code for the intended reason and pass after the fix, that is checked by the author, not verifiable from a diff.
 
