@@ -148,6 +148,14 @@ Show the commit plan to the user before committing:
 git log --oneline <base>..HEAD
 ```
 
+Split gate, blocking before the push and the PR creation. List the files of every commit and check each commit is one topic, tests sitting with their code:
+
+```bash
+git log --format="%h %s" --name-only <base>..HEAD
+```
+
+If any commit spans more than one topic, show the proposed split and re-split first, never open the PR and split afterwards.
+
 Get user approval.
 
 ### 5. PR Body Generation
