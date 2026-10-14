@@ -261,7 +261,14 @@ jq -Rs '{body: .}' < <body_file> | gh api "repos/<owner>/<repo>/issues/comments/
 
 ## 9. Finish
 
-1. Re-request reviews (skip reviewers who already approved, and skip bots):
+1. Ready for human review, only when the user asks for it or already did so in this conversation. It rewrites history and pushes, so each step needs its own approval, and it comes before the re-request so reviewers are notified last. The fixup commit links posted in Steps 7 and 8 then point at squashed commits, tell the user that:
+   - Fetch `origin`, then resolve the default branch name, each as its own plain command.
+   - Autosquash the fixups onto their original commits non-interactively, `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash origin/<default>`.
+   - Push with `--force-with-lease`.
+   - Trigger CI as in the CI trigger step of the `manage-github-pr` skill, skip it when the project has none.
+   - Report one line: the branch is rebased, squashed, pushed, and CI is triggered or not applicable.
+
+2. Re-request reviews (skip reviewers who already approved, and skip bots):
 
    ```bash
    scratch=$(mktemp -d)
@@ -288,7 +295,7 @@ jq -Rs '{body: .}' < <body_file> | gh api "repos/<owner>/<repo>/issues/comments/
    rm -r "$scratch"
    ```
 
-2. Summary: `PR` link, resolved `SHA`s, not-valid reasons, skipped NO RESPONSE items
+3. Summary: `PR` link, resolved `SHA`s, not-valid reasons, skipped NO RESPONSE items
 
 ## Rules
 
