@@ -14,8 +14,9 @@ if [ -n "$transcript_path" ] && [ -f "$transcript_path" ]; then
   # cache is already cold, so warn right at the boundary, not an hour after it.
   idle_warn_seconds=3600
 
-  # Most spend is on turns past 200K tokens, so warn before that, matching the /handoff or /compact advice.
-  size_warn_tokens=150000
+  # Autocompaction only guards the window limit, so cost keeps climbing until then. Warn late enough
+  # that the warning, which repeats on every prompt, is not noise, matching the /handoff or /compact advice.
+  size_warn_tokens=250000
 
   # Context size from the last assistant usage after the latest compaction, 0 when none is found,
   # which is the case for any transcript without a usage field, such as Codex and Copilot.

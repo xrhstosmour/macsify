@@ -136,10 +136,10 @@ PLAN:
 
 ## Context Management
 
-Every API call re-sends the whole history, so cost is context size times turns. Most spend is on turns past 200K tokens.
+Every API call re-sends the whole history, so cost is context size times turns. Autocompaction only acts near the window limit, so cost keeps growing every turn until then.
 
 - When the `context-guard.sh` warning fires, finish the current request, then tell the user and advise a handoff or compaction before new work. Only inform and advise, never run `/handoff` or `/compact` yourself.
-- Split sessions at natural boundaries, after a PR merge or a phase change, and `/handoff` or `/compact` near 150K tokens. Start fresh for unrelated work.
+- Split sessions at natural boundaries, after a PR merge or a phase change, and `/handoff` or `/compact` near 250K tokens. Start fresh for unrelated work.
 - After an idle gap or an overnight break, `/handoff` and start fresh instead of resuming a 100K to 500K context, the whole history is re-cached at full price, the cache lasts 1 hour on a subscription.
 - Use the explore subagent for code discovery instead of reading large files in the main context.
 - Search with the Grep and Glob tools where the tool has them, not Bash `grep` or `find`. When a tool is missing from the session, use `rg` through Bash with `-m` or `-c`, do not retry the missing tool. Read with `offset` and `limit` for files over about 15KB, and don't re-read a file you already have.
