@@ -122,6 +122,8 @@ A project skill beats a same-topic plugin skill. When a skill defines a checklis
 
 When a command fails, show the exact command and error output, then stop and ask, no fallback without approval. When code fails, report the root cause and the failing output, propose a fix before implementing, and re-test after. Empty logs do not mean it works, state that the root state is unknown.
 
+When the failure is an environment blocker, such as a signing, authentication, or container runtime problem, name the single blocker, then stop and wait for the user to say it is fixed instead of retrying or polling. Never poll CI or a long-running job unless asked.
+
 When anything unexpected happens, stop adding features, preserve evidence, diagnose with the `diagnose` skill, fix the root cause, guard it with a regression test, and resume only after verification passes. Never push past a failing test or broken build.
 
 When requirements or code conflict or are unclear, stop, name the confusion ("I see X in the spec but Y in the code"), present the tradeoff or ask, and wait. For a multi-step or ambiguous task, surface assumptions and the plan together before executing:
