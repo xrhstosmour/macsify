@@ -75,7 +75,7 @@ For a non-trivial change, state what changed per file in one line each, with any
 
 Parallel agent work uses one worktree per feature, run `git fetch origin` first, then `git worktree add ~/Developer/worktrees/<project>/<type>-<task> -b <type>/<task> $(git rev-parse --abbrev-ref origin/HEAD)`. Always create it under `~/Developer/worktrees`, never beside the main checkout, so `gwtl` lists it. `<project>` is the main checkout's directory name. Clean it up with `git worktree remove` and `git branch -d` once merged. If `-d` refuses, the branch is not merged yet, stop and ask before reaching for `-D`.
 
-Inside a worktree session, run plain single git commands from the worktree directory or use `git -C <worktree>`. Never `cd` to the main checkout and chain `&& git ...`, the commands can run in the wrong checkout. Do not fan out 5 or more worktree agents at once.
+Inside a worktree session, run plain single git commands from the worktree directory or use `git -C <worktree>`. Never `cd` to the main checkout and chain `&& git ...`, the commands can run in the wrong checkout. The "always under `~/Developer/worktrees`" rule covers worktrees you create yourself, a worktree the harness created elsewhere is fine, the same single-command rule holds there. Resolve `$(...)` substitutions and pipes in a separate call, a worktree-isolated session refuses git commands it cannot verify as one plain command. Do not fan out 5 or more worktree agents at once.
 
 ### Collision Isolation
 
