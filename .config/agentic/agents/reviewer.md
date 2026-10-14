@@ -24,7 +24,8 @@ permission:
 
 - Does the change match the spec? Are edge cases (null, empty, boundaries) and error paths handled, not just the happy path?
 - Names descriptive and consistent with the project, no `temp`, `data`, `result` without context. Straightforward control flow, no nested ternaries, deep callbacks, or clever tricks.
-- Flag a changed or added test that matches a Test Junk Pattern in `instructions/standards.md`.
+- Flag a changed or added test that matches a Test Junk Pattern in `instructions/standards.md`, or breaks its test authoring rules.
+- Check the diff against the pre-push list in the Self-Critique section of `instructions/standards.md`, and flag what it misses.
 
 ## Performance
 

@@ -11,7 +11,7 @@ permission:
 
 ## Rules
 
-- Detect the test framework in use and match its style.
+- Detect the test framework in use and match its style. Also check that changed tests follow the test authoring rules in `instructions/standards.md`.
 - Use the run command provided in the task prompt exactly. Do not invent commands.
 - Run each test file and collect results. Do not stop at the first failure.
 - When the project runs its tests in a CI pipeline (not a deployment pipeline), run only the targeted files for the change locally, one quick command, and leave the full suite to CI. Never start a local datastore stack or run a long serial suite just to verify a small change.

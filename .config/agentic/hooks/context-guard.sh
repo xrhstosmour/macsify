@@ -14,12 +14,15 @@ if [ -n "$transcript_path" ] && [ -f "$transcript_path" ]; then
   # cache is already cold, so warn right at the boundary, not an hour after it.
   idle_warn_seconds=3600
 
-  if [ "$idle_seconds" -gt "$idle_warn_seconds" ]; then
-    # Context size from the last assistant usage after the latest compaction, 0 when none is found,
-    # which is the case for any transcript without a usage field, such as Codex and Copilot.
-    tokens=$(tail -n 200 "$transcript_path" | jq -rs '(map(.subtype == "compact_boundary") | rindex(true) // -1) as $boundary | [.[($boundary + 1):][] | .message.usage? | select(.) | ((.input_tokens // 0) + (.cache_read_input_tokens // 0) + (.cache_creation_input_tokens // 0))] | last // 0' 2>/dev/null)
-    tokens=${tokens:-0}
+  # Most spend is on turns past 200K tokens, so warn before that, matching the /handoff or /compact advice.
+  size_warn_tokens=150000
 
+  # Context size from the last assistant usage after the latest compaction, 0 when none is found,
+  # which is the case for any transcript without a usage field, such as Codex and Copilot.
+  tokens=$(tail -n 200 "$transcript_path" | jq -rs '(map(.subtype == "compact_boundary") | rindex(true) // -1) as $boundary | [.[($boundary + 1):][] | .message.usage? | select(.) | ((.input_tokens // 0) + (.cache_read_input_tokens // 0) + (.cache_creation_input_tokens // 0))] | last // 0' 2>/dev/null)
+  tokens=${tokens:-0}
+
+  if [ "$idle_seconds" -gt "$idle_warn_seconds" ]; then
     echo ""
     echo "# Context Health Warning"
     echo ""
@@ -30,6 +33,13 @@ if [ -n "$transcript_path" ] && [ -f "$transcript_path" ]; then
     fi
     echo "The prompt cache has likely expired, so the next turn rebuilds the full context at full price."
     echo "Finish responding to the user's current request first. Then inform them the session has been idle a while, and advise compacting, handoff, or a new session."
+    echo "Do not interrupt the current answer to do this, and do not invoke anything yourself, only inform and advise."
+  elif [ "$tokens" -gt "$size_warn_tokens" ]; then
+    echo ""
+    echo "# Context Health Warning"
+    echo ""
+    echo "This session holds about $((tokens / 1000))K tokens of context, and every turn re-sends all of it."
+    echo "Finish responding to the user's current request first. Then inform them the context is large, and advise a handoff, compacting, or a new session at the next natural boundary."
     echo "Do not interrupt the current answer to do this, and do not invoke anything yourself, only inform and advise."
   fi
 fi

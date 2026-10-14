@@ -148,6 +148,14 @@ Show the commit plan to the user before committing:
 git log --oneline <base>..HEAD
 ```
 
+Split gate, blocking before the push and the PR creation. List the files of every commit and check each commit is one topic, tests sitting with their code:
+
+```bash
+git log --format="%h %s" --name-only <base>..HEAD
+```
+
+If any commit spans more than one topic, show the proposed split and re-split first, never open the PR and split afterwards.
+
 Get user approval.
 
 ### 5. PR Body Generation
@@ -327,6 +335,10 @@ If manual triggers exist, show the user the exact command and let them decide wh
 ```bash
 git push origin HEAD:tests/<branch-name>
 ```
+
+### 12. Sync the task
+
+If the PR links a task in a tracker, or the user mentioned one, offer in the same turn to update it, for example with the PR link, through the matching task management skill when one exists. Do not update it without approval.
 
 ## Rules
 

@@ -28,12 +28,22 @@ Skip it when there is nothing to flag, one line per item, no block for a trivial
 ## Code Style
 
 - All code comments end with a period and go above the code they describe, not inline to the right.
+- Documentation comments on new methods match the style of the neighbouring ones.
 - Respect `editor.rulers` as the max line length, project `.vscode/settings.json` first, then the user's VS Code settings. Without rulers, 80 soft and 100 hard.
 - Prefer single, whole words for names, never abbreviate (`documents` not `docs`, `reference` not `ref`, `temporary` not `tmp`, `error` not `err`, `message` not `msg`, `configuration` not `config`). Common acronyms (`ID`, `URL`, `API`, `HTTP`) are fine.
 
 ## Self-Critique
 
 After implementing code, re-read your work, question whether there is a better approach, and fix concerns before moving on. Max 3 iterations, then ask the user. If you realize you made a mistake or ignored a rule, acknowledge it immediately, revert, and explain.
+
+Before pushing, check the diff against this list, reviewers keep finding the same classes:
+
+- New tests follow the test authoring rules under Test Junk Patterns.
+- Queries eager-load what they read in a loop, no N+1.
+- A multi-step write sits in a transaction, or a failure in the middle cannot leave half the change.
+- An existing helper does not already do it, search for it before adding one.
+- Null, empty, and ambiguous-match inputs are handled, an arbitrary pick among several matches has a tiebreak.
+- A dependency outage on the new path is handled or surfaced, not swallowed.
 
 ## Implementation
 
@@ -72,6 +82,11 @@ Before writing or flagging a test, check these, a match means rewrite or drop it
 - Wrong-reason pass: a negative-control or error test that would also pass for an unrelated failure.
 - Overpromising name: the name claims more than the assertions check.
 
+Test authoring rules, apply them on top of the patterns above:
+
+- A test with several assertions groups them with the framework's multiple-failure feature, so one failure does not hide the rest.
+- Every new branch of production code has a test that reaches it.
+
 Don't flag a test just for looking similar, verify it protects a distinct contract first. A bug regression test must fail on the pre-fix code for the intended reason and pass after the fix, that is checked by the author, not verifiable from a diff.
 
 ## Migrations
@@ -107,6 +122,8 @@ A project skill beats a same-topic plugin skill. When a skill defines a checklis
 
 When a command fails, show the exact command and error output, then stop and ask, no fallback without approval. When code fails, report the root cause and the failing output, propose a fix before implementing, and re-test after. Empty logs do not mean it works, state that the root state is unknown.
 
+When the failure is an environment blocker, such as a signing, authentication, or container runtime problem, name the single blocker, then stop and wait for the user to say it is fixed instead of retrying or polling. Never poll CI or a long-running job unless asked.
+
 When anything unexpected happens, stop adding features, preserve evidence, diagnose with the `diagnose` skill, fix the root cause, guard it with a regression test, and resume only after verification passes. Never push past a failing test or broken build.
 
 When requirements or code conflict or are unclear, stop, name the confusion ("I see X in the spec but Y in the code"), present the tradeoff or ask, and wait. For a multi-step or ambiguous task, surface assumptions and the plan together before executing:
@@ -121,10 +138,10 @@ PLAN:
 
 Every API call re-sends the whole history, so cost is context size times turns. Most spend is on turns past 200K tokens.
 
-- When the `context-guard.sh` warning fires, tell the user and hand off or compact before taking on new work.
+- When the `context-guard.sh` warning fires, finish the current request, then tell the user and advise a handoff or compaction before new work. Only inform and advise, never run `/handoff` or `/compact` yourself.
 - Split sessions at natural boundaries, after a PR merge or a phase change, and `/handoff` or `/compact` near 150K tokens. Start fresh for unrelated work.
 - After an idle gap or an overnight break, `/handoff` and start fresh instead of resuming a 100K to 500K context, the whole history is re-cached at full price, the cache lasts 1 hour on a subscription.
 - Use the explore subagent for code discovery instead of reading large files in the main context.
-- Search with the Grep and Glob tools where the tool has them, not Bash `grep` or `find`. Read with `offset` and `limit` for files over about 15KB, and don't re-read a file you already have.
+- Search with the Grep and Glob tools where the tool has them, not Bash `grep` or `find`. When a tool is missing from the session, use `rg` through Bash with `-m` or `-c`, do not retry the missing tool. Read with `offset` and `limit` for files over about 15KB, and don't re-read a file you already have.
 - Pass a subagent the diff or file list it needs rather than letting it rediscover them.
 - Make commands selective before running them (`grep -c`, `jq` filters, `rg -m`, `sed -n` ranges). Keep only the salient lines of a large result and say how many were elided. Never drop information that changes the answer.

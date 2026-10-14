@@ -100,13 +100,11 @@ A distinct, opt-in action, not a generic comment. Some workflows rely on the lit
 
 ### 2. Gather optional fields
 
-Ask all at once in a single message. Status is always asked, never silently defaulted. Due date defaults to today when the user says nothing else.
+Ask all at once in a single message. Priority and status are not asked, they default to `normal` and `inprogress` unless the user already said otherwise. Due date defaults to today when the user says nothing else.
 
 - Description: generate from git? y/n.
-- Priority: P0 to P4.
 - Assignee: default self, resolved with `pha_user_whoami`, or another username per "Resolve a username to a PHID".
 - Subscribers: usernames.
-- Status: open, in progress, or resolved, default open.
 - Due date: default today's date when the user gives none, any format, normalize to `YYYY-MM-DD`.
 - Parent task: TID.
 - Reference links.
@@ -145,10 +143,10 @@ Resolve project, parent-task, subscriber, and non-self assignee PHIDs before cre
 ```
 Tag:         <project>, or Domain/Umbrella/Later when the tag model applies
 Title:       <title>
-Priority:    <priority>
+Priority:    <priority>, default normal
 Assignee:    <username>, default self, required when the umbrella tag is set
 Subscribers: <usernames>, or none
-Status:      <status>
+Status:      <status>, default inprogress
 Due date:    <date>, default today
 Column:      <board column>, or none
 Parent:      T<id>
@@ -164,7 +162,7 @@ Ask "Ready to create?" and do not execute without explicit confirmation.
 2. Due date: with a real field, set it in step 5 below. Without one, append `**Due:** <YYYY-MM-DD>` after a blank line at the bottom.
 3. Reference value: the bare `<pr_url>` if a PR exists, otherwise Branch `` `<branch-name>` ``. With a real `reference` field it goes there in step 5, with any extra links still in the description. Without one, it goes in the description with any extra links. Whatever lands in the description goes in a `## References` section at the very bottom, below the `**Due:**` line.
 4. `pha_task_create(title=..., description=..., owner_phid=<assignee PHID>)`. It returns `id` and `phid`, report the task as `$PHAB/T<id>`. New tasks default to "Needs Triage", status open, and no project tag.
-5. Follow up with `pha_task_update(task_id=<phid>, ...)` for tag, non-default priority, non-open status, reference, and a real due-date field, a task without this call is missing them. Two cases use other tools: a parent via `pha_task_update_relationships` (see "Umbrella tasks" for the call and verification) and a board column via `pha_workboard_move_task`, without it the task is left off the board.
+5. Follow up with `pha_task_update(task_id=<phid>, ...)` for tag, priority (default `normal`), status (default `inprogress`), reference, and a real due-date field, a task without this call stays "Needs Triage" and open. Two cases use other tools: a parent via `pha_task_update_relationships` (see "Umbrella tasks" for the call and verification) and a board column via `pha_workboard_move_task`, without it the task is left off the board.
 
 | Field | `pha_task_update` param |
 |-------|-------------------------|
@@ -192,4 +190,4 @@ Fetch with `pha_task_get` by numeric ID to confirm the task and show a before an
 
 ## Priority keywords
 
-Strict, case-sensitive lowercase, the API rejects `"Normal"`: `unbreak` (P0 Unbreak Now!), `triage` (Needs Triage, the default for new tasks), `high` (P1), `normal` (P2), `low` (P3), `wish` (P4 Wishlist).
+Strict, case-sensitive lowercase, the API rejects `"Normal"`: `unbreak` (P0 Unbreak Now!), `triage` (Needs Triage, the API default for new tasks, the skill overrides it with `normal`), `high` (P1), `normal` (P2), `low` (P3), `wish` (P4 Wishlist).

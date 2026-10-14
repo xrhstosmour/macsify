@@ -4,7 +4,8 @@ description: >
   Multi-agent GitHub PR code review orchestrator. Fetches a PR by URL or branch name,
   spawns specialist sub-agents for architecture and quality review, then
   synthesizes findings into a structured report. Activate with: "review my PR",
-  "review this PR", "/review-github-pr `<url_or_branch>`".
+  "review this PR", "review once more" or "look at the PR again" when a PR is the subject,
+  "/review-github-pr `<url_or_branch>`".
 ---
 
 # GitHub PR Review Orchestrator
