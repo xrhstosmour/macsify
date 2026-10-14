@@ -336,6 +336,10 @@ If manual triggers exist, show the user the exact command and let them decide wh
 git push origin HEAD:tests/<branch-name>
 ```
 
+### 12. Sync the task
+
+If the PR links a task in a tracker, or the user mentioned one, offer in the same turn to update it, for example with the PR link, through the matching task management skill when one exists. Do not update it without approval.
+
 ## Rules
 
 - Never push to `main` or `master`. Always create a feature branch.
