@@ -40,10 +40,11 @@ Then check the test against the Test Junk Patterns list in `instructions/standar
 ## Steps
 
 1. Read every file you will change.
-2. Plan: Identify the behaviors to test, confirm with user if unclear.
-3. Implement in vertical slices (RED → GREEN → REFACTOR) using Edit (prefer) or Write (new files only).
-4. Validate: Run the relevant test file(s) after each slice completes.
-5. If validation fails, fix the issue and re-run. Report if you cannot resolve it.
+2. Pre-flight: check the default branch history and open PRs (through the `read-github-pr` skill) for the same change, search for an existing guard or helper, and list the adjacent callers the change could affect. Report a hit instead of implementing.
+3. Plan: Identify the behaviors to test, confirm with user if unclear.
+4. Implement in vertical slices (RED → GREEN → REFACTOR) using Edit (prefer) or Write (new files only).
+5. Validate: Run the relevant test file(s) after each slice completes.
+6. If validation fails, fix the issue and re-run. Report if you cannot resolve it.
 
 ## Output
 
