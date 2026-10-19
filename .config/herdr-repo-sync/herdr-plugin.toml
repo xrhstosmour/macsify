@@ -1,0 +1,36 @@
+id = "herdr-repo-sync"
+name = "Herdr Repo Sync"
+version = "0.1.0"
+# `[[startup]]` needs herdr 0.7.5, older herdr ignores the section.
+min_herdr_version = "0.7.5"
+description = "Run the gfrb fetch and autosquash, autostash rebase onto the origin default branch in every herdr pane checked out on main or master, aborting on conflicts."
+platforms = ["macos"]
+
+# Every entry runs the same idempotent, throttled pass over all open pane
+# directories, the event name only ends up in the log.
+[[startup]]
+command = ["bash", "repo-sync.sh", "startup"]
+
+[[events]]
+on = "workspace.created"
+command = ["bash", "repo-sync.sh", "workspace.created"]
+
+[[events]]
+on = "worktree.created"
+command = ["bash", "repo-sync.sh", "worktree.created"]
+
+[[events]]
+on = "worktree.opened"
+command = ["bash", "repo-sync.sh", "worktree.opened"]
+
+[[events]]
+on = "tab.created"
+command = ["bash", "repo-sync.sh", "tab.created"]
+
+# Sync now, ignoring the throttle. Invoke with
+#   herdr plugin action invoke herdr-repo-sync.sync
+[[actions]]
+id = "sync"
+title = "Herdr Repo Sync: sync default branches now"
+contexts = ["global"]
+command = ["bash", "repo-sync.sh", "--force"]
