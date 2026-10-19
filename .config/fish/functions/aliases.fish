@@ -77,7 +77,7 @@ function aliases_cheat_sheet --description "Display all command abbreviations an
     echo "  - hs               Search history"
     echo "  - hlx <file>       Edit file in TUI editor"
     echo "  - ct               Open SSH TUI manager"
-    echo "  - ha               Launch or attach to the default session"
+    echo "  - ha               Maximize WezTerm, then launch or attach to the default session"
     echo "  - hasv             Run the Herdr server explicitly"
     echo "  - hast             Stop the Herdr server"
     echo "  - hals             List sessions"

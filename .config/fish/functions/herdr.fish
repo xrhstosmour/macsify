@@ -19,6 +19,20 @@ function _herdr_current_pane_field
     herdr pane current --current | jq -re ".result.pane.$argv[1] // empty"
 end
 
+# Function to open herdr, maximizing the WezTerm window first. The `herdr_maximize`
+# user var is caught by `window.lua`, the same one the `hamx` abbreviation sets.
+# It is sent before herdr takes over the terminal, so it reaches WezTerm directly
+# instead of depending on herdr passing the escape through. The value changes on
+# every call so WezTerm always sees a change and fires `user-var-changed`.
+# Usage:
+#   herdr_open [herdr arguments]
+function herdr_open
+    if test "$TERM_PROGRAM" = WezTerm; and not test "$HERDR_ENV" = 1
+        printf '\033]1337;SetUserVar=%s=%s\007' herdr_maximize (date +%s | base64)
+    end
+    herdr $argv
+end
+
 # Function to move the current tab into a brand-new herdr workspace.
 # Usage:
 #   herdr_move_to_new_workspace [label]
