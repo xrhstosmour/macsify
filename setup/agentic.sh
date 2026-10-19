@@ -559,4 +559,11 @@ if brewfile_declares herdr; then
     # `gh`/`glab`/`az`, per its own `README.md`. Pinned to the tag reviewed above,
     # same reasoning as the plugin install right before this one.
     install_herdr_component "herdr-reviewr plugin" herdr plugin install persiyanov/herdr-reviewr --ref v0.38.0 --yes
+
+    # Local plugin from this repository, runs the `gfrb` fetch and rebase in every
+    # herdr pane checked out on `main` or `master`. `install.sh` copied it into `~/.config` already, a
+    # link points herdr at it in place, so later edits need no re-link.
+    if ! herdr plugin list 2>/dev/null | grep -q '^- herdr-repo-sync '; then
+        install_herdr_component "herdr-repo-sync plugin" herdr plugin link "$HOME/.config/herdr-repo-sync" --enabled
+    fi
 fi
