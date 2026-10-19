@@ -1,4 +1,4 @@
-# Functions for moving the current `herdr` tab between workspaces (`herdr`'s
+# Functions for opening `herdr`, coloring the current tab, and moving it between workspaces (`herdr`'s
 # own sidebar-grouped concept, not a macOS Space or an `AeroSpace` workspace,
 # `herdr`'s socket API has no way to reach either of those). Guarded on
 # `$HERDR_ENV`/`$HERDR_PANE_ID` since those only exist inside a live `herdr`
@@ -8,6 +8,16 @@
 # in sync with the `hasr`/`hasy`/`hasg` abbreviations in `abbr.fish`, which
 # each hardcode one of these colors.
 set -g HERDR_TAB_COLORS 🔴 🟡 🟢
+
+# Prints a field of the calling pane, read live from `herdr`. The inherited
+# `$HERDR_TAB_ID`/`$HERDR_WORKSPACE_ID` go stale once the pane is moved to
+# another workspace or tab, a move hands out new IDs and the old tab ID stops
+# resolving (`tab_not_found`).
+# Usage:
+#   _herdr_current_pane_field <tab_id|workspace_id>
+function _herdr_current_pane_field
+    herdr pane current --current | jq -re ".result.pane.$argv[1] // empty"
+end
 
 # Function to move the current tab into a brand-new herdr workspace.
 # Usage:
@@ -35,7 +45,12 @@ function herdr_move_to_workspace
         return 1
     end
 
-    set -l workspace_data (herdr workspace list | jq -re '.result.workspaces[] | select(.workspace_id != env.HERDR_WORKSPACE_ID) | "\(.workspace_id)|\(.label)"')
+    set -l current_workspace_id (_herdr_current_pane_field workspace_id)
+    if test -z "$current_workspace_id"
+        log_error "Could not resolve the current workspace! (see any herdr error above)"
+        return 1
+    end
+    set -l workspace_data (herdr workspace list | jq -re --arg current "$current_workspace_id" '.result.workspaces[] | select(.workspace_id != $current) | "\(.workspace_id)|\(.label)"')
     if test -z "$workspace_data"
         log_error "No other herdr workspaces found! (see any herdr error above)"
         return 1
@@ -61,13 +76,19 @@ function herdr_tab_color
         log_error "Usage: herdr_tab_color <emoji>"
         return 1
     end
-    if not test "$HERDR_ENV" = 1; or not test -n "$HERDR_TAB_ID"
+    if not test "$HERDR_ENV" = 1; or not test -n "$HERDR_PANE_ID"
         log_error "Not inside a herdr pane!"
         return 1
     end
 
+    set -l tab_id (_herdr_current_pane_field tab_id)
+    if test -z "$tab_id"
+        log_error "Could not resolve the current tab! (see any herdr error above)"
+        return 1
+    end
+
     set -l emoji "$argv[1]"
-    set -l current_label (herdr tab get "$HERDR_TAB_ID" | jq -re '.result.tab.label // empty')
+    set -l current_label (herdr tab get "$tab_id" | jq -re '.result.tab.label // empty')
     if test -z "$current_label"
         log_error "Could not read the current tab's label! (see any herdr error above)"
         return 1
@@ -81,5 +102,5 @@ function herdr_tab_color
         end
     end
 
-    herdr tab rename "$HERDR_TAB_ID" "$emoji $current_label"
+    herdr tab rename "$tab_id" "$emoji $current_label"
 end
