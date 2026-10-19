@@ -2,11 +2,6 @@
 // settings.json:
 //   - Blocks WebFetch on service URLs that have a dedicated CLI, since OpenCode
 //     cannot deny WebFetch by host in config (Claude uses permissions.deny).
-//   - Warns once a session has been idle for a while, mirroring Claude Code's
-//     context-guard.sh's one hour idle rule (using the session API's
-//     `time.updated` instead of a transcript file's mtime). The token count
-//     context-guard.sh adds to its message is not ported, it reads usage from a
-//     Claude transcript, and the host's own context indicator already covers that.
 //   - Caps oversized `bash` stdout+stderr post-execution, mirroring Claude
 //     Code's bash-output-cap.sh (same 20000-byte cap and the same "full
 //     output is the point" command exemptions), but through
@@ -28,11 +23,6 @@
 //
 // Static instructions (communication/standards/versioning/privacy/security) load via opencode.json's
 // `instructions` array instead, no hook needed for those.
-//
-// experimental.chat.system.transform is not on opencode.ai/docs. Source of truth:
-//   signature:  https://github.com/anomalyco/opencode/blob/dev/packages/plugin/src/index.ts
-//   invocation: https://github.com/anomalyco/opencode/blob/dev/packages/opencode/src/session/llm/request.ts
-//   session shape (tokens, time.updated in epoch ms): https://github.com/anomalyco/opencode/blob/dev/packages/core/src/session.ts
 //
 // tool.execute.after receives the live result object, not a copy: trigger()
 // calls fn(input, output) directly on the same object and returns it
@@ -77,48 +67,8 @@ function truncateUtf8(bytes, maxBytes) {
   return bytes.subarray(0, end);
 }
 
-// No documented cache-TTL basis for this environment's actual providers
-// (opencode/deepseek-v4-flash-free, nemotron, etc. via the opencode-go gateway,
-// not Anthropic), so this mirrors context-guard.sh's Claude-subscription figure
-// as a general staleness heuristic rather than a provider-verified number.
-const IDLE_WARN_SECONDS = 3600;
-
-// In-memory, per running OpenCode process. Unlike context-guard.sh's
-// UserPromptSubmit hook (fires once per user message, so idle naturally
-// self-resets), this transform can run on every LLM request within a turn,
-// including intermediate tool-calling rounds. Keeps track of the
-// `time.updated` value last seen when a warning fired, so it only re-fires
-// once that value has actually moved forward, not on every request in a burst.
-const lastWarned = new Map();
-
-export const AgenticReminderPlugin = async ({ client }) => {
+export const AgenticGuardsPlugin = async () => {
   return {
-    "experimental.chat.system.transform": async (input, output) => {
-      const sessionID = input.sessionID;
-      if (!sessionID) return;
-
-      try {
-        const { data: session } = await client.session.get({ path: { id: sessionID } });
-        if (!session) return;
-
-        const updatedAt = session.time?.updated ?? Date.now();
-        const idleSeconds = (Date.now() - updatedAt) / 1000;
-
-        if (idleSeconds > IDLE_WARN_SECONDS) {
-          const last = lastWarned.get(sessionID);
-
-          if (!last || last.updatedAt !== updatedAt) {
-            lastWarned.set(sessionID, { updatedAt });
-            const idleMinutes = Math.round(idleSeconds / 60);
-            output.system.push(
-              `# Context Health Warning\n\nThis session has been idle for ~${idleMinutes} minutes.\nThe prompt cache has likely expired, so the next turn rebuilds the full context at full price.\nFinish responding to the user's current request first. Then inform them the session has been idle a while, and advise compacting, handoff, or a new session.\nDo not interrupt the current answer to do this, and do not invoke anything yourself, only inform and advise.`,
-            );
-          }
-        }
-      } catch {
-        // Best-effort. Never break a session if session info can't be fetched.
-      }
-    },
     "tool.execute.before": async (input, output) => {
       if ((input.tool ?? "").toLowerCase() !== "webfetch") return;
       const url = String(output.args?.url ?? "");

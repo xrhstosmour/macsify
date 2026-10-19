@@ -16,7 +16,7 @@ Opinionated `macOS` configuration via shell scripts.
 | Mobile Development | `Flutter` + `Android` SDK + `Xcode` + emulators |
 | Keyboard | Remapping with persistence (`kbcs` for cheat sheet) |
 | Shell Abbreviations | Custom aliases (`alcs` for cheat sheet) |
-| Coding Agent Runtime | `Herdr` (`ehc` to edit config) |
+| Coding Agent Runtime | `Herdr` (`ehc` to edit config), keeps `main`/`master` checkouts open in it rebased onto origin like `gfrb` (`herdr-repo-sync` plugin, log in `~/.cache/herdr-repo-sync/sync.log`) |
 | Menu Bar | `Stege` |
 | Clipboard | `Maccy` |
 | Notes | `Obsidian` |

@@ -15,6 +15,7 @@ This file documents the repository itself. For the agentic (AI assistant) subsys
 | `settings/` | Third-party app config/preference files restored during install (`aerospace.toml`, `flameshot.ini`, `.plist.xml` files) |
 | `packages/` | `Brewfile` (Homebrew), `store_applications_ids.txt` (Mac App Store, via `mas`), `additional_packages.txt` (arbitrary install commands) |
 | `.config/` | Copied verbatim to `~/.config/` by `install.sh`, contains app configs (`fish/`, `wezterm/`, `starship.toml`), executable utility scripts (`scripts/`, chmod'd by `install.sh`), and the `agentic/` and `opencode/` subsystems |
+| `.config/herdr-repo-sync/` | Local `herdr` plugin linked in place by `setup/agentic.sh`, runs the `gfrb` fetch and rebase in every `herdr` pane checked out on `main` or `master`. It runs from `~/.config` without this repository, so it carries its own logging and uses `set -u` without `set -e` to keep going past one failing repository, an exception to the script conventions below |
 | `claude/` | Global Claude Code settings (`settings.json`, `keybindings.json`) and plugin config (`plugins/claude-hud/config.json`), copied to `~/.claude/` by `setup/agentic.sh` |
 | `.config/opencode/` | OpenCode config and plugins. `setup/agentic.sh` also `npm install -g`s and installs the third-party `opencode-status-hud` HUD plugin into `~/.config/opencode/plugin/` |
 | `Wallpapers/` | Desktop wallpaper images |

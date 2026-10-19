@@ -221,14 +221,16 @@ if brewfile_declares "anomalyco/tap/opencode"; then
     create_symlink "$AGENTIC_DIRECTORY/skills"       "$HOME/.config/opencode/skills"
     create_symlink "$AGENTIC_DIRECTORY/AGENTS.md"    "$HOME/.config/opencode/AGENTS.md"
 
-    # OpenCode auto-loads plugins from its plugin directory. This plugin injects the idle context warning,
-    # blocks `WebFetch` on service hosts and caps Bash output. `Claude Code` does the same via hooks and
-    # permissions.deny in `settings.json`.
+    # OpenCode auto-loads plugins from its plugin directory. This plugin blocks `WebFetch` on service
+    # hosts and caps Bash output. `Claude Code` does the same via hooks and permissions.deny in
+    # `settings.json`.
     mkdir -p "$HOME/.config/opencode/plugin"
-    create_symlink "$AGENTIC_DIRECTORY/hooks/opencode-context-guard.js" "$HOME/.config/opencode/plugin/agentic-reminder.js"
+    # Previous name of the plugin, a leftover link would keep loading the old file next to the new one.
+    rm -f "$HOME/.config/opencode/plugin/agentic-reminder.js"
+    create_symlink "$AGENTIC_DIRECTORY/hooks/opencode-guards.js" "$HOME/.config/opencode/plugin/agentic-guards.js"
 
     # `opencode-status-hud`'s own local-install default is `~/.config/opencode/plugins`, which
-    # OpenCode does not auto-load. Force it into the same directory as `agentic-reminder.js` above.
+    # OpenCode does not auto-load. Force it into the same directory as `agentic-guards.js` above.
     # `mise`-installed `node`/`npm` come from `configure.sh`, which runs after this script, so
     # this still no-ops on a first-time install, re-run `install.sh` afterward, idempotent, to
     # pick it up.
@@ -557,4 +559,11 @@ if brewfile_declares herdr; then
     # `gh`/`glab`/`az`, per its own `README.md`. Pinned to the tag reviewed above,
     # same reasoning as the plugin install right before this one.
     install_herdr_component "herdr-reviewr plugin" herdr plugin install persiyanov/herdr-reviewr --ref v0.38.0 --yes
+
+    # Local plugin from this repository, runs the `gfrb` fetch and rebase in every
+    # herdr pane checked out on `main` or `master`. `install.sh` copied it into `~/.config` already, a
+    # link points herdr at it in place, so later edits need no re-link.
+    if ! herdr plugin list 2>/dev/null | grep -q '^- herdr-repo-sync '; then
+        install_herdr_component "herdr-repo-sync plugin" herdr plugin link "$HOME/.config/herdr-repo-sync" --enabled
+    fi
 fi

@@ -20,9 +20,11 @@ permission:
 
 ## Steps
 
-1. Context Discovery: Read all relevant files, existing patterns, and constraints before proposing anything. Do not skip this step.
-2. Multi-Approach Proposal: Identify 2-3 distinct conceptual approaches (not variations of the same idea). Present each with trade-offs before recommending one.
+1. Context Discovery: Read all relevant files, existing patterns, and constraints before proposing anything. Do not skip this step. When the prompt carries an exploration summary, work from it and read only the files it lacks.
+2. Multi-Approach Proposal: Identify 2-3 distinct conceptual approaches (not variations of the same idea). Give each a name, a one-sentence description, and key trade-offs before recommending one. Do not write code at this stage.
 3. Recommendation: Name which approach you recommend and why, then wait for sign-off.
+
+When reviewing a PR, skip the steps above and the Output below. Report each finding in the Finding format from `~/.config/agentic/agents/reviewer.md`.
 
 ## Output
 

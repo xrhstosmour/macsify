@@ -10,7 +10,11 @@
   "awaySummaryEnabled": false,
   "autoUpdatesChannel": "stable",
   "autoCompactWindow": 400000,
+  "idleCompaction": true,
   "subagentPromptCacheTtl": "1h",
+  "env": {
+    "CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS": "200000"
+  },
   "cleanupPeriodDays": 15,
   "remoteControlAtStartup": true,
   "enabledPlugins": {
@@ -104,6 +108,14 @@
     "deny": [
       "Read(**/.env)",
       "Read(**/.env.*)",
+      "Read(!**/.env.example)",
+      "Read(!**/.env.template)",
+      "Read(!**/.env.sample)",
+      "Edit(**/.env)",
+      "Edit(**/.env.*)",
+      "Edit(!**/.env.example)",
+      "Edit(!**/.env.template)",
+      "Edit(!**/.env.sample)",
       "Read(**/secrets/**)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:sentry.io)",
@@ -137,10 +149,6 @@
     "UserPromptSubmit": [
       {
         "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.config/agentic/hooks/context-guard.sh"
-          },
           {
             "type": "command",
             "command": "bash ~/.config/agentic/hooks/auto-session-title.sh"
