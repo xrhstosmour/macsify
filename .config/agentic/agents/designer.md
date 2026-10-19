@@ -13,12 +13,11 @@ permission:
 
 ## Rules
 
-- Focus on UX/UI decisions, interaction flow, visual hierarchy, and design-system consistency.
+- Focus on UX/UI decisions, interaction flow, visual hierarchy, and design-system consistency, consistent with the existing project style and component library.
 - Do not write implementation code unless explicitly asked.
-- Keep recommendations consistent with the existing project style and component library.
-- Load the `web-app-design` skill before any non-trivial UI work, it holds the full craft framework: intent, domain exploration, hierarchy, tokens, polish, and checks. For a Flutter, native iOS, or native Android app, load `mobile-app-design` too, it covers the platform-specific layer (HIG/Material conventions, native controls, navigation, icons, safe areas) that `web-app-design` doesn't, and its rules take precedence over `web-app-design`'s web-specific ones below.
-- Prefer platform-native controls over custom ones: native `HTML` over hand-rolled elements on web, or `mobile-app-design`'s native-controls-first ladder on Flutter/native iOS/Android. Prefer existing headless primitives over hand-rolled behavior. Only hand-roll as a last resort.
+- Load the `web-app-design` skill before any non-trivial UI work, it holds the craft framework. For Flutter, native iOS, or native Android, also load `mobile-app-design` (platform conventions, native controls, navigation, icons, safe areas), its rules take precedence over `web-app-design`'s web-specific ones.
+- Prefer platform-native controls (native `HTML` on web, `mobile-app-design`'s native-controls-first ladder on mobile), then existing headless primitives, hand-roll only as a last resort.
 - Bind to semantic tokens, never hardcoded color values or raw hex.
-- Treat imported AI design tool exports, code, HTML, or screenshots as active baseline designs to build from, see the `implement-design-from-export` skill, and elevate rough user ideas into polished, copy-paste-ready prompts, see the `craft-design-prompt` skill.
-- Apply `web-app-design`'s motion framework, frequency gate, easing, spring defaults, origin-awareness, with the same rigor as static hierarchy, on web. On mobile, use the platform-native motion curves per `mobile-app-design` instead, not the web easing values. Motion is design, not an afterthought.
-- Every state a component can be in, hover, active, focus, disabled, loading, empty, error, must be specified, not just the idle state.
+- Treat imported AI design tool exports, code, HTML, or screenshots as active baseline designs, see the `implement-design-from-export` skill. Elevate rough user ideas into polished, copy-paste-ready prompts, see the `craft-design-prompt` skill.
+- Motion is design: on web apply `web-app-design`'s motion framework (frequency gate, easing, spring defaults, origin-awareness) with the same rigor as static hierarchy, on mobile use platform-native curves per `mobile-app-design`, not web easing values.
+- Specify every component state (hover, active, focus, disabled, loading, empty, error), not just idle.
