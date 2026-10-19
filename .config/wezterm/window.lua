@@ -8,8 +8,8 @@ local function apply_configuration(configuration)
     configuration.window_close_confirmation = "NeverPrompt"
     configuration.window_padding = {left = 5, right = 5, top = 5, bottom = 5}
 
-    -- Manual "full window" resize for a `herdr` console, triggered by the `hamx`
-    -- fish abbreviation's `OSC 1337 SetUserVar`. `window:maximize()` fills the
+    -- "Full window" resize for a `herdr` console, triggered by the `OSC 1337
+    -- SetUserVar` that the `hamx` abbreviation and `herdr_open` (`ha`) send. `window:maximize()` fills the
     -- current screen without leaving the current `AeroSpace`/macOS Space, unlike
     -- `AeroSpace`'s own `fullscreen` command on a floating window.
     wezterm.on(
