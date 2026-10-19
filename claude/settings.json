@@ -139,10 +139,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.config/agentic/hooks/context-guard.sh"
-          },
-          {
-            "type": "command",
             "command": "bash ~/.config/agentic/hooks/auto-session-title.sh"
           }
         ]
