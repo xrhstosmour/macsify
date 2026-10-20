@@ -4,7 +4,10 @@
   "effortLevel": "high",
   "theme": "dark",
   "outputStyle": "Concise",
-  "includeCoAuthoredBy": false,
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
   "preferredNotifChannel": "terminal_bell",
   "spinnerTipsEnabled": false,
   "awaySummaryEnabled": false,
