@@ -48,25 +48,11 @@ Opinionated `macOS` configuration via shell scripts.
     - Edit [packages/additional_packages.txt](packages/additional_packages.txt).
     - Edit [packages/store_applications_ids.txt](packages/store_applications_ids.txt).
 
-4. Configure `AI` models:
-
-    - Edit [.config/agentic/models.txt](.config/agentic/models.txt) for all `OpenCode`, `Claude Code`, `Codex`, and `Copilot CLI` model assignments.
-
 ## Installation
 
 ```bash
 ./install.sh
 ```
-
-### Agentic Setup Only
-
-To pull just the shared `AI` config, agents, instructions, skills, commands, and hooks for `OpenCode`, `Claude Code`, `Codex`, and `Copilot CLI`, without the rest of macsify:
-
-```bash
-mkdir -p ~/.config && cp -R .config/agentic ~/.config/ && bash setup/agentic.sh
-```
-
-`setup/agentic.sh` only wires up a tool if its `brew`/`cask` line in [`packages/Brewfile`](packages/Brewfile) is present and uncommented, so trim that file to the wanted `AI` tools first.
 
 ## Post-Installation
 

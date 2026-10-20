@@ -1,23 +1,21 @@
 # AGENTS.md
 
 Personal macOS dotfiles/configuration repository.
-Installed on a new machine via `install.sh`, which copies `.config/*` into `~/.config/`, installs `Homebrew` and Brewfile dependencies, runs `setup/agentic.sh`, then `configure.sh` (developer tools, packages, `setup/*.sh`, `utilities/*.sh`).
-This file documents the repository itself. For the agentic (AI assistant) subsystem's own architecture, see `.config/agentic/README.md`, don't duplicate it here.
+Installed on a new machine via `install.sh`, which copies `.config/*` into `~/.config/`, installs `Homebrew` and Brewfile dependencies, then runs `configure.sh` (developer tools, packages, `setup/*.sh`, `utilities/*.sh`).
+This file documents the repository itself. The agentic (AI assistant) setup lives in its own private repository, not here.
 
 ## Directory map
 
 | Path | Purpose |
 | ---- | ------- |
 | `core/` | Shell constants shared across scripts |
-| `helpers/` | Shared shell functions: logging (`logs.sh`), prompts (`ui.sh`), Brewfile parsing (`brewfile.sh`) |
-| `setup/` | Installation steps, `homebrew.sh` and `agentic.sh` run directly by `install.sh`, the rest (developer tools, mobile toolchain, applications, shell, macOS preferences) run by `configure.sh` |
+| `helpers/` | Shared shell functions: logging (`logs.sh`), prompts (`ui.sh`) |
+| `setup/` | Installation steps, `homebrew.sh` run directly by `install.sh`, the rest (developer tools, mobile toolchain, applications, shell, macOS preferences) run by `configure.sh` |
 | `utilities/` | macOS system preference scripts, one per domain (`dock.sh`, `finder.sh`, `keyboard.sh`, `trackpad.sh`, etc.) |
 | `settings/` | Third-party app config/preference files restored during install (`aerospace.toml`, `flameshot.ini`, `.plist.xml` files) |
 | `packages/` | `Brewfile` (Homebrew), `store_applications_ids.txt` (Mac App Store, via `mas`), `additional_packages.txt` (arbitrary install commands) |
-| `.config/` | Copied verbatim to `~/.config/` by `install.sh`, contains app configs (`fish/`, `wezterm/`, `starship.toml`), executable utility scripts (`scripts/`, chmod'd by `install.sh`), and the `agentic/` and `opencode/` subsystems |
-| `.config/herdr-repo-sync/` | Local `herdr` plugin linked in place by `setup/agentic.sh`, runs the `gfrb` fetch and rebase in every `herdr` pane checked out on `main` or `master`. It runs from `~/.config` without this repository, so it carries its own logging and uses `set -u` without `set -e` to keep going past one failing repository, an exception to the script conventions below |
-| `claude/` | Global Claude Code settings (`settings.json`, `keybindings.json`) and plugin config (`plugins/claude-hud/config.json`), copied to `~/.claude/` by `setup/agentic.sh` |
-| `.config/opencode/` | OpenCode config and plugins. `setup/agentic.sh` also `npm install -g`s and installs the third-party `opencode-status-hud` HUD plugin into `~/.config/opencode/plugin/` |
+| `.config/` | Copied verbatim to `~/.config/` by `install.sh`, contains app configs (`fish/`, `wezterm/`, `starship.toml`), and executable utility scripts (`scripts/`, chmod'd by `install.sh`) |
+| `.config/herdr-repo-sync/` | Local `herdr` plugin linked in place by `setup/agentic.sh` from the agentic repository, runs the `gfrb` fetch and rebase in every `herdr` pane checked out on `main` or `master`. It runs from `~/.config` without this repository, so it carries its own logging and uses `set -u` without `set -e` to keep going past one failing repository, an exception to the script conventions below |
 | `Wallpapers/` | Desktop wallpaper images |
 
 ## Fish functions
@@ -36,11 +34,11 @@ The standalone `android-platform-tools` cask is deliberately absent from the Bre
 
 ## Script conventions
 
-New shell scripts should match the existing pattern (see `install.sh`, `configure.sh`, `setup/agentic.sh`):
+New shell scripts should match the existing pattern (see `install.sh`, `configure.sh`):
 
 - `set -e` at the top, `trap "exit" INT` in entrypoint scripts.
 - A `*_SCRIPT_DIRECTORY` constant computed with `cd "$(dirname "$0")" && pwd` (or `"${BASH_SOURCE[0]}"`), used for all relative paths.
-- Source `helpers/logs.sh` (and `helpers/ui.sh`, `helpers/brewfile.sh` where relevant) instead of re-implementing logging or Brewfile parsing.
+- Source `helpers/logs.sh` (and `helpers/ui.sh` where relevant) instead of re-implementing logging.
 - Use `log_info`/`log_success`/`log_error`/`log_divider` for output, not raw `echo`.
 - Comments end with a period, placed above the line they describe.
 
@@ -48,11 +46,6 @@ New shell scripts should match the existing pattern (see `install.sh`, `configur
 
 `install.sh` does `cp -R .config/* ~/.config/`.
 Anything added under `.config/` must be safe to drop onto a real home directory as-is, no machine-specific secrets or paths that only exist on this machine.
-
-## `opencode.json` is a template
-
-`.config/opencode/opencode.json` is copied verbatim to `~/.config/opencode/opencode.json` by `setup/agentic.sh`, which then injects an `"agent"` block (models from `.config/agentic/models.txt`) via `sed`.
-Edits to this file must stay valid JSON before that injection, and must not touch the line containing `"default_agent": "leader",` in a way that breaks the `sed` insertion anchor.
 
 ## Testing changes
 
