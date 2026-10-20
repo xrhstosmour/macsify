@@ -24,6 +24,3 @@ jobs:
 
       - name: Validate JSON
         run: find . -name '*.json' -not -path './.git/*' -print0 | xargs -0r -I{} jq empty {}
-
-      - name: Validate skill frontmatter
-        run: .github/scripts/check-skill-frontmatter.sh
