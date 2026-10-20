@@ -13,7 +13,7 @@ CONFIGURE_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 source "$CONFIGURE_SCRIPT_DIRECTORY/helpers/ui.sh"
 
 # `Homebrew` and Brewfile dependencies are installed by `install.sh` before this
-# script runs, agentic setup in between needs them already in place.
+# script runs.
 command -v brew &>/dev/null || { log_error "'brew' not found, run install.sh first."; exit 1; }
 
 # Install `Mac App Store` applications, before the developer tools because the
