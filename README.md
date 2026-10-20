@@ -1,6 +1,6 @@
 # macsify
 
-Opinionated `macOS` configuration via shell scripts.
+Opinionated `macOS` setup via shell scripts, plus a shared configuration for `AI` coding agents.
 
 <!-- Screenshots coming soon -->
 
@@ -8,59 +8,39 @@ Opinionated `macOS` configuration via shell scripts.
 
 | Category | Details |
 | -------- | ------- |
-| Shell | `Fish` + `Starship` + `Atuin` |
-| Terminal | `WezTerm` |
+| Shell | `Fish` + `Starship` + `Atuin`, custom aliases |
+| Terminal | `WezTerm` + `Herdr` multiplexer |
 | Editors | `Helix`, `VS Code`, `DataGrip` |
 | Window Manager | `AeroSpace` + `SwipeAeroSpace` + `DockDoor` |
 | Development Languages | `Node.js`, `Python`, `Go`, `Java`, `Ruby`, `.NET` (via `mise`) |
 | Mobile Development | `Flutter` + `Android` SDK + `Xcode` + emulators |
+| AI Agents | Shared `OpenCode`, `Claude Code`, `Codex` and `Copilot CLI` configuration (agents, skills, commands, hooks, instructions), wired up by `setup/agentic.sh` |
 | Keyboard | Remapping with persistence (`kbcs` for cheat sheet) |
-| Shell Abbreviations | Custom aliases (`alcs` for cheat sheet) |
-| Coding Agent Runtime | `Herdr` (`ehc` to edit config), keeps `main`/`master` checkouts open in it rebased onto origin like `gfrb` (`herdr-repo-sync` plugin, log in `~/.cache/herdr-repo-sync/sync.log`) |
-| Menu Bar | `Stege` |
-| Clipboard | `Maccy` |
-| Notes | `Obsidian` |
+| Utilities | `Stege` (menu bar), `Maccy` (clipboard), `Flameshot` (screenshots), `Amphetamine` (keep awake), `Obsidian` (notes) |
 | Network | `NordVPN`, `Tailscale` |
 | Version Control | `Gitify`, custom `Git` abbreviations |
-| Screenshots | `Flameshot` |
-| Keep Awake | `Amphetamine` |
 | Appearance | Dark mode + custom wallpapers |
-| Security | `1Password` + Firewall + stealth mode enabled |
+| Security | `1Password` + Firewall + stealth mode + `TouchID` for `sudo` |
 | Cleanup | `Mole` + Bloatware removal |
 | Automation | Login and `Dock` items auto-configured |
-| Authentication | `TouchID` for `sudo` |
 | Progressive Web Applications | via `Google Chrome` |
 | Packages | See [Brewfile](packages/Brewfile), [Additional Packages](packages/additional_packages.txt), and [Store applications](packages/store_applications_ids.txt) |
 
-## Pre-Installation
-
-1. Install `Xcode Command Line Tools` by typing `xcode-select --install` and follow the on-screen instructions.
-
-2. Grant Terminal permissions (`System Settings → Privacy & Security`):
-
-    - **Files & Folders** → Add Terminal
-    - **Full Disk Access** → Add Terminal
-    - **Accessibility** → Add Terminal
-
-3. Customize packages and application lists:
-
-    - Edit [packages/Brewfile](packages/Brewfile).
-    - Edit [packages/additional_packages.txt](packages/additional_packages.txt).
-    - Edit [packages/store_applications_ids.txt](packages/store_applications_ids.txt).
-
-4. Configure `AI` models:
-
-    - Edit [.config/agentic/models.txt](.config/agentic/models.txt) for all `OpenCode`, `Claude Code`, `Codex`, and `Copilot CLI` model assignments.
-
 ## Installation
 
-```bash
-./install.sh
-```
+1. Install `Xcode Command Line Tools` with `xcode-select --install`.
 
-### Agentic Setup Only
+2. Add Terminal to `System Settings → Privacy & Security`: **Files & Folders**, **Full Disk Access** and **Accessibility**.
 
-To pull just the shared `AI` config, agents, instructions, skills, commands, and hooks for `OpenCode`, `Claude Code`, `Codex`, and `Copilot CLI`, without the rest of macsify:
+3. Customize [packages/Brewfile](packages/Brewfile), [packages/additional_packages.txt](packages/additional_packages.txt), [packages/store_applications_ids.txt](packages/store_applications_ids.txt) and the `AI` model assignments in [.config/agentic/models.txt](.config/agentic/models.txt).
+
+4. Run:
+
+    ```bash
+    ./install.sh
+    ```
+
+To pull only the shared `AI` configuration, without the rest of macsify:
 
 ```bash
 mkdir -p ~/.config && cp -R .config/agentic ~/.config/ && bash setup/agentic.sh
@@ -86,67 +66,20 @@ mkdir -p ~/.config && cp -R .config/agentic ~/.config/ && bash setup/agentic.sh
 | `SwipeAeroSpace` | | ✓ | | |
 | `Stege` | | ✓ | | |
 
-### Keyboard Configuration
+### Keyboard Modifier Keys
 
-**Modifier Keys** (`System Settings → Keyboard → Keyboard Shortcuts → Modifier Keys`):
+`System Settings → Keyboard → Keyboard Shortcuts → Modifier Keys`, keys numbered left to right. Use `Windows/PC` mode on non-Apple keyboards, not `macOS`, where `Key 2` is `Super` and `Key 3` is `Alt`.
 
-> Keys (left to right):
->
-> - `Key 1` = Globe (`Apple`) / Control (`Windows/PC`)
-> - `Key 2` = Control (`Apple`) / Super (`Windows/PC`)
-> - `Key 3` = Option (`Apple`) / Alt (`Windows/PC`)
+| Key | Apple keyboards | Non-Apple keyboards | Mapping |
+| --- | --------------- | ------------------- | ------- |
+| `Key 1` | Globe | Control | Command |
+| `Key 2` | Control | Command | Option |
+| `Key 3` | Option | Option | Control |
 
-*Apple keyboards (internal/external):*
+### Manual Settings
 
-| Key | Mapping |
-| ---- | ------- |
-| Globe | Command |
-| Control | Option |
-| Option | Control |
-
-*Non-Apple keyboards (use `Windows/PC` mode, not `macOS`):*
-
-| Key | Mapping |
-| ---- | ------- |
-| Control | Command |
-| Command | Option |
-| Option | Control |
-
-### Display
-
-`System Settings → Displays`:
-
-- Disable **`True Tone`**
-
-### Calendar
-
-`System Settings → Internet Accounts`:
-
-- Add your accounts (`iCloud`, `Google`, etc.) so events show up in the time widget's popup.
-
-### `Finder`
-
-Open `Finder` and configure sidebar:
-
-- Remove: Recents, Shared, `iCloud`, `AirDrop`
-- Add to Locations: `Home` folder
-- Add to Favorites: `Developer` folder
-
-### `1Password`
-
-- [Enable SSH key management](https://developer.1password.com/docs/ssh/get-started).
-- [Enable commit signing](https://1password.com/blog/git-commit-signing).
-- Configure keyboard shortcuts (`Settings → General → Keyboard Shortcuts`):
-  - Autofill: `Key 2 + Shift + A`
-  - Quick Access: `Key 2 + Shift + S`
-  - Clear remaining shortcuts to avoid conflicts.
-
-### `PWA`s
-
-1. Open `Google Chrome` and visit:
-   - [`Google Messages`](https://messages.google.com/web)
-   - [`Google Photos`](https://photos.google.com/)
-
-2. For each site, go to `Chrome main menu → Cast, Save, and Share → Install Page as App...` and follow the on-screen instructions.
-
-3. Enable `chrome://settings/content → Additional content settings → On-device site data → Allow sites to save data on your device`
+- `Displays`: disable **`True Tone`**.
+- `Internet Accounts`: add your accounts (`iCloud`, `Google`, etc.) so events show up in the time widget's popup.
+- `Finder` sidebar: remove Recents, Shared, `iCloud`, `AirDrop`, add the `Home` folder to Locations and the `Developer` folder to Favorites.
+- `1Password`: [enable SSH key management](https://developer.1password.com/docs/ssh/get-started) and [commit signing](https://1password.com/blog/git-commit-signing), then in `Settings → General → Keyboard Shortcuts` set Autofill to `Key 2 + Shift + A`, Quick Access to `Key 2 + Shift + S` and clear the rest to avoid conflicts.
+- `PWA`s: in `Google Chrome` open [`Google Messages`](https://messages.google.com/web) and [`Google Photos`](https://photos.google.com/), install each with `Chrome main menu → Cast, Save, and Share → Install Page as App...`, then enable `chrome://settings/content → Additional content settings → On-device site data → Allow sites to save data on your device`.
