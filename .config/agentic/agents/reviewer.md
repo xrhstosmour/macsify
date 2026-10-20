@@ -27,7 +27,7 @@ permission:
 
 - Does the change match the spec, with edge cases (null, empty, boundaries) and error paths handled?
 - Names descriptive and consistent with the project, no `temp`, `data`, `result` without context. Control flow straightforward, no nested ternaries, deep callbacks, or clever tricks.
-- Flag a changed or added test that matches a Test Junk Pattern or breaks the test authoring rules in `instructions/standards.md`.
+- When a test changed or was added, load the `test-quality` skill and flag a match with a Test Junk Pattern or a break of its test authoring rules.
 - Check the diff against the pre-push list in Self-Critique in `instructions/standards.md`, flag what it misses.
 
 ## Performance

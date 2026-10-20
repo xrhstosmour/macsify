@@ -4,11 +4,11 @@
 
 - Implement in small steps, validate incrementally.
 - Complex and multi-step tasks go through `/scope`, which owns discovery, approach, and sign-off.
-- Before any user-facing operation, invoke a matching skill first (Claude Code: `skill` tool, OpenCode: `SKILL.md`), even in Plan Mode or when a command or subagent chain drives. Do not hand-roll what a skill covers.
+- When a skill matches the request or any step of it, invoke it first (Claude Code: `skill` tool, OpenCode: `SKILL.md`), even in Plan Mode or when a command or subagent chain drives. Do not hand-roll what a skill covers.
 - Tests required for behavior changes.
 - Prioritize security and performance risks.
 - Read a file before editing it, several in parallel.
-- State your reasoning before executing any command, always non-interactive.
+- Run commands non-interactively, explain first only when a command is destructive or non-obvious.
 - Use absolute paths, or verify them, before destructive commands. Inform the user of long-running processes.
 - Never fabricate. If you don't know, say so. Answer only with evidence you can point to, a file you read, a command output you saw, a source you cited, and if the source doesn't support your answer, say so. If nothing is wrong, say so.
 - Never claim work is done without the command output that proves it.
@@ -36,7 +36,7 @@ After implementing code, re-read it, question whether there is a better approach
 
 Before pushing, check the diff against this list:
 
-- New tests follow the test authoring rules under Test Junk Patterns.
+- New tests follow the `test-quality` skill.
 - Queries eager-load what they read in a loop, no N+1.
 - A multi-step write sits in a transaction, a mid-way failure cannot leave half the change.
 - An existing helper does not already do it, search before adding one.
@@ -45,7 +45,7 @@ Before pushing, check the diff against this list:
 
 ## Verification
 
-Before writing code, confirm the requirement, ask if unsure, check existing patterns, run lint and typecheck for a baseline, verify unfamiliar library APIs against official docs. After writing code, run lint and typecheck, review `git diff`, and run tests as follows:
+Before writing code, confirm the requirement, ask if unsure, check existing patterns, run lint and typecheck for a baseline only when the project documents a fast command, verify unfamiliar library APIs against official docs. After writing code, run lint and typecheck, review `git diff`, and run tests as follows:
 
 - With a CI test pipeline, a test job on the branch or PR, not a deployment pipeline, run only a targeted test locally, the single file or spec for the change, one quick command, and leave the full suite to that pipeline after the push. No long or serial suite locally, no local datastore stack just to run it.
 - Without a CI test pipeline, run the relevant tests locally before moving on.
@@ -74,29 +74,7 @@ Never simplify away input validation at trust boundaries, error handling that pr
 
 Reread comments near the code you touched, one explaining a shape that moved is orphaned but reads as true. When two files explain the same fact, one carries it and the other points at it by name. Drop a test that only reproves what an earlier test in the same file guarantees.
 
-### Test Junk Patterns
-
-Before writing or flagging a test, check these, a match means rewrite or drop it when authoring, flag it when reviewing:
-
-- Assertion-free: asserts nothing meaningful.
-- Duplicate: another test covers the same contract on the same input, including one test repeated with different variable names instead of a table-driven case.
-- Implementation-coupled: asserts internals or private state instead of the public interface, a behavior-preserving refactor would break it.
-- Self-fulfilling mock: the mock implements the behavior the test asserts.
-- Needs a fake seam: only passes because of a production-only export, flag, or hook no real caller needs. Test the real boundary.
-- Trivial wiring: source or import greps, getter and setter round-trips with no logic.
-- Wrong-reason pass: a negative-control or error test that would also pass for an unrelated failure.
-- Overpromising name: claims more than the assertions check.
-
-Test authoring rules, on top of the patterns above:
-
-- A test with several assertions groups them with the framework's multiple-failure feature.
-- Every new branch of production code has a test that reaches it.
-
-Don't flag a test just for looking similar, verify it protects a distinct contract first. A bug regression test must fail on the pre-fix code for the intended reason and pass after the fix, the author checks this, it is not verifiable from a diff, do not flag it in review.
-
-## Migrations
-
-Naming and chain-linearity rules live in the `migrations` skill, it auto-triggers.
+Before writing or flagging a test, apply the `test-quality` skill.
 
 ## Skills in Plans
 
@@ -134,7 +112,7 @@ Cost is context size times turns. Autocompaction acts near the window limit and 
 
 - Never run `/handoff` or `/compact` yourself. Advise them only when a hook warning asks you to, compaction is otherwise left to the host.
 - Split sessions at natural boundaries, after a PR merge or a phase change. Start fresh for unrelated work.
-- Use the explore subagent for code discovery instead of reading large files in the main context.
+- Use the explore subagent only for discovery that needs more than about 5 searches or reads, otherwise Grep, Glob, and Read directly.
 - Use the Grep and Glob tools, not Bash `grep` or `find`. When a tool is missing, use `rg` through Bash with `-m` or `-c`, do not retry the missing tool. Read with `offset` and `limit` for files over about 15KB, don't re-read a file you already have.
 - Pass a subagent the diff or file list it needs, not a rediscovery task.
 - Make commands selective (`grep -c`, `jq` filters, `rg -m`, `sed -n` ranges). Keep only the salient lines of a large result and say how many were elided. Never drop information that changes the answer.
