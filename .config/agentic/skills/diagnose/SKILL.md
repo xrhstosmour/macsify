@@ -75,6 +75,8 @@ If <X> is the cause, then <changing Y> will make the bug disappear, and <changin
 
 If you cannot state the prediction, the hypothesis is a vibe. Discard or sharpen it.
 
+When something is slow in only one environment, compare the environments before changing the design: hardware, memory cache or buffer pool size, row counts, cold versus warm cache. A query plan that looks fine on a slow environment points at hardware or data, not at the query.
+
 Show the ranked list to the user before testing. They often have domain knowledge that re-ranks instantly. Do not block on it, proceed with your ranking if the user is AFK.
 
 ## Phase 4: Instrument
@@ -89,6 +91,8 @@ Tool preference:
 Tag every debug log with a unique prefix, like `[DEBUG-a4f2]`. Cleanup at the end becomes a single grep. Untagged logs survive, tagged logs die.
 
 For performance regressions, logs are usually wrong. Instead: establish a baseline measurement (timing harness, profiler, query plan), then bisect. Measure first, fix second.
+
+For a slow database query, start from the smallest table that can pick the candidates and cap it with a `LIMIT`, so the expensive lookups on the large tables stay few. Re-measure on the slow environment, not only locally.
 
 ## Phase 5: Fix + regression test
 
