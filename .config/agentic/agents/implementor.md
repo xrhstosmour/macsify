@@ -28,7 +28,7 @@ Before writing any test, answer these, a missing answer means do not add it:
 2. What credible regression would make it fail?
 3. Why won't an existing test already catch that? Prefer extending a table-driven case over a near-duplicate test.
 
-Then check it against the Test Junk Patterns in `instructions/standards.md`.
+Then load the `test-quality` skill and check the test against its Test Junk Patterns.
 
 ## Steps
 

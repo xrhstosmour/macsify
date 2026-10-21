@@ -167,7 +167,7 @@ Skills are loaded by agents and triggered via commands. The `Command` column bel
 | `handoff` | `/handoff` | Compact conversation into a handoff document for fresh agent sessions |
 | `agent-models` | `/agent-models` | Research, rank, and apply model updates across all agents and configs for any provider |
 | `humanize` | `/humanize` | Rewrite AI-sounding text as natural human writing, English and Greek |
-| `capture-knowledge` | `/capture-knowledge` | Extract reusable knowledge from the conversation into an external second-brain repo, opens a `PR` |
+| `capture-knowledge` | `/capture-knowledge` | Add knowledge from the conversation or mined sources to an external knowledge repo, the shareable profile opens a `PR` |
 | `eli5` | Skill only, `/eli5` | Explain a concept, error, or code simply, dead-simple by default or matched to a stated audience |
 | `html-plan` | `/html-plan <task>`, from the `html-plan@claude-community` plugin | Write a plan as one interactive HTML page, answer decisions and comment in place, then paste the response back. `Claude Code` only, enabled and the `claude-community` marketplace added through `claude/settings.json`, needs `node`. The model writes the page by hand, so it costs tokens per plan |
 
@@ -190,6 +190,7 @@ Skills are loaded by agents and triggered via commands. The `Command` column bel
 | `search-grafana-logs` | Grafana dashboard/log links, `logcli`/Loki only, no `curl`/`HTTP API` path |
 | `search-qmd-notes` | `qmd` markdown search and semantic query usage |
 | `migrations` | Database migration file naming and chain-linearity rules |
+| `test-quality` | Test junk patterns and test authoring rules |
 | `craft-design-prompt` | Polish an AI design tool prompt before the user goes to the tool |
 | `implement-design-from-export` | Build/match UI from an AI design tool export, HTML/CSS or screenshot |
 

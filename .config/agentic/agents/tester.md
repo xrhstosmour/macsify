@@ -11,7 +11,7 @@ permission:
 
 ## Rules
 
-- Detect the test framework and match its style. Check that changed tests follow the test authoring rules in `instructions/standards.md`.
+- Detect the test framework and match its style. Load the `test-quality` skill and check that changed tests follow its test authoring rules.
 - Use the run command from the task prompt exactly, do not invent commands.
 - Run each test file and collect results, do not stop at the first failure.
 - Under a CI test pipeline, run only the targeted files for the change locally, one quick command, and leave the full suite to CI, per the Verification section of `instructions/standards.md`. Never start a local datastore stack or run a long serial suite just to verify a small change.

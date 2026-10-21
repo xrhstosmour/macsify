@@ -4,7 +4,10 @@
   "effortLevel": "high",
   "theme": "dark",
   "outputStyle": "Concise",
-  "includeCoAuthoredBy": false,
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
   "preferredNotifChannel": "terminal_bell",
   "spinnerTipsEnabled": false,
   "awaySummaryEnabled": false,
@@ -15,7 +18,8 @@
   "env": {
     "CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS": "200000"
   },
-  "cleanupPeriodDays": 15,
+  "cleanupPeriodDays": 90,
+  "autoMemoryEnabled": true,
   "remoteControlAtStartup": true,
   "enabledPlugins": {
     "ruby-lsp@claude-plugins-official": true,
@@ -40,7 +44,7 @@
   "statusLine": {
     "type": "command",
     "command": "bash -c 'cols=${COLUMNS:-}; case \"$cols\" in \"\"|*[!0-9]*) cols=$(stty size </dev/tty 2>/dev/null | awk '\"'\"'{print $2}'\"'\"');; esac; case \"$cols\" in \"\"|*[!0-9]*) cols=120;; esac; export COLUMNS=$(( cols > 4 ? cols - 4 : 1 )); plugin_dir=$(ls -d \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}\"/plugins/cache/*/claude-hud/*/ 2>/dev/null | awk -F/ '\"'\"'{ print $(NF-1) \"\\t\" $(0) }'\"'\"' | grep -E '\"'\"'^[0-9]+\\.[0-9]+\\.[0-9]+[[:space:]]'\"'\"' | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n | tail -1 | cut -f2-); exec \"bun\" --env-file /dev/null \"${plugin_dir}src/index.ts\"'",
-    "refreshInterval": 5
+    "refreshInterval": 15
   },
   "permissions": {
     "defaultMode": "auto",
