@@ -566,4 +566,11 @@ if brewfile_declares herdr; then
     if ! herdr plugin list 2>/dev/null | grep -q '^- herdr-repo-sync '; then
         install_herdr_component "herdr-repo-sync plugin" herdr plugin link "$HOME/.config/herdr-repo-sync" --enabled
     fi
+
+    # Local plugin from this repository, removes a clean worktree under
+    # `~/Developer/worktrees` once its herdr workspace is closed, same link
+    # reasoning as `herdr-repo-sync` above.
+    if ! herdr plugin list 2>/dev/null | grep -q '^- herdr-worktree-cleanup '; then
+        install_herdr_component "herdr-worktree-cleanup plugin" herdr plugin link "$HOME/.config/herdr-worktree-cleanup" --enabled
+    fi
 fi
