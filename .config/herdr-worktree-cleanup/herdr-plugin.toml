@@ -1,0 +1,28 @@
+id = "herdr-worktree-cleanup"
+name = "Herdr Worktree Cleanup"
+version = "0.1.0"
+min_herdr_version = "0.7.5"
+description = "Remove a worktree herdr opened under ~/Developer/worktrees once its workspace is closed, no pane is left in it, it is on a branch and it has no uncommitted or untracked changes. The branch is kept, ignored files are deleted."
+platforms = ["macos"]
+
+# Both events only record the worktree path, the sweep never touches a worktree
+# that herdr has not opened.
+[[events]]
+on = "worktree.created"
+command = ["bash", "worktree-cleanup.sh", "worktree.created"]
+
+[[events]]
+on = "worktree.opened"
+command = ["bash", "worktree-cleanup.sh", "worktree.opened"]
+
+[[events]]
+on = "workspace.closed"
+command = ["bash", "worktree-cleanup.sh", "workspace.closed"]
+
+# Sweep now. Invoke with
+#   herdr plugin action invoke herdr-worktree-cleanup.sweep
+[[actions]]
+id = "sweep"
+title = "Herdr Worktree Cleanup: sweep closed worktrees now"
+contexts = ["global"]
+command = ["bash", "worktree-cleanup.sh", "sweep"]
