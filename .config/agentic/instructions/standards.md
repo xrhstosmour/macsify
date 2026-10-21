@@ -96,6 +96,8 @@ When a command fails, show the exact command and error output, then stop and ask
 
 On an environment blocker, such as a signing, authentication, or container runtime problem, name the single blocker, then stop and wait for the user to say it is fixed, no retrying or polling. Never poll CI or a long-running job unless asked.
 
+Prefer a failure someone can see over a clever workaround that fails without a trace, such as a silently hidden feature or an empty result. A failed expensive computation must not be retried uncached on every request, bound it or surface it.
+
 When anything unexpected happens, stop adding features, preserve evidence, diagnose with the `diagnose` skill, fix the root cause, guard it with a regression test, resume only after verification passes. Never push past a failing test or broken build.
 
 When requirements or code conflict or are unclear, stop, name the confusion ("I see X in the spec but Y in the code"), present the tradeoff or ask, and wait. For a multi-step or ambiguous task, surface assumptions and plan before executing:
