@@ -18,7 +18,8 @@
   "env": {
     "CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS": "200000"
   },
-  "cleanupPeriodDays": 15,
+  "cleanupPeriodDays": 90,
+  "autoMemoryEnabled": true,
   "remoteControlAtStartup": true,
   "enabledPlugins": {
     "ruby-lsp@claude-plugins-official": true,
