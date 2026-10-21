@@ -72,7 +72,7 @@ For a non-trivial change, state what changed per file in one line each, with any
 
 ## Worktrees
 
-Parallel agent work uses one worktree per feature: `git fetch origin`, then `git worktree add ~/Developer/worktrees/<project>/<type>-<task> -b <type>/<task> $(git rev-parse --abbrev-ref origin/HEAD)`. Always under `~/Developer/worktrees`, so `gwtl` lists it, never beside the main checkout. `<project>` is the main checkout's directory name. Clean up with `git worktree remove` and `git branch -d` once merged. If `-d` refuses, the branch is not merged, stop and ask before `-D`.
+Parallel agent work uses one worktree per feature: `git fetch origin`, then `git worktree add ~/Developer/worktrees/<project>/<type>-<task> -b <type>/<task> $(git rev-parse --abbrev-ref origin/HEAD)`. Always under `~/Developer/worktrees`, so `gwtl` lists it, never beside the main checkout. `<project>` is the main checkout's directory name. `herdr` removes a clean worktree it opened when its workspace closes, the branch stays and ignored files go, a worktree made with plain `git worktree add` is never removed. Clean up leftovers with `git worktree remove` and `git branch -d` once merged. If `-d` refuses, the branch is not merged, stop and ask before `-D`.
 
 Inside a worktree session, run plain single git commands from the worktree directory or use `git -C <worktree>`, never `cd` to the main checkout and chain `&& git ...`. A harness-created worktree elsewhere is fine, the same rule holds. Resolve `$(...)` substitutions and pipes in a separate call, a worktree-isolated session refuses git commands it cannot verify as one plain command. Do not fan out 5 or more worktree agents at once.
 
