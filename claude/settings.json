@@ -200,6 +200,7 @@
     "eli5": "user-invocable-only",
     "humanize": "user-invocable-only",
     "implement-design-from-export": "user-invocable-only",
+    "marketing": "user-invocable-only",
     "mobile-app-design": "name-only",
     "promo-video": "user-invocable-only",
     "seo": "user-invocable-only",
