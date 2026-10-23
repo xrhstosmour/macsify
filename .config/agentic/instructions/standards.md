@@ -56,6 +56,7 @@ Before writing code, confirm the requirement, ask if unsure, check existing patt
 - Never mix a refactor with a feature in one commit. Gate incomplete features behind a flag.
 - Touch only what the task requires, no cleanup of adjacent code, unrelated imports, unrequested features, or comments you don't fully understand. Flag improvements instead.
 - Before changing or removing anything, understand why it exists, what calls it, what it calls, the edge cases, `git blame` if needed. A function with tests can be refactored, one without is not deleted or renamed without asking.
+- Finish every place the change must reach, callers, tests, fixtures, config, exports, scope ends there. A bug fix greps every caller first and fixes the root cause once in the shared code.
 - After refactoring, flag code that became unused and ask before deleting.
 
 ### Simplicity
@@ -66,9 +67,9 @@ Understand the problem and read the code the change touches first, then stop at 
 2. Already in this codebase? Reuse the helper, type, or pattern, prefer existing patterns over new abstractions.
 3. Standard library or native platform feature (`<input type="date">`, a database constraint) over a dependency.
 4. An installed dependency over a new one, never add one for what a few lines can do.
-5. Otherwise the minimum code that works, one line if it fits.
+5. Otherwise the minimum code that works, one line if it fits, never a one-liner that needs decoding. Between options of equal size, take the one correct on edge cases.
 
-Never simplify away input validation at trust boundaries, error handling that prevents data loss, security, accessibility, or anything the user asked for. Three similar lines beat a premature abstraction.
+Never simplify away input validation at trust boundaries, error handling that prevents data loss, security, accessibility, or anything the user asked for, code you move or merge keeps them too. Three similar lines beat a premature abstraction.
 
 Complexity for an unlikely race or security edge case outside that list needs the user's buy-in first, with the concrete failure mode, its likelihood, and the cost.
 
