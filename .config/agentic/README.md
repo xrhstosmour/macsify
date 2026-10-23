@@ -120,7 +120,7 @@ Slack is not registered here. `Claude Code` cannot do local OAuth for it, it com
 
 ## Startup context
 
-Everything listed at session start costs tokens on every turn, so `claude/settings.json` trims what is unused. `deniedMcpServers` takes an array of `{ "serverName": "<name>" }` objects, the object-with-array and `disabledMcpServers` forms were tested and do nothing, it hides the unused claude.ai connectors and keeps Slack. `skillOverrides` sets a local skill to `user-invocable-only` (hidden from the model, still in the `/` menu) or `name-only`, it does not reach plugin skills, bundled skills, or the claude.ai synced `anthropic-skills:*`, turn those off in the claude.ai skills settings. Verify with `claude --settings <file> -p "say ok" --output-format stream-json --verbose` and read the `init` event, or with `/context` in a fresh session. Today `agent-models`, `capture-knowledge`, `caveman`, `craft-design-prompt`, `eli5`, `humanize`, `implement-design-from-export`, `promo-video`, `seo` and `technical-analysis` are `user-invocable-only`, and `mobile-app-design` and `web-app-design` are `name-only`.
+Everything listed at session start costs tokens on every turn, so `claude/settings.json` trims what is unused. `deniedMcpServers` takes an array of `{ "serverName": "<name>" }` objects, the object-with-array and `disabledMcpServers` forms were tested and do nothing, it hides the unused claude.ai connectors and keeps Slack. `skillOverrides` sets a local skill to `user-invocable-only` (hidden from the model, still in the `/` menu) or `name-only`, it does not reach plugin skills, bundled skills, or the claude.ai synced `anthropic-skills:*`, turn those off in the claude.ai skills settings. Verify with `claude --settings <file> -p "say ok" --output-format stream-json --verbose` and read the `init` event, or with `/context` in a fresh session. Today `agent-models`, `capture-knowledge`, `caveman`, `craft-design-prompt`, `eli5`, `humanize`, `implement-design-from-export`, `marketing`, `promo-video`, `seo` and `technical-analysis` are `user-invocable-only`, and `mobile-app-design` and `web-app-design` are `name-only`.
 
 ## Advisor
 
@@ -144,6 +144,7 @@ Skills are loaded by agents and triggered via commands. The `Command` column bel
 | ----- | ------ | ------- |
 | `diagnose` | `/diagnose` | Disciplined diagnosis loop: reproduce, minimise, hypothesise, instrument, fix, regression-test |
 | `technical-analysis` | `/technical-analysis` | Structured technical analysis with method-level changes, notes, estimation, and architecture deepening opportunities |
+| `launch-audit` | `/launch-audit` | Pre-launch readiness audit, five parallel fresh-context read-only lanes, security and known CVEs, performance, dead weight and upgrades that fix bugs or replace own code, test gaps, new developer confusion, merged and verified into a ranked one-week fix plan, changes no code |
 | `seo` | `/seo` | Technical SEO, E-E-A-T/content quality, schema markup, sitemap, image SEO, and AI-search (GEO/AEO) analysis for any URL |
 
 ### Creative Skills
@@ -151,6 +152,12 @@ Skills are loaded by agents and triggered via commands. The `Command` column bel
 | Skill | Command | Purpose |
 | ----- | ------ | ------- |
 | `promo-video` | `/promo-video` | Plan and produce a short launch video for the current project: inspect, storyboard, tone, share copy, then render locally from HTML scenes with headless Chrome and `ffmpeg` through the bundled `scripts/promo.py` (one command, Python 3 standard library only), no packages to install, works natively on macOS, Linux, and Windows. Runs on the model pinned in its `SKILL.md` for the turn it is invoked |
+
+### Marketing Skills
+
+| Skill | Command | Purpose |
+| ----- | ------ | ------- |
+| `marketing` | `/marketing` | Own condensed take on `coreyhaines31/marketingskills` for indie apps, a router plus on-demand references for product context, launch, ASO, landing copy, pricing and paywalls, onboarding. Defers search work to `seo` |
 
 ### Design Skills
 
