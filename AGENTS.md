@@ -10,7 +10,7 @@ This file documents the repository itself. For the agentic (AI assistant) subsys
 | ---- | ------- |
 | `core/` | Shell constants shared across scripts |
 | `helpers/` | Shared shell functions: logging (`logs.sh`), prompts (`ui.sh`), Brewfile parsing (`brewfile.sh`) |
-| `setup/` | Installation steps, `homebrew.sh` and `agentic.sh` run directly by `install.sh`, the rest (developer tools, mobile toolchain, applications, shell, macOS preferences) run by `configure.sh` |
+| `setup/` | Installation steps, `homebrew.sh` and `agentic.sh` run directly by `install.sh`, `agentic.sh` also copies `.config/agentic` itself first so it can be rerun alone after a merge, the rest (developer tools, mobile toolchain, applications, shell, macOS preferences) run by `configure.sh` |
 | `utilities/` | macOS system preference scripts, one per domain (`dock.sh`, `finder.sh`, `keyboard.sh`, `trackpad.sh`, etc.) |
 | `settings/` | Third-party app config/preference files restored during install (`aerospace.toml`, `flameshot.ini`, `.plist.xml` files) |
 | `packages/` | `Brewfile` (Homebrew), `store_applications_ids.txt` (Mac App Store, via `mas`), `additional_packages.txt` (arbitrary install commands) |
