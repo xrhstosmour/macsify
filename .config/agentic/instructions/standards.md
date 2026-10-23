@@ -115,6 +115,7 @@ Cost is context size times turns. Autocompaction acts near the window limit and 
 - Never run `/handoff` or `/compact` yourself. Advise them only when a hook warning asks you to, compaction is otherwise left to the host.
 - Split sessions at natural boundaries, after a PR merge or a phase change. Start fresh for unrelated work.
 - Use the explore subagent only for discovery that needs more than about 5 searches or reads, otherwise Grep, Glob, and Read directly.
+- Delegate only what gains from isolation: a fresh subagent for verbose read-heavy work that returns a summary, a resumed agent or a fork, where the tool and the agent's prompt allow it, for work that needs the current context, see `leader.md`, its own session and worktree for independent long-lived work, none for a quick targeted change.
 - Use the Grep and Glob tools, not Bash `grep` or `find`. When a tool is missing, use `rg` through Bash with `-m` or `-c`, do not retry the missing tool. Read with `offset` and `limit` for files over about 15KB, don't re-read a file you already have.
 - Pass a subagent the diff or file list it needs, not a rediscovery task.
 - Make commands selective (`grep -c`, `jq` filters, `rg -m`, `sed -n` ranges). Keep only the salient lines of a large result and say how many were elided. Never drop information that changes the answer.
