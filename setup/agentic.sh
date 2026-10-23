@@ -138,6 +138,13 @@ install_herdr_component() {
   run_with_timeout 30 "$@" </dev/null || log_warning "${label} install failed, run manually later."
 }
 
+# Refresh the installed copy every tool links to, so a rerun after a merge picks up new skills.
+# `cp -R` only adds and overwrites, files that exist only in the installed copy stay.
+log_info "Copying agentic configuration to ${AGENTIC_DIRECTORY}..."
+mkdir -p "$AGENTIC_DIRECTORY"
+cp -R "$AGENTIC_SCRIPT_DIRECTORY/../.config/agentic/." "$AGENTIC_DIRECTORY/"
+log_divider
+
 # Only set up the tools declared in the Brewfile. `install.sh` runs `brew bundle` before
 # this script, so the Brewfile is the intent signal, not a runtime `command -v` check.
 if [ ! -f "$MODELS_FILE_PATH" ]; then
