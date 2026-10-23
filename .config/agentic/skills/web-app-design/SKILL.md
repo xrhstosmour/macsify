@@ -81,6 +81,7 @@ A 280px sidebar next to full-width content says "navigation serves content." A 3
 
 - ~60/30/10: a dominant neutral surface, a secondary tone, and ~10% accent. Color is a scarce resource, most of the screen is structure.
 - One accent, used with intention, beats five colors used without thought. Gray builds structure. Color communicates (status, action, identity). Unmotivated color is noise.
+- Cut taglines, helper text, and secondary explanatory labels, the label tier of the type hierarchy stays. A screen that needs them to make sense needs a layout fix, not more words. Keep only what prevents an error, a format hint on an input, a consequence on a destructive action.
 - Hierarchy through space and weight, not lines. Reach for whitespace and tonal shift before borders and dividers. The most premium interfaces are mostly invisible structure.
 - Optical sizing on large type: tighten letter-spacing as type gets bigger (headings slightly negative tracking). Loosen line-height on body for readability (~1.5). Tight type reads as crafted. Default tracking on a 32px heading reads as a document.
 
