@@ -7,6 +7,7 @@
 - When a skill matches the request or any step of it, invoke it first (Claude Code: `skill` tool, OpenCode: `SKILL.md`), even in Plan Mode or when a command or subagent chain drives. Do not hand-roll what a skill covers.
 - Tests required for behavior changes.
 - Prioritize security and performance risks.
+- Pick the option that improves user, developer, and agent experience together, without breaking anything. When they conflict, say which one loses and why.
 - Read a file before editing it, several in parallel.
 - Run commands non-interactively, explain first only when a command is destructive or non-obvious.
 - Use absolute paths, or verify them, before destructive commands. Inform the user of long-running processes.
