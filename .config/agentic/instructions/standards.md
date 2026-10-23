@@ -70,6 +70,8 @@ Understand the problem and read the code the change touches first, then stop at 
 
 Never simplify away input validation at trust boundaries, error handling that prevents data loss, security, accessibility, or anything the user asked for. Three similar lines beat a premature abstraction.
 
+Complexity for an unlikely race or security edge case outside that list needs the user's buy-in first, with the concrete failure mode, its likelihood, and the cost.
+
 ### Comment and Test Hygiene
 
 Reread comments near the code you touched, one explaining a shape that moved is orphaned but reads as true. When two files explain the same fact, one carries it and the other points at it by name. Drop a test that only reproves what an earlier test in the same file guarantees.
