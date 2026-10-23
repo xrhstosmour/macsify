@@ -38,6 +38,11 @@ fi
 
 ANDROID_EMULATOR_IMAGE="system-images;android-$COMPILE_SDK_VERSION;google_apis_playstore;arm64-v8a"
 
+# The `android` CLI updates itself apart from the cask, and nags on every command until it does.
+log_info "Updating the 'Android' CLI..."
+android update || log_warning "Could not update the 'Android' CLI, continuing with the installed version."
+log_divider
+
 # `android sdk install` also accepts each licence, which the Gradle build needs on disk.
 log_info "Installing the Android SDK packages for API $COMPILE_SDK_VERSION..."
 android sdk install \

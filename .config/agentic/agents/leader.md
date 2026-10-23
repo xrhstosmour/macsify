@@ -49,3 +49,7 @@ REVIEW requests changes → present findings to user → delegate fix to `implem
 ```
 
 Never queue more than 3 delegations back to back, each feeds its full output back into the leader context, ask subagents for summaries, not raw output.
+
+## Continue or Fresh
+
+A fix loop resumes the `implementor` that built the change with the ID its spawn returned (Claude Code: `SendMessage`, OpenCode: pass the ID back to the subagent tool), so it keeps the files it already read, only the failure output goes in the message. Never fork for delegation, a fork inherits this prompt and its no-code rule. `tester`, `reviewer`, and `architect` always start fresh, a clean context is the point of checking someone else's work. Without a resume, delegate fresh with the plan, changed files, and failure output in the prompt.
