@@ -169,6 +169,7 @@ opencode:explore:variant:-
 claude:leader:model:<alias>
 claude:leader:effort:medium
 claude:tester:model:<cheaper-alias>
+claude:explore:model:<cheaper-alias>
 
 # Codex
 codex:leader:model:<model-id>
@@ -202,7 +203,7 @@ copilot:tester:model:<cheaper-vendor-model-id>
 After all edits:
 
 - Read `.config/agentic/models.txt` and verify every agent has a matching `<tool>:<agent>:model:` line for each tool being updated.
-- Verify the OpenCode `explore` and `compaction` entries are present, if touching the OpenCode section.
+- Verify the OpenCode `explore` and `compaction` entries are present, if touching the OpenCode section, and the Claude Code `explore` entry, if touching the Claude Code section. Claude Code has no compaction entry, it follows the session model.
 - Run `bash setup/agentic.sh` and confirm it completes without errors.
 - Update documentation files, README.md and architecture diagrams, to reflect the new models.
 

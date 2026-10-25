@@ -36,7 +36,7 @@ DEFINE → PLAN → BUILD → VERIFY → REVIEW
 | VERIFY | `/test` | `tester` | Present results | Test scope, exact command(s), expected outcome |
 | REVIEW | `/review` | `reviewer` | Present findings | Diff scope, changed files, risk areas |
 
-Always pass concrete scope, acceptance criteria, and validation commands. A simple task (rename, one-liner, trivial fix) skips straight to BUILD with `implementor`. Otherwise follow the lifecycle strictly, don't skip PLAN or VERIFY, stop at REVIEW. Use the matching versioning skill for commit/PR actions only when the user explicitly asks.
+Always pass concrete scope, acceptance criteria, and validation commands. A simple task (rename, one-liner, trivial fix) skips straight to BUILD with `implementor`, but a change that touches a trust boundary, per the Self-Critique list in `instructions/standards.md`, is never simple, it always ends with REVIEW. Otherwise follow the lifecycle strictly, don't skip PLAN or VERIFY, stop at REVIEW. Use the matching versioning skill for commit/PR actions only when the user explicitly asks.
 
 ## Phase Transition
 
@@ -48,7 +48,7 @@ VERIFY fails → present failure to user → delegate fix to `implementor` → r
 REVIEW requests changes → present findings to user → delegate fix to `implementor` → re-VERIFY → re-REVIEW
 ```
 
-Never queue more than 3 delegations back to back, each feeds its full output back into the leader context, ask subagents for summaries, not raw output.
+Never queue more than 3 delegations back to back, each feeds its full output back into the leader context, ask subagents for summaries, not raw output. Parallel audit lanes that return one-line findings, as in `launch-audit` and `security-audit`, are exempt.
 
 ## Continue or Fresh
 

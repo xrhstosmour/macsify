@@ -36,6 +36,8 @@ Per changed code path, how often does it run (once is low, per item in a loop is
 
 ## Security
 
+Other agents and skills cite this section and Severity calibration by heading name, keep both names stable.
+
 Think like an attacker: trace every new input path or trust boundary end to end, past the first sanitizer. Flag only what you can trace to a concrete exploit path.
 
 - Access control: every non-public endpoint needs a guard, scoped data access must check ownership, not just authentication, flag IDOR (a swappable ID reaching another user's or tenant's resource).
@@ -48,7 +50,11 @@ Think like an attacker: trace every new input path or trust boundary end to end,
 - Web hardening and debug surfaces: CORS wildcarded with credentials, cookies missing `HttpOnly`/`Secure`/`SameSite`, plain HTTP where TLS should be enforced, `/debug`, `/admin`, `/status`, `/env`, or mode toggles reachable in production through an environment variable, query parameter, or header.
 - Enumeration and bulk paths: differences in error message, timing, size, or status between "does not exist" and "no access", search, filter, sort, or autocomplete revealing records outside the caller's access, exports or backups above the caller's access level, imports or bulk writes bypassing the validation and permission checks of their non-bulk equivalent.
 - Trust boundary composition: when a value crosses a component, service, cache, queue, webhook, or lifecycle stage, flag the receiver assuming a guarantee the sender did not enforce, and scope that survives a token refresh, delegation, or role change when it should not.
-- Control relaxation: a diff weakening an existing control (disabling a CSRF or CORS check, widening a permit or allow list, loosening a content-security-policy or frame-ancestors, an "allow other host" override) is high severity by default, even before an exploit chain is proven. Removing a guard is often riskier than never having had one, since it looks intentional.
+- Second-order use and recovery: a value safe where it is stored but used later as a path, template, URL, or query, and undelete, restore, or rollback that skips the current ownership and authorization checks.
+- AI and agent scope: model output, memory, or tool metadata treated as authority, and a tool handler that does not re-check the requesting user on the named resource.
+- Control relaxation: a diff weakening an existing control (disabling a CSRF or CORS check, widening a permit or allow list, loosening a content-security-policy or frame-ancestors, an "allow other host" override) is HIGH when a reachable input can exploit the missing control, otherwise MEDIUM, even before a full exploit chain is proven, and the Severity calibration caps still apply. Removing a guard is often riskier than never having had one, since it looks intentional.
+- Domain depth: when the diff touches an area the table in `~/.config/agentic/skills/security-audit/references/README.md` covers, read the matching reference and apply its classes to the changed paths only.
+- A risk that hinges on deployment configuration outside the repo, a proxy, identity provider, branch protection, or cloud policy, is reported with the exact fact to check, never assumed present or absent.
 - Existing code is not evidence of a safe pattern, judge a construct on its own merits.
 - Report a vulnerability unrelated to the diff separately and explicitly, never silently fix it inside this diff.
 

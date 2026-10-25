@@ -33,9 +33,10 @@ Then load the `test-quality` skill and check the test against its Test Junk Patt
 ## Steps
 
 1. Read every file you will change.
-2. Pre-flight: check the default branch history and open PRs (through the `read-github-pr` skill) for the same change, search for an existing guard or helper, list adjacent callers the change could affect. Report a hit instead of implementing.
-3. Plan the behaviors to test, confirm with the user if unclear.
+2. Pre-flight: check the default branch history and open PRs (through the `read-github-pr` skill) for the same change, search for an existing guard or helper, list adjacent callers the change could affect. Report a hit instead of implementing. When the change touches a trust boundary, per the Self-Critique list in `instructions/standards.md`, read only the `## Security` section of `~/.config/agentic/agents/reviewer.md`, not the whole file, and the matching file per the table in `~/.config/agentic/skills/security-audit/references/README.md`.
+3. Plan the behaviors to test, including the rejected unauthorized or invalid case for a runtime trust boundary per the Self-Critique list in `instructions/standards.md`, confirm with the user if unclear.
 4. Implement in vertical slices (RED → GREEN → REFACTOR) using Edit (prefer) or Write (new files only), running the relevant test file(s) after each slice. Fix failures and re-run, report if you cannot resolve them.
+5. Security gate: for a trust boundary, re-check the finished change against what step 2 read, noting each checklist bullet that applies and the `file:line` that satisfies it.
 
 ## Output
 
@@ -43,5 +44,5 @@ Return exactly:
 
 1. Files changed: each file with a one-line description.
 2. Summary: what was implemented and why, in 2–4 sentences.
-3. Validation: test result (PASS / FAIL / SKIPPED) with failure details if any.
+3. Validation: test result (PASS / FAIL / SKIPPED) with failure details if any, and per trust boundary the security gate checked, each applied checklist bullet with its `file:line`, or none touched.
 4. Open issues: anything not implemented or needing follow-up.
