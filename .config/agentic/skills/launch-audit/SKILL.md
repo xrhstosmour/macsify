@@ -42,7 +42,7 @@ Rules for every lane:
 
 Merge the lanes, dedup by root cause or the same `file:line` region, keep the higher impact, list every lane that found it. Never merge a security finding into a general one.
 
-Skip verification when no finding is high impact. Otherwise spawn one fresh read-only verifier with the numbered findings and only the code around each cited line. It answers keep, drop, or unverified per number, drop only when the cited code contradicts the claim, never drop a security or CVE finding, answer unverified instead.
+Skip verification when no finding is high impact. Otherwise spawn one fresh read-only verifier, the Explore subagent where the tool has one, otherwise the `reviewer`, with the numbered findings and only the code around each cited line. It answers keep, drop, or unverified per number, drop only when the cited code contradicts the claim, never drop a security or CVE finding, answer unverified instead.
 
 ## 4. Report
 
