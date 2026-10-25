@@ -38,6 +38,8 @@ claude:designer:model:sonnet
 claude:designer:effort:medium
 claude:reviewer:model:opus
 claude:reviewer:effort:medium
+claude:explore:model:sonnet
+claude:explore:effort:medium
 
 # Codex
 codex:leader:model:gpt-5.6

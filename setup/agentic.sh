@@ -262,17 +262,23 @@ fi
 if brewfile_declares claude-code; then
     log_info "Injecting Claude Code agent models..."
 
-    # Fully regenerated from agents/*.md below, any hand-added personal subagent
-    # not tracked in this repo is destroyed here on every run.
+    # Fully regenerated from `agents/*.md` and `claude/agents/*.md` below, any
+    # hand-added personal subagent not tracked in this repo is destroyed here on every run.
     rm -rf "$HOME/.claude/agents"
     mkdir -p "$HOME/.claude/agents"
 
-    for agent_file in "$AGENT_SOURCE_DIRECTORY"/*.md; do
+    # `claude/agents/` holds Claude Code only overrides of built-in subagents, such as `Explore`.
+    for agent_file in "$AGENT_SOURCE_DIRECTORY"/*.md "$AGENTIC_SCRIPT_DIRECTORY"/../claude/agents/*.md; do
         agent=$(basename "$agent_file" .md)
         model=$(grep "^claude:${agent}:model:" "$MODELS_FILE_PATH" | cut -d: -f4-)
         effort=$(grep "^claude:${agent}:effort:" "$MODELS_FILE_PATH" | cut -d: -f4- 2>/dev/null || true)
 
         [ -z "$model" ] && { log_warning "SKIP ${agent}: no model in models.txt"; continue; }
+
+        # The directory was emptied above, so an existing file means two sources share a name.
+        if [ -e "$HOME/.claude/agents/${agent}.md" ]; then
+            log_warning "${agent}.md exists in both agent sources, the one from ${agent_file} wins."
+        fi
 
         cp "$agent_file" "$HOME/.claude/agents/${agent}.md"
         sed -i '' "1s/^---$/---\\
