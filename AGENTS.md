@@ -21,6 +21,11 @@ This file documents the repository itself. For the agentic (AI assistant) subsys
 | `.config/opencode/` | OpenCode config and plugins. `setup/agentic.sh` also `npm install -g`s and installs the third-party `opencode-status-hud` HUD plugin into `~/.config/opencode/plugin/` |
 | `Wallpapers/` | Desktop wallpaper images |
 
+## `Explore` override
+
+`claude/agents/explore.md` copies the built-in `Explore` `disallowedTools` and `omitClaudeMd`, which needs Claude Code 2.1.271 or later, re-check both against the built-in on each Claude Code upgrade.
+Since it skips the global instructions, its Rules carry the shell safety and privacy rules from `.config/agentic/instructions/security.md` and `privacy.md`, change them together.
+
 ## Fish functions
 
 `.config/fish/functions/` holds reusable helpers invoked by abbreviations in `.config/fish/conf.d/abbr.fish`. Notably `git.fish` (rebasing, worktrees, fixups, `GitHub` PR helpers) and `agentic.fish` (`claude_session_list`/`opencode_session_list` and their delete counterparts). Check there before writing new shell logic for `git`/session-management needs.
