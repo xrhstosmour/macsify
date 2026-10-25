@@ -16,7 +16,8 @@
   "idleCompaction": true,
   "subagentPromptCacheTtl": "1h",
   "env": {
-    "CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS": "200000"
+    "CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS": "200000",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet"
   },
   "cleanupPeriodDays": 90,
   "autoMemoryEnabled": true,
