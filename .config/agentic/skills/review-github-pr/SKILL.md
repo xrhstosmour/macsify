@@ -250,9 +250,9 @@ Both agents run in parallel. Wait for both to complete before proceeding.
 Verify each numbered finding below against the actual code at {head_sha}. Read the cited code with `git show {head_sha}:<path>` and check authorship with `git blame {head_sha} -- <path>`, never the local checkout. Do not run tests and do not mutate files. Your own output format is ignored, use the one below.
 Findings use the format [SEVERITY] [Tag] file:line, claim, evidence, fix. Never rewrite a finding, the original wording and fix stay intact.
 Return one line per finding number: keep, drop, or unverified, then a one-line reason.
-- drop only when the finding cites code at file:line that contradicts the claim, or the cited line does not exist.
-- unverified when you can neither confirm nor refute it.
-- keep when the cited code confirms it.
+- drop only when the finding cites code at file:line that contradicts the claim, the cited line does not exist, or, for a claim about how an external tool, library, platform, or service behaves, its documentation or local state contradicts it, citing the documentation URL or the read-only command and its output in the reason.
+- unverified when you can neither confirm nor refute it, including an external claim you cannot check.
+- keep when the cited code, or for an external claim its documentation or local state, confirms it.
 Never drop a Security, CRITICAL, or HIGH finding, answer unverified instead. You may also answer "retag Pre-existing", only when `git blame {head_sha}` shows the line predates the PR and the claim does not depend on any changed line. Do not add new findings and do not change severities.
 
 ## Findings
