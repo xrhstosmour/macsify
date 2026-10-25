@@ -14,8 +14,8 @@ Read only enough to brief the lanes, about 10 tool calls:
 
 - The README, the build and deploy config, the dependency manifests and lockfiles, the entry points, routes, handlers, jobs, CLI commands, and where tests live.
 - The expected load, one user running a script or many users at once, the lanes judge scale against it.
-- The audit tool each ecosystem already supports, run nothing yet: `npm audit --omit=dev`, `pnpm audit`, `yarn audit` on Yarn 1 or `yarn npm audit --all --recursive --environment production` on Yarn 2 and later, `pip-audit -r requirements.txt`, never bare `pip-audit`, it scans its own environment, and never `pip-audit .`, it builds the project and runs its code, `bundle audit`, `cargo audit`, `govulncheck ./...`, and `osv-scanner scan -r .` for a `pyproject.toml` project, `pub`, and anything else, it reads lockfiles such as `uv.lock`, `poetry.lock`, and `pubspec.lock`. Only commands that read manifests and lockfiles, never one that builds or installs the target.
-- The outdated check per ecosystem, run nothing yet: `npm outdated`, `pnpm outdated`, `yarn outdated`, `pip list --outdated`, `bundle outdated`, `cargo outdated`, `go list -u -m all`, `flutter pub outdated`. These show version drift only, never report one as a CVE check.
+- The audit tool each ecosystem already supports, run nothing yet: `npm audit --omit=dev`, `pnpm audit`, `yarn audit` on Yarn 1 or `yarn npm audit --all --recursive --environment production` on Yarn 2 and later, `bundle audit`, `cargo audit`, `govulncheck ./...`, and `osv-scanner scan -r .` for Python, `pub`, and anything else, it reads `requirements.txt` and lockfiles such as `uv.lock`, `poetry.lock`, and `pubspec.lock`. Never `pip-audit`, even with `-r` it is the same as `pip install`, which runs the build code of a local or editable requirement. For Python without a lockfile, `osv-scanner` checks only the pinned direct requirements, report the rest as `unverified` CVE coverage. Only commands that read manifests and lockfiles, never one that builds or installs the target.
+- The outdated check per ecosystem, run nothing yet: `npm outdated`, `pnpm outdated`, `yarn outdated`, `uv tree --outdated --frozen` for a `uv.lock`, other Python reported as unchecked, never `pip list --outdated`, it lists the auditing machine's own packages, `bundle outdated`, `cargo outdated`, `go list -u -m all`, `flutter pub outdated`. These show version drift only, never report one as a CVE check.
 
 Write a brief of at most 15 lines: what the repo does, stack, load, entry points, test command, audit and outdated commands, and which `security-audit` references match the stack, per the table in its `references/README.md`. Every lane gets the same brief, no lane re-maps the repo.
 
@@ -42,7 +42,7 @@ Rules for every lane:
 
 Merge the lanes, dedup by root cause or the same `file:line` region, keep the higher impact, list every lane that found it. Never merge a security finding into a general one.
 
-Skip verification when no finding is high impact. Otherwise spawn one fresh read-only verifier with the numbered findings and only the code around each cited line. It answers keep, drop, or unverified per number, drop only when the cited code contradicts the claim, never drop a security or CVE finding, answer unverified instead.
+Skip verification when no finding is high impact. Otherwise spawn one fresh read-only verifier, the Explore subagent where the tool has one, otherwise the `reviewer`, with the numbered findings and only the code around each cited line. It answers keep, drop, or unverified per number, drop only when the cited code contradicts the claim, never drop a security or CVE finding, answer unverified instead.
 
 ## 4. Report
 
