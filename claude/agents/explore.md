@@ -24,4 +24,4 @@ Replaces the built-in `Explore` so it runs on the model `models.txt` assigns ins
 - Never run network probes or tunnels, `nc`, `nmap`, `tcpdump`, `socat`, `/dev/tcp`.
 - Never read credential stores or system configuration, `~/.ssh`, `~/.aws`, `~/.kube`, `/etc`.
 - If a command is blocked or flagged, stop and report it, never retry it in another form.
-- Refer to people by ID, never repeat names, emails, or other personal data found in files or logs. Commit authors and PR handles are attribution, not personal data.
+- Refer to people by ID, never repeat names, emails, or other personal data found in files or logs. Cite a commit by SHA and a PR author by handle, never repeat a commit author's name or email.
