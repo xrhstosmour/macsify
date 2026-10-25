@@ -99,6 +99,7 @@ Scan the changed file paths and diff for signals:
 | ------------------------------------------------- | ------------------------------------ |
 | New database migrations, schema changes           | Architecture review is high priority |
 | Auth, session, token, API key files               | Security review is high priority     |
+| CI workflows, infrastructure, model or tool calls | Security review is high priority     |
 | Hot-path code, controllers, handlers, middleware  | Performance review is high priority  |
 | Config, routes, infrastructure                    | Architecture review is high priority |
 | Tests only                                        | Light review, focus on test quality  |
@@ -158,7 +159,7 @@ Report at most 3 NIT findings, keep the three with the clearest fix. When the sa
 
 Invoke two sub-agents via the Task tool, running them concurrently. Skip the `architect` and run only the `reviewer` when the diff is under about 150 changed lines and touches no migrations, config, or routes, the two re-read the same files and the architect adds little on a small diff.
 
-For a diff over about 500 lines, send each specialist the file list plus only the hunks in its area instead of the full diff. The `architect` gets hunks for migrations, config, routes, infrastructure, and new modules or boundaries, the `reviewer` gets hunks with logic, handlers, auth, queries, and tests. A hunk that fits both goes to both, and config, routes, auth, permission, CORS/CSP, and dependency manifest hunks always go to both.
+For a diff over about 500 lines, send each specialist the file list plus only the hunks in its area instead of the full diff. The `architect` gets hunks for migrations, config, routes, infrastructure, and new modules or boundaries, the `reviewer` gets hunks with logic, handlers, auth, queries, and tests. A hunk that fits both goes to both, and config, routes, auth, permission, CORS/CSP, CI workflow, and dependency manifest hunks always go to both.
 
 ### Architect agent
 
