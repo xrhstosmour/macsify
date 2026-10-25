@@ -21,7 +21,7 @@ Write a brief of at most 15 lines: what the repo does, stack, load, entry points
 
 ## 2. Lanes
 
-The lanes return one-line findings, so the `leader` cap of 3 back-to-back delegations does not apply to them. Without subagent support, run the lanes one after another in the main session with the same brief and rules.
+The lanes are exempt from the `leader` delegation cap, per its Phase Transition section. Without subagent support, run the lanes one after another in the main session with the same brief and rules.
 
 Spawn all five in one message, in parallel, each a fresh read-only Explore subagent where the tool has one, otherwise the `reviewer`. Each gets the brief, its focus, the rules, and a budget of about 25 tool calls.
 

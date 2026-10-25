@@ -48,7 +48,7 @@ VERIFY fails → present failure to user → delegate fix to `implementor` → r
 REVIEW requests changes → present findings to user → delegate fix to `implementor` → re-VERIFY → re-REVIEW
 ```
 
-Never queue more than 3 delegations back to back, each feeds its full output back into the leader context, ask subagents for summaries, not raw output.
+Never queue more than 3 delegations back to back, each feeds its full output back into the leader context, ask subagents for summaries, not raw output. Parallel audit lanes that return one-line findings, as in `launch-audit` and `security-audit`, are exempt.
 
 ## Continue or Fresh
 
