@@ -211,6 +211,6 @@ Agent system prompts live in `agents/`. Model assignments are in `models.txt` as
 - **Codex**: generated as one `.toml` file per agent under `~/.codex/agents/`, `name`/`model`/`description`/`developer_instructions` fields plus an optional `model_reasoning_effort` when `models.txt` sets one, `developer_instructions` is the agent's Markdown body.
 - **Copilot CLI**: generated as one `.agent.md` file per agent under `~/.copilot/agents/`, same YAML-frontmatter-plus-Markdown-body shape as the Claude Code source files. `disallowedTools`/`permission` (Claude/OpenCode-only, denylist-based) don't translate to Copilot's allowlist-based `tools:` field, so they're dropped, Copilot agents get access to all tools rather than the same restrictions Claude's `architect`/`reviewer`/etc. get.
 
-Built-in agents: `explore` and `compaction` use lowest-cost capable models.
+Built-in agents: `explore` and `compaction` use lowest-cost capable models. Claude Code has no model setting for its built-in `Explore`, so `claude/agents/explore.md` overrides it with a read-only agent of the same name that takes the `claude:explore:` model. Compaction there has no model setting either and follows the session model. `CLAUDE_CODE_SUBAGENT_MODEL` in `claude/settings.json` is the default for `general-purpose` and any subagent without its own model, never for agents that set one, from Claude Code 2.1.251, before that it overrode every agent's model. `Plan` and forks follow the session model.
 
 Refer to `models.txt` for current assignments.
