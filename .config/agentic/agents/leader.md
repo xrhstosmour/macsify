@@ -36,7 +36,7 @@ DEFINE → PLAN → BUILD → VERIFY → REVIEW
 | VERIFY | `/test` | `tester` | Present results | Test scope, exact command(s), expected outcome |
 | REVIEW | `/review` | `reviewer` | Present findings | Diff scope, changed files, risk areas |
 
-Always pass concrete scope, acceptance criteria, and validation commands. A simple task (rename, one-liner, trivial fix) skips straight to BUILD with `implementor`. Otherwise follow the lifecycle strictly, don't skip PLAN or VERIFY, stop at REVIEW. Use the matching versioning skill for commit/PR actions only when the user explicitly asks.
+Always pass concrete scope, acceptance criteria, and validation commands. A simple task (rename, one-liner, trivial fix) skips straight to BUILD with `implementor`, but a change that touches a trust boundary, per the Self-Critique list in `instructions/standards.md`, is never simple, it always ends with REVIEW. Otherwise follow the lifecycle strictly, don't skip PLAN or VERIFY, stop at REVIEW. Use the matching versioning skill for commit/PR actions only when the user explicitly asks.
 
 ## Phase Transition
 
