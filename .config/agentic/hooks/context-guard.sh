@@ -23,6 +23,13 @@ if [ -n "$transcript_path" ] && [ -f "$transcript_path" ]; then
   tokens=$(tail -n 200 "$transcript_path" | jq -rs '(map(.subtype == "compact_boundary") | rindex(true) // -1) as $boundary | [.[($boundary + 1):][] | .message.usage? | select(.) | ((.input_tokens // 0) + (.cache_read_input_tokens // 0) + (.cache_creation_input_tokens // 0))] | last // 0' 2>/dev/null)
   tokens=${tokens:-0}
 
+  # A 7 day usage scan put turns more than 2 hours into a session at about a third of all usage, so warn
+  # on age even while the context is still small. Birth time is the session start, the transcript is one file.
+  age_warn_seconds=7200
+  birth=$(stat -f%B "$transcript_path" 2>/dev/null || stat -c%W "$transcript_path" 2>/dev/null)
+  age_seconds=$((now - ${birth:-$now}))
+  age_minutes=$((age_seconds / 60))
+
   if [ "$idle_seconds" -gt "$idle_warn_seconds" ]; then
     echo ""
     echo "# Context Health Warning"
@@ -41,6 +48,13 @@ if [ -n "$transcript_path" ] && [ -f "$transcript_path" ]; then
     echo ""
     echo "This session holds about $((tokens / 1000))K tokens of context, and every turn re-sends all of it."
     echo "Finish responding to the user's current request first. Then inform them the context is large, and advise a handoff, compacting, or a new session at the next natural boundary."
+    echo "Do not interrupt the current answer to do this, and do not invoke anything yourself, only inform and advise."
+  elif [ "$age_seconds" -gt "$age_warn_seconds" ]; then
+    echo ""
+    echo "# Context Health Warning"
+    echo ""
+    echo "This session has been running for ~${age_minutes} minutes, long sessions re-read their whole context on every turn."
+    echo "Finish responding to the user's current request first. Then inform them the session is long, and advise a handoff or a new session at the next natural boundary."
     echo "Do not interrupt the current answer to do this, and do not invoke anything yourself, only inform and advise."
   fi
 fi

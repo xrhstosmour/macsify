@@ -60,6 +60,13 @@ Anything added under `.config/` must be safe to drop onto a real home directory 
 `.config/opencode/opencode.json` is copied verbatim to `~/.config/opencode/opencode.json` by `setup/agentic.sh`, which then injects an `"agent"` block (models from `.config/agentic/models.txt`) via `sed`.
 Edits to this file must stay valid JSON before that injection, and must not touch the line containing `"default_agent": "leader",` in a way that breaks the `sed` insertion anchor.
 
+## Usage
+
+A 7 day log scan (2026-10-26) put the biggest usage on long sessions (about 33%), subagents (about 21%) and large tool output (about 10%), a rough weighted estimate.
+The rules for all three live in the global `standards.md` Context Management, this repo only enforces them where it can.
+`.config/agentic/hooks/context-guard.sh` runs for Codex and Copilot CLI only, not `Claude Code` or `OpenCode`, and warns on every prompt once a session is idle over 1 hour, holds over 250K tokens of context, or is older than 2 hours.
+In `Claude Code`, `bash-output-cap.sh` caps `Bash` output and idle compaction handles stale sessions, so session age and subagent use stay a written rule.
+
 ## Testing changes
 
 No test suite.
