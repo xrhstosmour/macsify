@@ -360,8 +360,9 @@ if ! pane_list=$(herdr pane list 2>>"$LOG_FILE"); then
   exit 1
 fi
 # An unexpected output shape must stop the sweep, an empty directory list would
-# read as no pane anywhere and every clean worktree would be removed.
-if ! printf '%s' "$pane_list" | jq -e '.result.panes | type == "array"' >/dev/null 2>&1; then
+# read as no pane anywhere and every clean worktree would be removed. Panes with
+# no `cwd` at all mean `herdr` renamed the key, an empty list is a real answer.
+if ! printf '%s' "$pane_list" | jq -e '.result.panes | type == "array" and (length == 0 or any(.[]; (.cwd // "") != ""))' >/dev/null 2>&1; then
   log "unexpected herdr pane list output"
   exit 1
 fi
