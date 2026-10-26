@@ -1092,8 +1092,10 @@ end
 # create`/`open` do (confirmed against `herdr` 0.9.1 and
 # https://github.com/herdrdev/herdr/issues/3620).
 # `--focus` switches to the new grouped pane instead of `cd`-ing the current
-# shell, so the pane the caller ran `gwta` from is left untouched. Returns
-# success only when the pane was actually opened and grouped.
+# shell, so the pane the caller ran `gwta` from is left untouched. An optional
+# fifth argument, `no-focus`, opens it in the background instead, which the
+# `herdr-worktree-open.fish` hook uses. Returns success only when the pane was
+# actually opened and grouped.
 # `herdr` has been observed returning a `source_workspace_id` for a given
 # `--cwd` that belongs to a different repo's workspace, which silently groups
 # the new worktree's pane (and its on-disk content) under the wrong repo. The
@@ -1105,6 +1107,10 @@ function _herdr_open_worktree_pane
     set worktree_path "$argv[2]"
     set branch_slug "$argv[3]"
     set repo_name "$argv[4]"
+    set focus_flag --focus
+    if test "$argv[5]" = no-focus
+        set focus_flag --no-focus
+    end
 
     if not test -n "$HERDR_SOCKET_PATH"; or not command -v herdr >/dev/null 2>&1; or not command -v jq >/dev/null 2>&1
         return 1
@@ -1122,7 +1128,7 @@ function _herdr_open_worktree_pane
         return 1
     end
 
-    if not herdr worktree open --workspace "$parent_workspace" --path "$worktree_path" --label "$branch_slug" --focus --trust-repository >/dev/null 2>&1
+    if not herdr worktree open --workspace "$parent_workspace" --path "$worktree_path" --label "$branch_slug" $focus_flag --trust-repository >/dev/null 2>&1
         log_warning "herdr worktree grouping failed, falling back to a plain cd."
         return 1
     end
