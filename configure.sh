@@ -38,6 +38,10 @@ fi
 source setup/developer.sh
 source utilities/development.sh
 
+# `node` and `npm` come from `mise` in the step above, so the agentic setup that
+# `install.sh` ran earlier skipped its `npm` plugin installs. Rerun it, it is idempotent.
+bash setup/agentic.sh
+
 # Set up the mobile development toolchain. Asked with a no-op command and run
 # afterwards, so the command substitution the answer needs does not swallow the
 # script's own output.

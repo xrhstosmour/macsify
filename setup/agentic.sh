@@ -239,8 +239,7 @@ if brewfile_declares "anomalyco/tap/opencode"; then
     # `opencode-status-hud`'s own local-install default is `~/.config/opencode/plugins`, which
     # OpenCode does not auto-load. Force it into the same directory as `agentic-guards.js` above.
     # `mise`-installed `node`/`npm` come from `configure.sh`, which runs after this script, so
-    # this still no-ops on a first-time install, re-run `install.sh` afterward, idempotent, to
-    # pick it up.
+    # this no-ops on the first run, `configure.sh` reruns this script once `node` is installed.
     if command -v npm &>/dev/null; then
         if ! command -v opencode-status-hud &>/dev/null; then
             log_info "Installing opencode-status-hud plugin..."
