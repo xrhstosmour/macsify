@@ -35,12 +35,12 @@ APPLICATIONS_DESTINATIONS=(
 )
 
 APPLICATIONS_NAMES=(
-  "Aerospace"
+  "AeroSpace"
   "Amphetamine"
   "DockDoor"
   "Maccy"
   "SwipeAeroSpace"
-  "Flameshot"
+  "flameshot"
   "Stege"
 )
 

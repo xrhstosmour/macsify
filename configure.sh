@@ -29,13 +29,18 @@ if command -v mas &>/dev/null; then
             continue
         fi
 
-        mas purchase "$application_id"
+        # A Mac not signed into the App Store fails here, keep going so the rest of the setup still runs.
+        mas purchase "$application_id" || log_warning "Failed to install App Store application '$application_id', sign in to the App Store and rerun."
     done <packages/store_applications_ids.txt
 fi
 
 # Install developer tools & programming languages.
 source setup/developer.sh
 source utilities/development.sh
+
+# `node` and `npm` come from `mise` in the step above, so the agentic setup that
+# `install.sh` ran earlier skipped its `npm` plugin installs. Rerun it, it is idempotent.
+bash setup/agentic.sh
 
 # Set up the mobile development toolchain. Asked with a no-op command and run
 # afterwards, so the command substitution the answer needs does not swallow the

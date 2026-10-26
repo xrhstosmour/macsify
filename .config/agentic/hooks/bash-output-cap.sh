@@ -50,6 +50,14 @@ case "$command" in
     ;;
 esac
 
+# An `exit` inside the wrapper's brace group ends the shell before the output is
+# read back and the temp file removed, so the output would be lost and the file leaked.
+case "$command" in
+  *exit*)
+    exit 0
+    ;;
+esac
+
 # Commands where the user explicitly wants the full, unbroken output.
 case "$command" in
   git\ diff*|git\ log*|git\ show*|git\ blame*|diff\ *|cat\ *)
@@ -66,6 +74,14 @@ case "$command" in
   *"sudo "*|*"dd "*|*"mkfs"*|*"git push"*|*"git filter-branch"*|*"git reset --hard"*|*"git clean -f"*|*"git branch -D"*|*"git checkout ."*|*"git checkout -- ."*|*"git restore ."*|*"gh pr merge"*)
     exit 0
     ;;
+esac
+
+# A trailing `;` would make the group `{ cmd; ; }`, a syntax error. A trailing
+# `\;` is an escaped argument, such as the end of `find -exec`, and must stay.
+command="${command%"${command##*[![:space:]]}"}"
+case "$command" in
+  *'\;') ;;
+  *';') command="${command%;}" ;;
 esac
 
 capture_file="${TMPDIR:-/tmp}/bash-output-cap.$$"

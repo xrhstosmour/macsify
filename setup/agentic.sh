@@ -204,20 +204,33 @@ if brewfile_declares "anomalyco/tap/opencode"; then
       \"model\": \"${compaction_model:-opencode/big-pickle}\"
     }"
 
+    # The `sed` below exits 0 when its anchor is missing, so check the anchor first and the result after,
+    # otherwise a reformatted template silently deploys without any agent models.
+    if ! grep -q '"default_agent": "leader",' "$OPENCODE_CONFIGURATION_PATH"; then
+        log_error "Anchor '\"default_agent\": \"leader\",' not found in ${OPENCODE_CONFIGURATION_TEMPLATE}"
+        exit 1
+    fi
+
     agent_section_file=$(mktemp)
     printf '  \"agent\": {\n%s\n  },\n' "${agent_json_block}" > "$agent_section_file"
     sed -i '' "/\"default_agent\": \"leader\",/r ${agent_section_file}" "$OPENCODE_CONFIGURATION_PATH"
     rm -f "$agent_section_file"
 
+    if ! jq -e '.agent.leader.model' "$OPENCODE_CONFIGURATION_PATH" >/dev/null; then
+        log_error "Injected agent models are missing or invalid in ${OPENCODE_CONFIGURATION_PATH}"
+        exit 1
+    fi
+
     # OpenCode's `{env:VAR}` config substitution reads its own process environment at launch, it has no equivalent to deriving from `~/.arcrc` itself. Bake the already-derived URL into this deployed (non-tracked) copy directly instead. If nothing was derived, leave the placeholder, OpenCode resolves it to an empty string and that one server just won't connect, not a hard failure.
+    # A `&` or `|` in a URL is special in a `sed` replacement, escape both so a query string survives.
     if [ -n "$PHABRICATOR_MCP_URL" ]; then
-        sed -i '' "s|{env:PHABRICATOR_MCP_URL}|${PHABRICATOR_MCP_URL}|" "$OPENCODE_CONFIGURATION_PATH"
+        sed -i '' "s|{env:PHABRICATOR_MCP_URL}|$(printf '%s' "$PHABRICATOR_MCP_URL" | sed 's/[&|\\]/\\&/g')|" "$OPENCODE_CONFIGURATION_PATH"
     fi
     if [ -n "$GRAFANA_MCP_URL" ]; then
-        sed -i '' "s|{env:GRAFANA_MCP_URL}|${GRAFANA_MCP_URL}|" "$OPENCODE_CONFIGURATION_PATH"
+        sed -i '' "s|{env:GRAFANA_MCP_URL}|$(printf '%s' "$GRAFANA_MCP_URL" | sed 's/[&|\\]/\\&/g')|" "$OPENCODE_CONFIGURATION_PATH"
     fi
     if [ -n "$METABASE_MCP_URL" ]; then
-        sed -i '' "s|{env:METABASE_MCP_URL}|${METABASE_MCP_URL}|" "$OPENCODE_CONFIGURATION_PATH"
+        sed -i '' "s|{env:METABASE_MCP_URL}|$(printf '%s' "$METABASE_MCP_URL" | sed 's/[&|\\]/\\&/g')|" "$OPENCODE_CONFIGURATION_PATH"
     fi
 
     log_info "Creating OpenCode symlinks..."
@@ -239,12 +252,11 @@ if brewfile_declares "anomalyco/tap/opencode"; then
     # `opencode-status-hud`'s own local-install default is `~/.config/opencode/plugins`, which
     # OpenCode does not auto-load. Force it into the same directory as `agentic-guards.js` above.
     # `mise`-installed `node`/`npm` come from `configure.sh`, which runs after this script, so
-    # this still no-ops on a first-time install, re-run `install.sh` afterward, idempotent, to
-    # pick it up.
+    # this no-ops on the first run, `configure.sh` reruns this script once `node` is installed.
     if command -v npm &>/dev/null; then
         if ! command -v opencode-status-hud &>/dev/null; then
             log_info "Installing opencode-status-hud plugin..."
-            npm install -g opencode-status-hud || log_warning "opencode-status-hud install failed, install manually later."
+            npm install -g opencode-status-hud@0.1.3 || log_warning "opencode-status-hud install failed, install manually later."
         fi
         opencode-status-hud install --mode local --plugin-dir "$HOME/.config/opencode/plugin" || log_warning "opencode-status-hud plugin registration failed, run manually later."
     else

@@ -67,6 +67,6 @@ The rules for all three live in the global `standards.md` Context Management, th
 In `Claude Code`, `bash-output-cap.sh` caps `Bash` output and idle compaction handles stale sessions, so session age and subagent use stay a written rule.
 ## Testing changes
 
-No test suite.
+`tests/` holds two plain `bash` tests, `bash-output-cap.sh` (the hook rewrites a command without changing its output or exit status) and `worktree-cleanup.sh` (the cleanup keeps a worktree when `herdr`'s pane list is unreadable), both run by `.github/workflows/lint.yml` next to the `shellcheck`, `fish` and `JSON` checks. Everything else has no automated test.
 Verify by running the specific script that changed directly, most `setup/*.sh` and `utilities/*.sh` scripts are idempotent shell scripts safe to re-run. Use `brew bundle check --file=packages/Brewfile` to validate Brewfile changes without installing anything.
 `configure.sh` assumes `install.sh` already installed `Homebrew` and Brewfile dependencies, running it standalone on a machine without `Homebrew` on `PATH` fails inside `setup/developer.sh`.

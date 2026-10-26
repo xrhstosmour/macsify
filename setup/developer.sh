@@ -22,8 +22,16 @@ if [ ! -f ~/.gitconfig ]; then
   cp "$DEVELOPER_SCRIPT_DIRECTORY/../.gitconfig" ~
 
   log_info "Configuring 'Git'..."
-  read -p "Enter your 'Git' name: " git_name
-  read -p "Enter your 'Git' email: " git_email
+  # Ask until both are given, an empty identity would be written once and the
+  # `~/.gitconfig` guard above would never ask again.
+  git_name=""
+  git_email=""
+  while [ -z "$git_name" ]; do
+    read -r -p "Enter your 'Git' name: " git_name
+  done
+  while [ -z "$git_email" ]; do
+    read -r -p "Enter your 'Git' email: " git_email
+  done
 
   {
     echo "[user]"
