@@ -61,6 +61,11 @@ apply_system_configuration() {
     log_info "Disabling 'AirDrop'..."
     defaults write com.apple.sharingd DiscoverableMode -string "Off"
 
+    # Disable `AirPlay Receiver`, it listens on ports 5000 and 7000 on every interface. The key's
+    # spelling is Apple's own.
+    log_info "Disabling 'AirPlay Receiver'..."
+    defaults -currentHost write com.apple.controlcenter AirplayRecieverEnabled -bool false
+
     # Disabling `Reopen Windows When Logging Back`.
     log_info "Disabling 'Reopen Windows When Logging Back'..."
     defaults write com.apple.loginwindow TALLogoutSavesState -bool false
