@@ -18,20 +18,25 @@ command -v brew &>/dev/null || { log_error "'brew' not found, run install.sh fir
 
 # Install `Mac App Store` applications, before the developer tools because the
 # mobile toolchain's iOS half needs `Xcode` already installed.
-# Loop through the list of app IDs in `packages/store_applications_ids.txt`.
+# Loop through the list of app IDs in `packages/store_applications_ids.txt`, then in the
+# active profile's `packages/<profile>.store_applications_ids.txt` when it has one.
 if command -v mas &>/dev/null; then
     installed_application_ids=$(mas list | awk '{print $1}')
 
-    while IFS= read -r application_id || [[ -n "$application_id" ]]; do
-        [[ -z "$application_id" || "$application_id" =~ ^# ]] && continue
+    for application_ids_file in packages/store_applications_ids.txt "packages/${MACSIFY_PROFILE:-personal}.store_applications_ids.txt"; do
+        [[ -f "$application_ids_file" ]] || continue
 
-        if grep -qx "$application_id" <<<"$installed_application_ids"; then
-            continue
-        fi
+        while IFS= read -r application_id || [[ -n "$application_id" ]]; do
+            [[ -z "$application_id" || "$application_id" =~ ^# ]] && continue
 
-        # A Mac not signed into the App Store fails here, keep going so the rest of the setup still runs.
-        mas purchase "$application_id" || log_warning "Failed to install App Store application '$application_id', sign in to the App Store and rerun."
-    done <packages/store_applications_ids.txt
+            if grep -qx "$application_id" <<<"$installed_application_ids"; then
+                continue
+            fi
+
+            # A Mac not signed into the App Store fails here, keep going so the rest of the setup still runs.
+            mas purchase "$application_id" || log_warning "Failed to install App Store application '$application_id', sign in to the App Store and rerun."
+        done <"$application_ids_file"
+    done
 fi
 
 # Install developer tools & programming languages.
