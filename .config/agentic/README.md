@@ -145,6 +145,7 @@ Skills are loaded by agents and triggered via commands. The `Command` column bel
 | `diagnose` | `/diagnose` | Disciplined diagnosis loop: reproduce, minimise, hypothesise, instrument, fix, regression-test |
 | `technical-analysis` | `/technical-analysis` | Structured technical analysis with method-level changes, notes, estimation, and architecture deepening opportunities |
 | `launch-audit` | `/launch-audit` | Pre-launch readiness audit, five parallel fresh-context read-only lanes, security and known CVEs, performance, dead weight and upgrades that fix bugs or replace own code, test gaps, new developer confusion, merged and verified into a ranked one-week fix plan, changes no code |
+| `post-deploy-check` | `/post-deploy-check` | Read-only post-deploy check for any repository, discovers the project's CI/CD, error tracker, logs and metrics tools, finds the live release, checks recent deploy runs, new issues and metric steps against the change, reports, optionally repeats on a cron, changes nothing |
 | `security-audit` | `/security-audit` | Deep read-only security audit adapted from `cloudflare/security-audit-skill`, parallel hunt lanes plus on-demand references for web and auth, AI and agents, supply chain and CI, cloud, and data isolation, every candidate disproved by a fresh verifier into confirmed, needs-validation, or rejected, changes no code |
 | `seo` | `/seo` | Technical SEO, E-E-A-T/content quality, schema markup, sitemap, image SEO, and AI-search (GEO/AEO) analysis for any URL |
 
