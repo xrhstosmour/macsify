@@ -64,9 +64,7 @@ Edits to this file must stay valid JSON before that injection, and must not touc
 
 A 7 day log scan (2026-10-26) put the biggest usage on long sessions (about 33%), subagents (about 21%) and large tool output (about 10%), a rough weighted estimate.
 The rules for all three live in the global `standards.md` Context Management, this repo only enforces them where it can.
-`.config/agentic/hooks/context-guard.sh` runs for Codex and Copilot CLI only, not `Claude Code` or `OpenCode`, and warns on every prompt once a session is idle over 1 hour, holds over 250K tokens of context, or is older than 2 hours.
 In `Claude Code`, `bash-output-cap.sh` caps `Bash` output and idle compaction handles stale sessions, so session age and subagent use stay a written rule.
-
 ## Testing changes
 
 No test suite.
