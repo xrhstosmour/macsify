@@ -16,6 +16,10 @@ cd "$INSTALL_SCRIPT_DIRECTORY"
 source "$INSTALL_SCRIPT_DIRECTORY/helpers/logs.sh"
 source "$INSTALL_SCRIPT_DIRECTORY/helpers/ui.sh"
 source "$INSTALL_SCRIPT_DIRECTORY/helpers/brewfile.sh"
+source "$INSTALL_SCRIPT_DIRECTORY/helpers/profile.sh"
+
+# Ask whether this is a work or a personal machine, every later step reads the answer.
+profile_resolve
 
 # Copy the needed configuration files to the new machine.
 log_info "Copying configuration files to '~/.config'..."

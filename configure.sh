@@ -11,6 +11,10 @@ CONFIGURE_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 # Import functions and flags.
 source "$CONFIGURE_SCRIPT_DIRECTORY/helpers/ui.sh"
+source "$CONFIGURE_SCRIPT_DIRECTORY/helpers/profile.sh"
+
+# `install.sh` already chose the profile, a standalone run reads the saved one.
+profile_resolve
 
 # `Homebrew` and Brewfile dependencies are installed by `install.sh` before this
 # script runs, agentic setup in between needs them already in place.

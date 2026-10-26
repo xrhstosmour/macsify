@@ -44,7 +44,8 @@ jobs:
       - name: Validate skill frontmatter
         run: .github/scripts/check-skill-frontmatter.sh
 
-      - name: Test cleanup and output cap scripts
+      - name: Test cleanup, output cap and profile scripts
         run: |
           bash tests/bash-output-cap.sh
           bash tests/worktree-cleanup.sh
+          bash tests/profile.sh
