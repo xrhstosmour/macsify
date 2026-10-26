@@ -96,7 +96,7 @@ Pages may sit in frames and return no page text, use screenshots, with the zoom 
 - Logs: router logs for repeated failed logins, unknown devices, or reboots.
 - Maintenance: remote diagnostics, automatic reboot, backup of the router configuration, and the ISP's management contact.
 
-Huawei ISP routers keep these under Advanced, with System Information for status. Other vendors differ, read the menu, do not guess.
+ISP-supplied routers often keep these under an Advanced menu, with a System Information page for status. Vendors differ, read the menu, do not guess.
 
 ## 6. IoT isolation plan
 
@@ -156,7 +156,7 @@ Recommend replacing the router only when one holds, and say which one:
 
 Before recommending any replacement, check that the ISP allows it, some providers do not:
 
-- Find the connection type from the router pages, GPON or fibre ONT, DSL, cable, or Ethernet handoff, and whether the router is a combined ONT and router, as with an `HG8145V5` style unit.
+- Find the connection type from the router pages, GPON or fibre ONT, DSL, cable, or Ethernet handoff, and whether the router is a combined ONT and router, as with many ISP-supplied fibre units.
 - Search the ISP's own support pages and terms for third-party or own-router support, bridge or modem mode, and whether login details such as PPPoE, VLAN ID, or TR-069 are given to customers. Cite the page, never guess.
 - A combined ONT and router usually cannot be replaced, only put in bridge mode or placed behind the new router in double NAT. A new router then plugs into its Ethernet port, with the ISP unit kept.
 - Check that voice, TV, and IPTV services depend on the ISP unit, they may break behind a new router.

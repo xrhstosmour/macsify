@@ -149,6 +149,13 @@ Skills are loaded by agents and triggered via commands. The `Command` column bel
 | `security-audit` | `/security-audit` | Deep read-only security audit adapted from `cloudflare/security-audit-skill`, parallel hunt lanes plus on-demand references for web and auth, AI and agents, supply chain and CI, cloud, and data isolation, every candidate disproved by a fresh verifier into confirmed, needs-validation, or rejected, changes no code |
 | `seo` | `/seo` | Technical SEO, E-E-A-T/content quality, schema markup, sitemap, image SEO, and AI-search (GEO/AEO) analysis for any URL |
 
+### Network Skills
+
+| Skill | Command | Purpose |
+| ----- | ------- | ------- |
+| `audit-home-network` | Skill only, `/audit-home-network` | Audit the user's own home network, computer, IoT devices and router, external exposure through `Shodan` and `Censys`, an `nmap` scan of the local subnet, a read-only router audit in `Chrome`, an IoT isolation plan and a router replacement check against the ISP, then a ranked report with fixes. Every change needs per-change approval and a connectivity check, router and system security settings are handed to the user |
+| `audit-tailscale` | Skill only, `/audit-tailscale` | Audit a `Tailscale` network and replace allow-all access with role tags and per-port grants, an inventory, port map, policy draft with `tests` and `sshTests`, applied only after the user approves the diff, then tagged one device at a time. Needs no secret in chat, the OAuth client stays with the user |
+
 ### Creative Skills
 
 | Skill | Command | Purpose |
