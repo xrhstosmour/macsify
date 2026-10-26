@@ -13,15 +13,18 @@ set -gx HOMEBREW_NO_ENV_HINTS 1
 # Use `1Password` as the `SSH` agent.
 set -gx SSH_AUTH_SOCK ~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
 
+# Source `_source_cached_init`, needed by the tool init lines below.
+source $HOME/.config/fish/functions/cache.fish
+
 # Enable `Starship` as `Fish` prompt.
-starship init fish | source
+_source_cached_init starship init fish --print-full-init
 
 # Enable `Zoxide` at `Fish` shell.
-zoxide init fish | source
+_source_cached_init zoxide init fish
 
 # Enable and configure `Atuin` at `Fish` shell.
 set -gx ATUIN_NOBIND "true"
-atuin init fish | source
+_source_cached_init atuin init fish
 bind \ch _atuin_search
 bind -M insert \ch _atuin_search
 
@@ -42,7 +45,7 @@ set -gx NODE_USE_SYSTEM_CA 1
 set -gx ANDROID_HOME /opt/homebrew/share/android-commandlinetools
 
 # Activate `mise` environment for `Fish` shell.
-mise activate fish | source
+_source_cached_init mise activate fish
 
 # Source needed `Fish` constants.
 source $HOME/.config/fish/constants/colors.fish
@@ -60,7 +63,7 @@ source $HOME/.config/fish/functions/herdr.fish
 
 # Puppeteer configuration for `M` series `MacBooks`.
 set -gx PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
-set -gx PUPPETEER_EXECUTABLE_PATH (which chromium)
+set -gx PUPPETEER_EXECUTABLE_PATH (command -v chromium)
 
 # Add `SDKMAN` candidates to the `PATH`. Its init script is bash only, running it in a child
 # `bash -i` changes nothing in `Fish` and costs a shell spawn on every new terminal.
