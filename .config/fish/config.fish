@@ -62,10 +62,10 @@ source $HOME/.config/fish/functions/herdr.fish
 set -gx PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 set -gx PUPPETEER_EXECUTABLE_PATH (which chromium)
 
-# Add `SDKMAN` support for `Fish` shell only at the end of this file.
-# Only in interactive shells, `bash -i` needs a real terminal and otherwise
-# prints "no job control" noise into non-interactive subshells (eg. `fzf` previews).
+# Add `SDKMAN` candidates to the `PATH`. Its init script is bash only, running it in a child
+# `bash -i` changes nothing in `Fish` and costs a shell spawn on every new terminal.
+# An unmatched wildcard in a `for` loop is silently empty.
 set -gx SDKMAN_DIR "$HOME/.sdkman"
-if status is-interactive
-    test -s "$HOME/.sdkman/bin/sdkman-init.sh" && bash -i -c 'source "$HOME/.sdkman/bin/sdkman-init.sh"'
+for candidate_bin in $SDKMAN_DIR/candidates/*/current/bin
+    fish_add_path -g $candidate_bin
 end
