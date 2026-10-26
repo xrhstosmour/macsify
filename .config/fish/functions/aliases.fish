@@ -29,6 +29,8 @@ function aliases_cheat_sheet --description "Display all command abbreviations an
     echo "  - am               Agent monitor"
     echo "  - ado              Enable 'AirDrop' to 'Everyone'"
     echo "  - adc              Disable 'AirDrop'"
+    echo "  - apo              Enable 'AirPlay Receiver'"
+    echo "  - apc              Disable 'AirPlay Receiver'"
     echo "  - po               Shutdown system"
     echo "  - zzz              Sleep system"
     echo "  - caff             Disable Amphetamine sleep"
