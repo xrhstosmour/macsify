@@ -11,6 +11,10 @@ source "$AGENTIC_SCRIPT_DIRECTORY/../helpers/logs.sh"
 source "$AGENTIC_SCRIPT_DIRECTORY/../helpers/brewfile.sh"
 source "$AGENTIC_SCRIPT_DIRECTORY/../helpers/symlink.sh"
 source "$AGENTIC_SCRIPT_DIRECTORY/../helpers/phabricator.sh"
+source "$AGENTIC_SCRIPT_DIRECTORY/../helpers/profile.sh"
+
+# The profile decides which tools `brewfile_declares` sees and which skills stay installed.
+profile_resolve
 
 # Extract the dedented body of an agent markdown file's `description:` frontmatter
 # field (a folded YAML block scalar), used to populate the description in
@@ -143,6 +147,22 @@ install_herdr_component() {
 log_info "Copying agentic configuration to ${AGENTIC_DIRECTORY}..."
 mkdir -p "$AGENTIC_DIRECTORY"
 cp -R "$AGENTIC_SCRIPT_DIRECTORY/../.config/agentic/." "$AGENTIC_DIRECTORY/"
+
+# Skills listed as personal only are removed from the installed copy on any other
+# profile, also when a machine switches profile after an earlier install, together
+# with the command of the same name that invokes the skill. A line with a path
+# separator or a leading dot is skipped, it could name something outside `skills/`.
+PERSONAL_SKILLS_FILE_PATH="$AGENTIC_SCRIPT_DIRECTORY/../packages/personal.skills.txt"
+if [ "$MACSIFY_PROFILE" != "personal" ] && [ -f "$PERSONAL_SKILLS_FILE_PATH" ]; then
+    while IFS= read -r skill || [ -n "$skill" ]; do
+        [[ -z "$skill" || "$skill" =~ ^# || "$skill" == */* || "$skill" == .* ]] && continue
+        if [ -d "$AGENTIC_DIRECTORY/skills/$skill" ]; then
+            log_info "Removing personal only skill '${skill}'..."
+            rm -rf "${AGENTIC_DIRECTORY:?}/skills/${skill:?}"
+        fi
+        rm -f "${AGENTIC_DIRECTORY:?}/commands/${skill:?}.md"
+    done <"$PERSONAL_SKILLS_FILE_PATH"
+fi
 log_divider
 
 # Only set up the tools declared in the Brewfile. `install.sh` runs `brew bundle` before
