@@ -12,6 +12,7 @@ CONFIGURE_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # Import functions and flags.
 source "$CONFIGURE_SCRIPT_DIRECTORY/helpers/ui.sh"
 source "$CONFIGURE_SCRIPT_DIRECTORY/helpers/profile.sh"
+source "$CONFIGURE_SCRIPT_DIRECTORY/helpers/brewfile.sh"
 
 # `install.sh` already chose the profile, a standalone run reads the saved one.
 profile_resolve
@@ -53,8 +54,8 @@ bash setup/agentic.sh
 
 # Set up the mobile development toolchain. Asked with a no-op command and run
 # afterwards, so the command substitution the answer needs does not swallow the
-# script's own output.
-if [ "$(ask_user_before_execution "Do you want to install the mobile development toolchain?" "true" ":")" = "y" ]; then
+# script's own output. Skipped when the profile does not install `flutter`.
+if brewfile_declares flutter && [ "$(ask_user_before_execution "Do you want to install the mobile development toolchain?" "true" ":")" = "y" ]; then
     bash setup/mobile.sh
 fi
 log_divider
