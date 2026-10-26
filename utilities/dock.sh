@@ -45,11 +45,10 @@ apply_dock_configuration() {
         "/System/Applications/System Settings.app"
     )
 
+    # An application that is not installed is left out quietly, a profile skips some on purpose.
     for app_path in "${dock_apps[@]}"; do
         if [ -d "$app_path" ]; then
             defaults write com.apple.dock persistent-apps -array-add "<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>$app_path</string><key>_CFURLStringType</key><integer>0</integer></dict></dict></dict>"
-        else
-            log_error "Application not found, not adding to Dock: $app_path."
         fi
     done
 
