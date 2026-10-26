@@ -28,7 +28,7 @@ Opinionated `macOS` setup via shell scripts, plus a shared configuration for `AI
 
 ## Installation
 
-1. Install `Xcode Command Line Tools` with `xcode-select --install`.
+1. Use an Apple silicon `Mac`, the scripts hardcode `/opt/homebrew` and `arm64` paths. Install `Xcode Command Line Tools` with `xcode-select --install`.
 
 2. Add Terminal to `System Settings → Privacy & Security`: **Files & Folders**, **Full Disk Access** and **Accessibility**.
 
