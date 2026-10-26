@@ -204,10 +204,22 @@ if brewfile_declares "anomalyco/tap/opencode"; then
       \"model\": \"${compaction_model:-opencode/big-pickle}\"
     }"
 
+    # The `sed` below exits 0 when its anchor is missing, so check the anchor first and the result after,
+    # otherwise a reformatted template silently deploys without any agent models.
+    if ! grep -q '"default_agent": "leader",' "$OPENCODE_CONFIGURATION_PATH"; then
+        log_error "Anchor '\"default_agent\": \"leader\",' not found in ${OPENCODE_CONFIGURATION_TEMPLATE}"
+        exit 1
+    fi
+
     agent_section_file=$(mktemp)
     printf '  \"agent\": {\n%s\n  },\n' "${agent_json_block}" > "$agent_section_file"
     sed -i '' "/\"default_agent\": \"leader\",/r ${agent_section_file}" "$OPENCODE_CONFIGURATION_PATH"
     rm -f "$agent_section_file"
+
+    if ! jq -e '.agent.leader.model' "$OPENCODE_CONFIGURATION_PATH" >/dev/null; then
+        log_error "Injected agent models are missing or invalid in ${OPENCODE_CONFIGURATION_PATH}"
+        exit 1
+    fi
 
     # OpenCode's `{env:VAR}` config substitution reads its own process environment at launch, it has no equivalent to deriving from `~/.arcrc` itself. Bake the already-derived URL into this deployed (non-tracked) copy directly instead. If nothing was derived, leave the placeholder, OpenCode resolves it to an empty string and that one server just won't connect, not a hard failure.
     if [ -n "$PHABRICATOR_MCP_URL" ]; then
