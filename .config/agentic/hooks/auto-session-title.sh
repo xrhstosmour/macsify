@@ -14,25 +14,35 @@ session_id=$(echo "$input" | jq -r '.session_id // empty')
 
 [ -n "$transcript_path" ] && [ -f "$transcript_path" ] && [ -n "$session_id" ] || exit 0
 
+# A title is already generated or being generated for this session, skip the
+# transcript scans below. Same lock as the one claimed further down.
+lock="${TMPDIR:-/tmp}/agentic-auto-session-title-${session_id}"
+[ -d "$lock" ] && exit 0
+
 # Already named, by us before or by a manual /rename, never overwrite.
 grep -q '"type":"custom-title"' "$transcript_path" 2>/dev/null && exit 0
 
 # Wait for enough signal that a summary is meaningful (skip a bare "hi").
 # Counts only turns with real text content, tool-result echoes also carry
 # `"role":"user"` in the transcript and would otherwise satisfy this after
-# the very first turn.
-user_message_count=$(jq -rs '
+# the very first turn. Reads only the first 500 KB, the early turns are all a
+# title needs and slurping a multi-MB transcript on every prompt is slow. Bytes,
+# not lines, since every tool call and result is its own line and a tool heavy
+# first turn would push the second message past any line limit. The cut line is
+# partial JSON, `fromjson?` skips it so it cannot fail the whole parse.
+early_transcript=$(head -c 500000 "$transcript_path" | jq -cR 'fromjson?' 2>/dev/null)
+user_message_count=$(printf '%s' "$early_transcript" | jq -rs '
   [.[] | select(.type == "user") | .message.content |
     (if type == "string" then . elif type == "array" then (map(select(.type == "text") | .text) | first // "") else "" end)
   ] | map(select(length > 0)) | length
-' "$transcript_path" 2>/dev/null || echo 0)
+' 2>/dev/null || echo 0)
 [ "${user_message_count:-0}" -ge 2 ] || exit 0
 
 # Find the first substantive user message: skip system-injected/command-wrapped
 # content and skip trivial exit-type turns ("exit", "bye", "ok") so a session
 # that's just the user leaving, or has no real content yet, isn't named and
 # isn't locked out of retrying once real content does show up.
-first_message=$(jq -rs '
+first_message=$(printf '%s' "$early_transcript" | jq -rs '
   [.[] | select(.type == "user") | .message.content |
     (if type == "string" then . elif type == "array" then (map(select(.type == "text") | .text) | first // "") else "" end)
   ] | map(select(length > 3 and (startswith("<") | not))) |
@@ -43,14 +53,13 @@ first_message=$(jq -rs '
       "hi","hello","hey","test","testing"] | index($s)) | not
   )) |
   first // empty
-' "$transcript_path" 2>/dev/null | head -c 800)
+' 2>/dev/null | head -c 800)
 
 [ -n "$first_message" ] || exit 0
 
 # Claim a lock only once there's real content worth summarizing, so an
 # empty/trivial-only session can still pick up a title from a later message
 # instead of being locked out permanently.
-lock="${TMPDIR:-/tmp}/agentic-auto-session-title-${session_id}"
 mkdir "$lock" 2>/dev/null || exit 0
 
 nohup bash -c '
