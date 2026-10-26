@@ -23,11 +23,28 @@ jobs:
           tar -xJf shellcheck.tar.xz
           sudo mv shellcheck-v0.11.0/shellcheck /usr/local/bin/shellcheck
 
+      - name: Install fish
+        run: sudo apt-get update && sudo apt-get install -y fish
+
       - name: Shellcheck
         run: find . -name '*.sh' -not -path './.git/*' -print0 | xargs -0r shellcheck -S warning
 
       - name: Validate JSON
         run: find . -name '*.json' -not -path './.git/*' -print0 | xargs -0r -I{} jq empty {}
 
+      - name: Validate fish syntax
+        run: find . -name '*.fish' -not -path './.git/*' -print0 | xargs -0r -n1 fish --no-execute
+
+      # The guard is an ES module, older `node` only parses `export` in a `.mjs` file.
+      - name: Validate JavaScript syntax
+        run: |
+          cp .config/agentic/hooks/opencode-guards.js "$RUNNER_TEMP/opencode-guards.mjs"
+          node --check "$RUNNER_TEMP/opencode-guards.mjs"
+
       - name: Validate skill frontmatter
         run: .github/scripts/check-skill-frontmatter.sh
+
+      - name: Test cleanup and output cap scripts
+        run: |
+          bash tests/bash-output-cap.sh
+          bash tests/worktree-cleanup.sh
