@@ -42,8 +42,7 @@ Before pushing, check the diff against this list:
 - A multi-step write sits in a transaction, a mid-way failure cannot leave half the change.
 - An existing helper does not already do it, search before adding one.
 - Null, empty, and ambiguous-match inputs are handled, an arbitrary pick among several matches has a tiebreak.
-- A dependency outage on the new path is handled or surfaced, not swallowed.
-- A touched trust boundary, new input, endpoint, permission check, secret, outbound request, file path, dependency, CI step, or model or tool call, passes the Security section of `~/.config/agentic/agents/reviewer.md`.
+- A dependency outage on the new path is handled or surfaced, not swallowed.- A touched trust boundary, new input, endpoint, permission check, secret, outbound request, file path, dependency, CI step, or model or tool call, passes the Security section of `~/.config/agentic/agents/reviewer.md`.
 - A runtime boundary, input, endpoint, permission check, outbound request, file path, or model or tool call, also gets a test that the unauthorized or invalid case is rejected, a dependency, secret, or CI step gets the check only.
 
 ## Verification
@@ -80,7 +79,7 @@ Complexity for an unlikely race or security edge case outside that list needs th
 
 Reread comments near the code you touched, one explaining a shape that moved is orphaned but reads as true. When two files explain the same fact, one carries it and the other points at it by name. Drop a test that only reproves what an earlier test in the same file guarantees.
 
-Before writing or flagging a test, apply the `test-quality` skill.
+Before writing or flagging a test, apply the `test-quality` skill. Docs, tests, and PR descriptions follow `documentation.md`.
 
 ## Skills in Plans
 
