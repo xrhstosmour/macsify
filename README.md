@@ -24,7 +24,8 @@ Opinionated `macOS` setup via shell scripts, plus a shared configuration for `AI
 | Cleanup | `Mole` + Bloatware removal |
 | Automation | Login and `Dock` items auto-configured |
 | Progressive Web Applications | via `Google Chrome` |
-| Packages | See [Brewfile](packages/Brewfile), [Additional Packages](packages/additional_packages.txt), and [Store applications](packages/store_applications_ids.txt) |
+| Profiles | Work or personal, asked once by `install.sh`, a work machine skips personal applications and skills |
+| Packages | See [base](packages/base.Brewfile), [personal](packages/personal.Brewfile) and [work](packages/work.Brewfile) Brewfiles, [Additional Packages](packages/additional_packages.txt), and [Store applications](packages/store_applications_ids.txt) |
 
 ## Installation
 
@@ -34,13 +35,19 @@ Opinionated `macOS` setup via shell scripts, plus a shared configuration for `AI
 
 3. Sign in to the `App Store`, `mas` cannot install the store applications without it.
 
-4. Customize [packages/Brewfile](packages/Brewfile), [packages/additional_packages.txt](packages/additional_packages.txt), [packages/store_applications_ids.txt](packages/store_applications_ids.txt) and the `AI` model assignments in [.config/agentic/models.txt](.config/agentic/models.txt).
+4. Customize the packages and the `AI` model assignments in [.config/agentic/models.txt](.config/agentic/models.txt):
+    - [packages/base.Brewfile](packages/base.Brewfile) for every machine, [packages/personal.Brewfile](packages/personal.Brewfile) and [packages/work.Brewfile](packages/work.Brewfile) per profile, each includes the base one.
+    - [packages/store_applications_ids.txt](packages/store_applications_ids.txt) for every machine and [packages/personal.store_applications_ids.txt](packages/personal.store_applications_ids.txt) for a personal one.
+    - [packages/personal.skills.txt](packages/personal.skills.txt), the agentic skills removed on a work machine.
+    - [packages/additional_packages.txt](packages/additional_packages.txt).
 
-5. Run:
+5. Run, and answer whether it is a work or a personal machine:
 
     ```bash
     ./install.sh
     ```
+
+    The answer is saved to `~/.config/macsify/profile`, so later runs of any script reuse it. Export `MACSIFY_PROFILE=work` or `personal` to skip the question or to switch profile. Switching to work stops installing personal applications, it does not uninstall them.
 
 To pull only the shared `AI` configuration, without the rest of macsify:
 
@@ -48,7 +55,9 @@ To pull only the shared `AI` configuration, without the rest of macsify:
 mkdir -p ~/.config && cp -R .config/agentic ~/.config/ && bash setup/agentic.sh
 ```
 
-`setup/agentic.sh` only wires up a tool if its `brew`/`cask` line in [`packages/Brewfile`](packages/Brewfile) is present and uncommented, so trim that file to the wanted `AI` tools first.
+It asks for the work or personal profile too, unless `MACSIFY_PROFILE` is set or a profile is already saved, a work profile leaves out the skills in [`packages/personal.skills.txt`](packages/personal.skills.txt).
+
+`setup/agentic.sh` only wires up a tool if its `brew`/`cask` line in [`packages/base.Brewfile`](packages/base.Brewfile) or the profile's Brewfile is present and uncommented, so trim those files to the wanted `AI` tools first.
 
 ## Post-Installation
 
