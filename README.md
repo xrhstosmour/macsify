@@ -32,9 +32,11 @@ Opinionated `macOS` setup via shell scripts, plus a shared configuration for `AI
 
 2. Add Terminal to `System Settings → Privacy & Security`: **Files & Folders**, **Full Disk Access** and **Accessibility**.
 
-3. Customize [packages/Brewfile](packages/Brewfile), [packages/additional_packages.txt](packages/additional_packages.txt), [packages/store_applications_ids.txt](packages/store_applications_ids.txt) and the `AI` model assignments in [.config/agentic/models.txt](.config/agentic/models.txt).
+3. Sign in to the `App Store`, `mas` cannot install the store applications without it.
 
-4. Run:
+4. Customize [packages/Brewfile](packages/Brewfile), [packages/additional_packages.txt](packages/additional_packages.txt), [packages/store_applications_ids.txt](packages/store_applications_ids.txt) and the `AI` model assignments in [.config/agentic/models.txt](.config/agentic/models.txt).
+
+5. Run:
 
     ```bash
     ./install.sh

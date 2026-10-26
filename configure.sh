@@ -29,7 +29,8 @@ if command -v mas &>/dev/null; then
             continue
         fi
 
-        mas purchase "$application_id"
+        # A Mac not signed into the App Store fails here, keep going so the rest of the setup still runs.
+        mas purchase "$application_id" || log_warning "Failed to install App Store application '$application_id', sign in to the App Store and rerun."
     done <packages/store_applications_ids.txt
 fi
 
