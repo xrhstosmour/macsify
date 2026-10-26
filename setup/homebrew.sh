@@ -13,7 +13,8 @@ HOMEBREW_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 source "$HOMEBREW_SCRIPT_DIRECTORY/../helpers/logs.sh"
 
 # Declare `Homebrew` constants.
-HOMEBREW_INSTALL_URL="https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"
+# Pinned to the `Homebrew/install` commit from 2026-10-23, `HEAD` would run whatever is pushed next.
+HOMEBREW_INSTALL_URL="https://raw.githubusercontent.com/Homebrew/install/85d1a3fc80d8a63932f632aca8f787de11d14a64/install.sh"
 HOMEBREW_BIN_PATH="/opt/homebrew/bin/brew"
 ZPROFILE_PATH="$HOME/.zprofile"
 

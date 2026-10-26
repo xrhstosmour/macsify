@@ -32,7 +32,8 @@
     "claude-hud": {
       "source": {
         "source": "github",
-        "repo": "jarrodwatts/claude-hud"
+        "repo": "jarrodwatts/claude-hud",
+        "ref": "v0.6.0"
       }
     },
     "claude-community": {

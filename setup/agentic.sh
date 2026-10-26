@@ -256,7 +256,7 @@ if brewfile_declares "anomalyco/tap/opencode"; then
     if command -v npm &>/dev/null; then
         if ! command -v opencode-status-hud &>/dev/null; then
             log_info "Installing opencode-status-hud plugin..."
-            npm install -g opencode-status-hud || log_warning "opencode-status-hud install failed, install manually later."
+            npm install -g opencode-status-hud@0.1.3 || log_warning "opencode-status-hud install failed, install manually later."
         fi
         opencode-status-hud install --mode local --plugin-dir "$HOME/.config/opencode/plugin" || log_warning "opencode-status-hud plugin registration failed, run manually later."
     else
