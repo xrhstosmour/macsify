@@ -22,5 +22,7 @@ Test authoring rules, on top of the patterns above:
 
 - A test with several assertions groups them with the framework's multiple-failure feature.
 - Every new branch of production code has a test that reaches it.
-
+- Tests are the source of truth for behavior, someone describing a scenario should be able to read the test names and tell whether it is covered or a blind spot. Names and descriptions use plain business words, not method or class names.
+- Cover scenarios, branches, and complications, not lines, line coverage is automatic and proves little.
+- Integration first, unit second. A few large scenarios for the big picture, then small tests for what they do not reach.
 Don't flag a test just for looking similar, verify it protects a distinct contract first. A bug regression test must fail on the pre-fix code for the intended reason and pass after the fix, the author checks this, it is not verifiable from a diff, do not flag it in review.
