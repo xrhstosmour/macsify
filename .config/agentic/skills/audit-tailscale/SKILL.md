@@ -81,6 +81,16 @@ Show the port map, each server with its listening ports and who uses them, and a
 
 ## 4. Draft the policy
 
+The skill ships no policy file on purpose, Tailscale's policy fields and syntax change. No earlier policy or local copy is needed either. Build the policy from the live tailnet and the current documentation:
+
+- Fetch the live policy and the device list through the OAuth client, and read the current policy syntax from Tailscale's own documentation (`tailscale.com/kb`, the access control and grants pages) before writing a line. Use the field names the live policy and the docs use today, never from memory, and never keep a deprecated one such as the legacy `acls` list where `grants` are available.
+- Let the validate endpoint be the judge. A field it rejects is fixed from the docs, not guessed around. A `tests` block that fails stops the run.
+- Address names come from the device list, confirmed by the user. The non-root login name for SSH is asked, never guessed.
+- Roles and ports come from steps 2 and 3, not from a template. Write the design below in the current syntax.
+- Keep the saved copy private, it holds tailnet addresses.
+
+The design to express, adjust only with the user's approval:
+
 - `hosts` aliases for each personal device's address so tests do not depend on tag order, and one tag per role in `tagOwners`. A replaced device needs its alias address updated.
 - Grants that allow only the mapped ports. SSH into tagged machines is `tcp:22` only.
 - Servers that only answer requests get internet access only.
