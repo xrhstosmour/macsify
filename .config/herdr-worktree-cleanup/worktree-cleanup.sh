@@ -8,10 +8,12 @@
 # with `git worktree remove` only when no herdr pane is left inside it, it is on a
 # branch, it has no uncommitted or untracked changes and no rebase, merge,
 # cherry-pick, revert or bisect is in progress. Anything else is kept and logged.
-# The branch is never deleted, but ignored files such as `.env` or a build cache
-# go with the worktree. A process outside `herdr`, such as an editor, does not
-# count as a pane. Runs from `~/.config` without the macsify repository, so it
-# carries its own logging, like `herdr-repo-sync`.
+# Ignored files such as `.env` or a build cache go with the worktree. Its branch
+# is deleted only when merged, see `delete_merged_branch`. A worktree named
+# `review` or `reviews`, or listed in the `protected` file, is never touched. A
+# process outside `herdr`, such as an editor, does not count as a pane. Runs from
+# `~/.config` without the macsify repository, so it carries its own logging,
+# like `herdr-repo-sync`.
 # Usage:
 #   worktree-cleanup.sh <event name>
 
@@ -23,8 +25,14 @@ LOG_FILE="$STATE_DIRECTORY/cleanup.log"
 # One `<worktree path><tab><workspace ID>` line per tracked worktree.
 TRACKED_FILE="$STATE_DIRECTORY/tracked"
 LOCK_DIRECTORY="$STATE_DIRECTORY/lock"
+PROTECTED_FILE="$HOME/.config/herdr-worktree-cleanup/protected"
 WORKTREES_ROOT="$HOME/Developer/worktrees"
 LOG_MAX_BYTES=200000
+# Upper bound for each network call made while the pass lock is held, a stalled
+# one would otherwise make every later event give up and go untracked.
+NETWORK_TIMEOUT_SECONDS=30
+# Repositories already fetched during this pass, as `|path|` entries.
+fetched_checkouts=""
 # herdr can still list the panes of a workspace that just closed.
 SETTLE_SECONDS=3
 
@@ -147,10 +155,103 @@ record_worktree() {
     "$WORKTREES_ROOT"/*) ;;
     *) return ;;
   esac
+  if is_protected "$path"; then
+    return
+  fi
   # A reopened worktree belongs to its new workspace.
   untrack "$path"
   printf '%s\t%s\n' "$path" "$workspace" >>"$TRACKED_FILE"
   log "tracking: $path ($workspace)"
+}
+
+# Runs a command and kills it after a time limit, macOS has no `timeout`. The
+# watchdog's output goes to `/dev/null` so a command substitution around this
+# does not wait for its sleep.
+# Usage:
+#   run_bounded <seconds> <command and arguments...>
+run_bounded() {
+  local limit="$1" pid watchdog status
+  shift
+  "$@" &
+  pid=$!
+  (sleep "$limit" && kill "$pid" 2>/dev/null) >/dev/null 2>&1 &
+  watchdog=$!
+  wait "$pid"
+  status=$?
+  kill "$watchdog" 2>/dev/null
+  wait "$watchdog" 2>/dev/null
+  return "$status"
+}
+
+# A worktree kept on purpose, never tracked, removed or stripped of its branch.
+# Any directory named `review` or `reviews`, plus every directory name or
+# physical absolute path (symlinks resolved, no `~`) listed one per line in
+# `~/.config/herdr-worktree-cleanup/protected`.
+# Usage:
+#   is_protected <path>
+is_protected() {
+  case "$(basename "$1")" in
+    review | reviews) return 0 ;;
+  esac
+  [ -f "$PROTECTED_FILE" ] || return 1
+  grep -qxF -e "$1" -e "$(basename "$1")" "$PROTECTED_FILE"
+}
+
+# Deletes the branch a removed worktree was on, only when its work is merged:
+# the tip is an ancestor of the origin default branch, or the tip is exactly the
+# head of a merged pull request, which covers squash and rebase merges. A branch
+# that gained commits after its pull request merged is kept. The default branch
+# is never deleted.
+# Usage:
+#   delete_merged_branch <main checkout> <branch>
+delete_merged_branch() {
+  local main_checkout="$1" branch="$2" default_reference tip merged_head
+  default_reference=$(git -C "$main_checkout" symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null) || {
+    log "branch kept, no origin default branch: $branch"
+    return
+  }
+  if [ "$branch" = "${default_reference#origin/}" ]; then
+    return
+  fi
+  # One fetch per repository per pass, the sweep can remove several worktrees.
+  case "$fetched_checkouts" in
+    *"|$main_checkout|"*) ;;
+    *)
+      fetched_checkouts="$fetched_checkouts|$main_checkout|"
+      if ! GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=10' run_bounded "$NETWORK_TIMEOUT_SECONDS" git -C "$main_checkout" fetch origin --quiet >>"$LOG_FILE" 2>&1; then
+        log "fetch failed, checking merge state against the last known refs: $main_checkout"
+      fi
+      ;;
+  esac
+  tip=$(git -C "$main_checkout" rev-parse --verify --quiet "refs/heads/$branch") || {
+    log "branch kept, no local branch named: $branch"
+    return
+  }
+
+  if git -C "$main_checkout" merge-base --is-ancestor "$tip" "$default_reference"; then
+    # `git branch -d` compares against the branch's upstream or the checkout's
+    # `HEAD`, not the default branch, so it can refuse a provably merged branch.
+    if git -C "$main_checkout" branch -D "$branch" >>"$LOG_FILE" 2>&1; then
+      log "branch deleted, merged into $default_reference: $branch"
+    else
+      log "branch delete failed: $branch"
+    fi
+    return
+  fi
+
+  if command -v gh >/dev/null 2>&1; then
+    merged_head=$(cd "$main_checkout" && run_bounded "$NETWORK_TIMEOUT_SECONDS" gh pr list --head "$branch" --state merged --json headRefOid --jq '.[].headRefOid' 2>>"$LOG_FILE") || merged_head=""
+    if printf '%s\n' "$merged_head" | grep -qx -- "$tip"; then
+      # `git branch -d` cannot see a squash merge, the tip match above is the proof.
+      if git -C "$main_checkout" branch -D "$branch" >>"$LOG_FILE" 2>&1; then
+        log "branch deleted, its tip is the head of a merged pull request: $branch"
+      else
+        log "branch delete failed: $branch"
+      fi
+      return
+    fi
+  fi
+  log "branch kept, not merged: $branch"
 }
 
 # Usage:
@@ -171,6 +272,12 @@ sweep_worktree() {
   local path="$1"
 
   if [ ! -d "$path" ]; then
+    untrack "$path"
+    return
+  fi
+
+  if is_protected "$path"; then
+    log "kept, protected: $path"
     untrack "$path"
     return
   fi
@@ -215,10 +322,16 @@ sweep_worktree() {
     fi
   done
 
+  local branch
+  # The full ref, `--short` gives `heads/<name>` when a tag has the same name.
+  branch=$(git -C "$path" symbolic-ref HEAD)
+  branch="${branch#refs/heads/}"
+
   # No `--force`, git itself refuses a locked or dirty worktree.
   if git -C "$main_checkout" worktree remove "$path" >>"$LOG_FILE" 2>&1; then
-    log "removed, branch kept, ignored files deleted: $path"
+    log "removed, ignored files deleted: $path"
     untrack "$path"
+    delete_merged_branch "$main_checkout" "$branch"
   else
     log "remove failed: $path"
   fi
