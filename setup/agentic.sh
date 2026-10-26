@@ -222,14 +222,15 @@ if brewfile_declares "anomalyco/tap/opencode"; then
     fi
 
     # OpenCode's `{env:VAR}` config substitution reads its own process environment at launch, it has no equivalent to deriving from `~/.arcrc` itself. Bake the already-derived URL into this deployed (non-tracked) copy directly instead. If nothing was derived, leave the placeholder, OpenCode resolves it to an empty string and that one server just won't connect, not a hard failure.
+    # A `&` or `|` in a URL is special in a `sed` replacement, escape both so a query string survives.
     if [ -n "$PHABRICATOR_MCP_URL" ]; then
-        sed -i '' "s|{env:PHABRICATOR_MCP_URL}|${PHABRICATOR_MCP_URL}|" "$OPENCODE_CONFIGURATION_PATH"
+        sed -i '' "s|{env:PHABRICATOR_MCP_URL}|$(printf '%s' "$PHABRICATOR_MCP_URL" | sed 's/[&|\\]/\\&/g')|" "$OPENCODE_CONFIGURATION_PATH"
     fi
     if [ -n "$GRAFANA_MCP_URL" ]; then
-        sed -i '' "s|{env:GRAFANA_MCP_URL}|${GRAFANA_MCP_URL}|" "$OPENCODE_CONFIGURATION_PATH"
+        sed -i '' "s|{env:GRAFANA_MCP_URL}|$(printf '%s' "$GRAFANA_MCP_URL" | sed 's/[&|\\]/\\&/g')|" "$OPENCODE_CONFIGURATION_PATH"
     fi
     if [ -n "$METABASE_MCP_URL" ]; then
-        sed -i '' "s|{env:METABASE_MCP_URL}|${METABASE_MCP_URL}|" "$OPENCODE_CONFIGURATION_PATH"
+        sed -i '' "s|{env:METABASE_MCP_URL}|$(printf '%s' "$METABASE_MCP_URL" | sed 's/[&|\\]/\\&/g')|" "$OPENCODE_CONFIGURATION_PATH"
     fi
 
     log_info "Creating OpenCode symlinks..."
