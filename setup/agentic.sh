@@ -252,7 +252,7 @@ if brewfile_declares "anomalyco/tap/opencode"; then
     fi
 
     # `Herdr`'s own installer drops a plugin file into OpenCode's plugin directory, unlike
-    # the `settings.json`/`hooks.json` cases above nothing here overwrites it on a re-run,
+    # the `settings.json`/`agentic.json` cases nothing here overwrites it on a re-run,
     # so this mainly matters for a first-time install picking up the integration at all.
     if brewfile_declares herdr; then
         install_herdr_component "Herdr integration for OpenCode" herdr integration install opencode
@@ -432,21 +432,6 @@ if brewfile_declares codex; then
     create_symlink "$AGENTIC_DIRECTORY/skills"    "$CODEX_DIRECTORY/skills"
     create_symlink "$AGENTIC_DIRECTORY/commands"  "$CODEX_DIRECTORY/prompts"
 
-    log_info "Writing Codex hooks..."
-
-    # No `PreToolUse` web-fetch guard here: Codex has no built-in URL-fetch tool to
-    # gate, its `web_search` tool returns query snippets, not a fetched URL, so
-    # there's nothing for `webfetch-guard.sh` to match against.
-    cat >"$CODEX_DIRECTORY/hooks.json" <<'EOF'
-{
-  "hooks": {
-    "UserPromptSubmit": [
-      { "hooks": [ { "type": "command", "command": "bash ~/.config/agentic/hooks/context-guard.sh" } ] }
-    ]
-  }
-}
-EOF
-
     # Phabricator/Sentry MCP, mirrors the Claude Code block above, including the
     # `</dev/null`/`timeout`/fail-soft hardening on every `mcp` invocation.
     if ! command -v codex &>/dev/null; then
@@ -470,9 +455,7 @@ EOF
         fi
     fi
 
-    # `Herdr`'s own installer merges a `SessionStart` hook into `hooks.json`, run last
-    # so it lands after the `cat >"$CODEX_DIRECTORY/hooks.json"` above overwrote the
-    # file with the tracked baseline, not before.
+    # `Herdr`'s own installer merges a `SessionStart` hook into `hooks.json`.
     if brewfile_declares herdr; then
         install_herdr_component "Herdr integration for Codex" herdr integration install codex
     fi
@@ -524,9 +507,6 @@ if brewfile_declares copilot-cli; then
   "hooks": {
     "PreToolUse": [
       { "type": "command", "matcher": "WebFetch", "bash": "bash ~/.config/agentic/hooks/webfetch-guard.sh" }
-    ],
-    "UserPromptSubmit": [
-      { "type": "command", "bash": "bash ~/.config/agentic/hooks/context-guard.sh" }
     ]
   }
 }
