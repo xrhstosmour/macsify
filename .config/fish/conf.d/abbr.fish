@@ -31,16 +31,27 @@ abbr sce "sudo launchctl load -w"
 abbr scstp "sudo launchctl unload"
 abbr scd "sudo launchctl unload -w"
 abbr scrr "sudo launchctl kickstart -k"
-abbr des "disable_android_emulators_audio"
-abbr ae "open_android_emulator"
-abbr ie "open_ios_emulator"
-abbr adbp "adb pair"
+
+# Mobile abbreviations, only where the tools are installed, a work profile skips them.
+# Checked by path, `conf.d` loads before `config.fish` adds `Homebrew` to the `PATH`.
+if test -x /opt/homebrew/share/android-commandlinetools/emulator/emulator
+    abbr des "disable_android_emulators_audio"
+    abbr ae "open_android_emulator"
+end
+if test -d /Applications/Xcode.app
+    abbr ie "open_ios_emulator"
+end
+if test -x /opt/homebrew/share/android-commandlinetools/platform-tools/adb
+    abbr adbp "adb pair"
+end
 
 # Network abbreviations.
 abbr ip "printf 'IPv4 (en0): %s\n' $(ipconfig getifaddr en0)"
 abbr wrip "witr --port"
 abbr wpi "witr --pid"
-abbr tss "tailscale status"
+if test -x /usr/local/bin/tailscale
+    abbr tss "tailscale status"
+end
 
 # Terminal tools abbreviations.
 abbr cat "bat"

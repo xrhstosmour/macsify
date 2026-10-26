@@ -21,10 +21,19 @@ function aliases_cheat_sheet --description "Display all command abbreviations an
     echo "  - us               Update system"
     echo "  - cs               Clean system"
     echo "  - ks               Kill audio daemons"
-    echo "  - des              Disable emulator audio"
-    echo "  - ae               Launch Android emulator"
-    echo "  - ie               Launch iOS simulator"
-    echo "  - adbp ip:port     Pair ADB device"
+    # Listed only where `conf.d/abbr.fish` defines them.
+    if abbr -q des
+        echo "  - des              Disable emulator audio"
+    end
+    if abbr -q ae
+        echo "  - ae               Launch Android emulator"
+    end
+    if abbr -q ie
+        echo "  - ie               Launch iOS simulator"
+    end
+    if abbr -q adbp
+        echo "  - adbp ip:port     Pair ADB device"
+    end
     echo "  - sm               System monitor"
     echo "  - am               Agent monitor"
     echo "  - ado              Enable 'AirDrop' to 'Everyone'"
@@ -54,7 +63,9 @@ function aliases_cheat_sheet --description "Display all command abbreviations an
     echo "  - ip               Show IP address"
     echo "  - wrip <port>      Show what's running on the specified port"
     echo "  - wpi <pid>        Show what's running with the specified process ID"
-    echo "  - tss              Show Tailscale peers and their addresses"
+    if abbr -q tss
+        echo "  - tss              Show Tailscale peers and their addresses"
+    end
     echo ""
 
     echo "⌨️  TERMINAL TOOLS:"
