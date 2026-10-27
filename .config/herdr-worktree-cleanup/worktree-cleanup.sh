@@ -213,20 +213,25 @@ delete_merged_branch() {
   if [ "$branch" = "${default_reference#origin/}" ]; then
     return
   fi
-  # One fetch per repository per pass, the sweep can remove several worktrees.
-  case "$fetched_checkouts" in
-    *"|$main_checkout|"*) ;;
-    *)
-      fetched_checkouts="$fetched_checkouts|$main_checkout|"
-      if ! GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=10' run_bounded "$NETWORK_TIMEOUT_SECONDS" git -C "$main_checkout" fetch origin --quiet >>"$LOG_FILE" 2>&1; then
-        log "fetch failed, checking merge state against the last known refs: $main_checkout"
-      fi
-      ;;
-  esac
   tip=$(git -C "$main_checkout" rev-parse --verify --quiet "refs/heads/$branch") || {
     log "branch kept, no local branch named: $branch"
     return
   }
+
+  # Already merged by the last known refs needs no fetch, the network calls run
+  # while the pass lock is held and every waiting event gives up after 30 s.
+  # One fetch per repository per pass, the sweep can remove several worktrees.
+  if ! git -C "$main_checkout" merge-base --is-ancestor "$tip" "$default_reference"; then
+    case "$fetched_checkouts" in
+      *"|$main_checkout|"*) ;;
+      *)
+        fetched_checkouts="$fetched_checkouts|$main_checkout|"
+        if ! GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=10' run_bounded "$NETWORK_TIMEOUT_SECONDS" git -C "$main_checkout" fetch origin --quiet >>"$LOG_FILE" 2>&1; then
+          log "fetch failed, checking merge state against the last known refs: $main_checkout"
+        fi
+        ;;
+    esac
+  fi
 
   if git -C "$main_checkout" merge-base --is-ancestor "$tip" "$default_reference"; then
     # `git branch -d` compares against the branch's upstream or the checkout's

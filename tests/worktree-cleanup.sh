@@ -95,8 +95,15 @@ if [ ! -d "$worktree" ]; then
 fi
 rm "$worktree/notes.txt"
 
-# A clean worktree is removed, and its branch, merged into `origin/main`, goes too.
+# A clean worktree is removed, and its branch, merged into `origin/main`, goes
+# too. Origin is unreachable, a branch merged by the last known refs needs no fetch.
+mv "$origin" "$origin.offline"
 run_sweep
+mv "$origin.offline" "$origin"
+if grep -q 'fetch failed' "$XDG_CACHE_HOME/herdr-worktree-cleanup/cleanup.log"; then
+  echo "FAIL: fetched origin for a branch already merged by the last known refs"
+  exit 1
+fi
 if [ -d "$worktree" ]; then
   echo "FAIL: clean worktree with no pane was not removed"
   exit 1
