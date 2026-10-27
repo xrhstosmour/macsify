@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
 
 # Runs what the `gfrb` fish abbreviation (`git_fetch_and_rebase`) does, in every
-# herdr pane whose checkout is on `main` or `master`: fetch all remotes, then
-# rebase onto the origin default branch with `--autosquash --autostash`. Run by
+# herdr pane whose checkout is on `main` or `master`: fetch `origin`, then
+# rebase onto the origin default branch with `--autosquash --autostash`. Only
+# `origin` is fetched, unlike `gfrb`, the rebase reads nothing else and every
+# extra remote would lengthen the pass that holds the lock. Run by
 # herdr on startup and on workspace, worktree and tab events (see
 # `herdr-plugin.toml`), or by hand with explicit paths. Checkouts on any other
-# branch, with uncommitted changes, or mid rebase, merge or cherry-pick are left
-# alone. A rebase that stops on a conflict is aborted, restoring the checkout, and
+# branch, with uncommitted changes, mid rebase, merge or cherry-pick, or whose
+# own configuration or hooks would run code are left alone. A rebase that stops on a conflict is aborted, restoring the checkout, and
 # logged. Each checkout is synced at most once per throttle window.
 # Usage:
-#   repo-sync.sh [event name] [--force] [path...]
+#   repository-sync.sh [event name] [--force] [path...]
 
 set -u
 
-REPO_SYNC_SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
-STATE_DIRECTORY="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-repo-sync"
+REPOSITORY_SYNC_SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+STATE_DIRECTORY="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-repository-sync"
 LOG_FILE="$STATE_DIRECTORY/sync.log"
 LOCK_DIRECTORY="$STATE_DIRECTORY/lock"
 THROTTLE_SECONDS=600
@@ -47,7 +49,7 @@ done
 
 # Return to herdr right away, fetching every repository can take a while.
 if [ "$detached" = false ]; then
-  nohup bash "$REPO_SYNC_SCRIPT_PATH" "$@" --detached >/dev/null 2>&1 &
+  nohup bash "$REPOSITORY_SYNC_SCRIPT_PATH" "$@" --detached >/dev/null 2>&1 &
   exit 0
 fi
 
@@ -109,6 +111,32 @@ if [ ${#paths[@]} -eq 0 ]; then
   done < <(printf '%s\n' "$pane_directories" | sort -u)
 fi
 
+# A checkout's own configuration and hooks run code during `status`, `fetch` and
+# `rebase`. A plain clone has neither, one copied or extracted from elsewhere can
+# carry both, and this runs unattended in every pane, so such a checkout is left
+# alone. `core.fsmonitor` set to `true` or `false` is the built-in monitor, not a
+# command. Only the repository's own scopes count, `local` and `worktree`, the
+# user's global signing program or credential helper is trusted.
+# Usage:
+#   repository_code_reason <checkout path>, prints why and succeeds when it would run code
+repository_code_reason() {
+  local checkout="$1" setting hooks_directory hook
+  setting=$(git -C "$checkout" config --show-scope --includes --get-regexp '^(core\.(sshcommand|gitproxy|fsmonitor|hookspath|askpass)|remote\..*\.uploadpack|filter\..*\.(clean|smudge|process)|merge\..*\.driver|credential\.(.*\.)?helper|gpg\.(.*\.)?program|protocol\.(.*\.)?allow)$' 2>/dev/null | grep -E '^(local|worktree)[[:space:]]' | grep -viE '[[:space:]]core\.fsmonitor (true|false)$' | head -n 1)
+  if [ -n "$setting" ]; then
+    setting=$(printf '%s' "$setting" | cut -f2)
+    echo "sets ${setting%% *}"
+    return 0
+  fi
+  hooks_directory=$(git -C "$checkout" rev-parse --path-format=absolute --git-path hooks)
+  for hook in pre-rebase post-rewrite post-checkout post-merge post-index-change reference-transaction pre-auto-gc; do
+    if [ -x "$hooks_directory/$hook" ]; then
+      echo "has a $hook hook"
+      return 0
+    fi
+  done
+  return 1
+}
+
 # Usage:
 #   sync_checkout <checkout path> <throttle stamp file>
 sync_checkout() {
@@ -126,6 +154,13 @@ sync_checkout() {
     return
   fi
 
+  # Before `status` below, it already runs `core.fsmonitor`.
+  local reason
+  if reason=$(repository_code_reason "$checkout"); then
+    log "skipped $branch, the repository $reason: $checkout"
+    return
+  fi
+
   # Unlike an interactive `gfrb`, nobody is there to resolve an autostash that
   # conflicts on re-apply, and an agent may be editing the files right now, so a
   # checkout with uncommitted changes is left alone.
@@ -134,7 +169,7 @@ sync_checkout() {
     return
   fi
 
-  if ! git -C "$checkout" fetch --all --prune --quiet 2>>"$LOG_FILE"; then
+  if ! git -C "$checkout" fetch origin --prune --quiet 2>>"$LOG_FILE"; then
     log "fetch failed: $checkout"
     return
   fi

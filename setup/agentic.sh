@@ -12,6 +12,7 @@ source "$AGENTIC_SCRIPT_DIRECTORY/../helpers/brewfile.sh"
 source "$AGENTIC_SCRIPT_DIRECTORY/../helpers/symlink.sh"
 source "$AGENTIC_SCRIPT_DIRECTORY/../helpers/phabricator.sh"
 source "$AGENTIC_SCRIPT_DIRECTORY/../helpers/profile.sh"
+source "$AGENTIC_SCRIPT_DIRECTORY/../helpers/agentic.sh"
 
 # The profile decides which tools `brewfile_declares` sees and which skills stay installed.
 profile_resolve
@@ -149,19 +150,10 @@ mkdir -p "$AGENTIC_DIRECTORY"
 cp -R "$AGENTIC_SCRIPT_DIRECTORY/../.config/agentic/." "$AGENTIC_DIRECTORY/"
 
 # Skills listed as personal only are removed from the installed copy on any other
-# profile, also when a machine switches profile after an earlier install, together
-# with the command of the same name that invokes the skill. A line with a path
-# separator or a leading dot is skipped, it could name something outside `skills/`.
+# profile, also when a machine switches profile after an earlier install.
 PERSONAL_SKILLS_FILE_PATH="$AGENTIC_SCRIPT_DIRECTORY/../packages/personal.skills.txt"
 if [ "$MACSIFY_PROFILE" != "personal" ] && [ -f "$PERSONAL_SKILLS_FILE_PATH" ]; then
-    while IFS= read -r skill || [ -n "$skill" ]; do
-        [[ -z "$skill" || "$skill" =~ ^# || "$skill" == */* || "$skill" == .* ]] && continue
-        if [ -d "$AGENTIC_DIRECTORY/skills/$skill" ]; then
-            log_info "Removing personal only skill '${skill}'..."
-            rm -rf "${AGENTIC_DIRECTORY:?}/skills/${skill:?}"
-        fi
-        rm -f "${AGENTIC_DIRECTORY:?}/commands/${skill:?}.md"
-    done <"$PERSONAL_SKILLS_FILE_PATH"
+    remove_personal_skills "$AGENTIC_DIRECTORY" "$PERSONAL_SKILLS_FILE_PATH"
 fi
 log_divider
 
@@ -180,66 +172,7 @@ if brewfile_declares "anomalyco/tap/opencode"; then
     OPENCODE_CONFIGURATION_PATH="$HOME/.config/opencode/opencode.json"
     OPENCODE_CONFIGURATION_TEMPLATE="$AGENTIC_SCRIPT_DIRECTORY/../.config/opencode/opencode.json"
     cp "$OPENCODE_CONFIGURATION_TEMPLATE" "$OPENCODE_CONFIGURATION_PATH"
-
-    agent_json_block=""
-    for agent_file in "$AGENT_SOURCE_DIRECTORY"/*.md; do
-        agent=$(basename "$agent_file" .md)
-        case "$agent" in
-            leader|architect|implementor|clarifier|tester|designer|reviewer) ;;
-            *) continue ;;
-        esac
-
-        model=$(grep "^opencode:${agent}:model:" "$MODELS_FILE_PATH" | cut -d: -f4-)
-        variant=$(grep "^opencode:${agent}:variant:" "$MODELS_FILE_PATH" | cut -d: -f4-)
-        [ -z "$model" ] && continue
-
-        mode="subagent"
-        [ "$agent" = "leader" ] && mode="primary"
-
-        if [ "$variant" != "-" ]; then
-            agent_json_block+="    \"${agent}\": {
-      \"mode\": \"${mode}\",
-      \"model\": \"${model}\",
-      \"variant\": \"${variant}\"
-    },
-"
-        else
-            agent_json_block+="    \"${agent}\": {
-      \"mode\": \"${mode}\",
-      \"model\": \"${model}\"
-    },
-"
-        fi
-    done
-
-    explore_model=$(grep '^opencode:explore:model:' "$MODELS_FILE_PATH" | cut -d: -f4-)
-    compaction_model=$(grep '^opencode:compaction:model:' "$MODELS_FILE_PATH" | cut -d: -f4-)
-
-    agent_json_block+="    \"explore\": {
-      \"mode\": \"subagent\",
-      \"model\": \"${explore_model:-opencode/big-pickle}\"
-    },
-    \"compaction\": {
-      \"mode\": \"primary\",
-      \"model\": \"${compaction_model:-opencode/big-pickle}\"
-    }"
-
-    # The `sed` below exits 0 when its anchor is missing, so check the anchor first and the result after,
-    # otherwise a reformatted template silently deploys without any agent models.
-    if ! grep -q '"default_agent": "leader",' "$OPENCODE_CONFIGURATION_PATH"; then
-        log_error "Anchor '\"default_agent\": \"leader\",' not found in ${OPENCODE_CONFIGURATION_TEMPLATE}"
-        exit 1
-    fi
-
-    agent_section_file=$(mktemp)
-    printf '  \"agent\": {\n%s\n  },\n' "${agent_json_block}" > "$agent_section_file"
-    sed -i '' "/\"default_agent\": \"leader\",/r ${agent_section_file}" "$OPENCODE_CONFIGURATION_PATH"
-    rm -f "$agent_section_file"
-
-    if ! jq -e '.agent.leader.model' "$OPENCODE_CONFIGURATION_PATH" >/dev/null; then
-        log_error "Injected agent models are missing or invalid in ${OPENCODE_CONFIGURATION_PATH}"
-        exit 1
-    fi
+    inject_opencode_agent_models "$OPENCODE_CONFIGURATION_PATH" "$MODELS_FILE_PATH" "$AGENT_SOURCE_DIRECTORY"
 
     # OpenCode's `{env:VAR}` config substitution reads its own process environment at launch, it has no equivalent to deriving from `~/.arcrc` itself. Bake the already-derived URL into this deployed (non-tracked) copy directly instead. If nothing was derived, leave the placeholder, OpenCode resolves it to an empty string and that one server just won't connect, not a hard failure.
     # A `&` or `|` in a URL is special in a `sed` replacement, escape both so a query string survives.
@@ -588,13 +521,22 @@ if brewfile_declares herdr; then
     # Local plugin from this repository, runs the `gfrb` fetch and rebase in every
     # herdr pane checked out on `main` or `master`. `install.sh` copied it into `~/.config` already, a
     # link points herdr at it in place, so later edits need no re-link.
-    if ! herdr plugin list 2>/dev/null | grep -q '^- herdr-repo-sync '; then
-        install_herdr_component "herdr-repo-sync plugin" herdr plugin link "$HOME/.config/herdr-repo-sync" --enabled
+    # Previous name of the plugin, a leftover link would run every sync twice.
+    if herdr plugin list 2>/dev/null | grep -q '^- herdr-repo-sync '; then
+        log_info "Unlinking the 'herdr-repo-sync' plugin, renamed to 'herdr-repository-sync'..."
+        if run_with_timeout 30 herdr plugin unlink herdr-repo-sync </dev/null; then
+            rm -rf "$HOME/.config/herdr-repo-sync" "${XDG_CACHE_HOME:-$HOME/.cache}/herdr-repo-sync"
+        else
+            log_warning "Could not unlink 'herdr-repo-sync', run 'herdr plugin unlink herdr-repo-sync' by hand."
+        fi
+    fi
+    if ! herdr plugin list 2>/dev/null | grep -q '^- herdr-repository-sync '; then
+        install_herdr_component "herdr-repository-sync plugin" herdr plugin link "$HOME/.config/herdr-repository-sync" --enabled
     fi
 
     # Local plugin from this repository, removes a clean worktree under
     # `~/Developer/worktrees` once its herdr workspace is closed, same link
-    # reasoning as `herdr-repo-sync` above.
+    # reasoning as `herdr-repository-sync` above.
     if ! herdr plugin list 2>/dev/null | grep -q '^- herdr-worktree-cleanup '; then
         install_herdr_component "herdr-worktree-cleanup plugin" herdr plugin link "$HOME/.config/herdr-worktree-cleanup" --enabled
     fi

@@ -1,8 +1,10 @@
 #!/bin/bash
 
 # Checks that `worktree-cleanup.sh` keeps a worktree when `herdr` returns a pane
-# list it cannot read, and removes a clean one when the list is valid and empty.
-# Runs against a temporary `HOME`, never touches real worktrees.
+# list it cannot read or when it holds untracked work, removes a clean one when
+# the list is valid and empty, and deletes the branch only when it is merged
+# into the origin default branch. Runs against a temporary `HOME`, never touches
+# real worktrees.
 
 set -e
 
@@ -27,25 +29,40 @@ cat >"$TEST_HOME/bin/herdr" <<'FAKE'
 #!/bin/bash
 cat "$(dirname "$0")/pane_list.json"
 FAKE
-chmod +x "$TEST_HOME/bin/herdr"
+# A fake `gh` that knows no merged pull request, so only ancestry decides.
+printf '#!/bin/bash\n' >"$TEST_HOME/bin/gh"
+chmod +x "$TEST_HOME/bin/herdr" "$TEST_HOME/bin/gh"
 export PATH="$TEST_HOME/bin:$PATH"
 
+origin="$TEST_HOME/origin.git"
 repository="$TEST_HOME/Developer/project"
 worktree="$TEST_HOME/Developer/worktrees/project/fix-example"
 mkdir -p "$repository"
+git init --quiet --bare "$origin"
 git -C "$repository" init --quiet
 git -C "$repository" commit --quiet --allow-empty -m 'Initial commit'
+git -C "$repository" remote add origin "$origin"
+git -C "$repository" push --quiet -u origin main
+git -C "$repository" remote set-head origin main
 git -C "$repository" worktree add --quiet "$worktree" -b fix/example
 
 physical_worktree=$(cd "$worktree" && pwd -P)
+
+# Usage:
+#   branch_exists <branch>
+branch_exists() {
+  git -C "$repository" rev-parse --verify --quiet "refs/heads/$1" >/dev/null
+}
 
 # The script prepends `Homebrew`'s directories to `PATH`, which would put a real
 # `herdr` ahead of the fake one, so run a copy without that line.
 cleanup_copy="$TEST_HOME/worktree-cleanup.sh"
 grep -v '^export PATH=' "$CLEANUP_SCRIPT" >"$cleanup_copy"
 
+# Usage:
+#   run_sweep [worktree path, defaults to the `fix/example` one]
 run_sweep() {
-  printf '%s\tworkspace-1\n' "$physical_worktree" >"$XDG_CACHE_HOME/herdr-worktree-cleanup/tracked"
+  printf '%s\tworkspace-1\n' "${1:-$physical_worktree}" >"$XDG_CACHE_HOME/herdr-worktree-cleanup/tracked"
   # An unreadable pane list exits 1 on purpose, only the worktree outcome is asserted.
   bash "$cleanup_copy" sweep --detached || true
 }
@@ -66,11 +83,47 @@ if [ ! -d "$worktree" ]; then
   exit 1
 fi
 
-# A valid pane list with no pane in the worktree removes the clean worktree.
+# From here on no pane is inside any worktree.
 printf '{"result":{"panes":[{"cwd":"%s"}]}}' "$TEST_HOME" >"$TEST_HOME/bin/pane_list.json"
+
+# A new, never added file is work worth keeping.
+touch "$worktree/notes.txt"
 run_sweep
+if [ ! -d "$worktree" ]; then
+  echo "FAIL: worktree removed although it had an untracked file"
+  exit 1
+fi
+rm "$worktree/notes.txt"
+
+# A clean worktree is removed, and its branch, merged into `origin/main`, goes
+# too. Origin is unreachable, a branch merged by the last known refs needs no fetch.
+mv "$origin" "$origin.offline"
+run_sweep
+mv "$origin.offline" "$origin"
+if grep -q 'fetch failed' "$XDG_CACHE_HOME/herdr-worktree-cleanup/cleanup.log"; then
+  echo "FAIL: fetched origin for a branch already merged by the last known refs"
+  exit 1
+fi
 if [ -d "$worktree" ]; then
   echo "FAIL: clean worktree with no pane was not removed"
+  exit 1
+fi
+if branch_exists fix/example; then
+  echo "FAIL: merged branch fix/example was not deleted"
+  exit 1
+fi
+
+# A branch with a commit `origin/main` does not have is kept after its worktree goes.
+unmerged_worktree="$TEST_HOME/Developer/worktrees/project/feature-unmerged"
+git -C "$repository" worktree add --quiet "$unmerged_worktree" -b feature/unmerged
+git -C "$unmerged_worktree" commit --quiet --allow-empty -m 'Unmerged work'
+run_sweep "$(cd "$unmerged_worktree" && pwd -P)"
+if [ -d "$unmerged_worktree" ]; then
+  echo "FAIL: clean worktree on an unmerged branch was not removed"
+  exit 1
+fi
+if ! branch_exists feature/unmerged; then
+  echo "FAIL: unmerged branch feature/unmerged was deleted"
   exit 1
 fi
 

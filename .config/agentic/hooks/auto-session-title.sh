@@ -19,8 +19,25 @@ session_id=$(echo "$input" | jq -r '.session_id // empty')
 lock="${TMPDIR:-/tmp}/agentic-auto-session-title-${session_id}"
 [ -d "$lock" ] && exit 0
 
-# Already named, by us before or by a manual /rename, never overwrite.
-grep -q '"type":"custom-title"' "$transcript_path" 2>/dev/null && exit 0
+# Already named, by us before or by a manual /rename, never overwrite. Claim the
+# lock so later prompts skip this scan of the whole transcript.
+if grep -q '"type":"custom-title"' "$transcript_path" 2>/dev/null; then
+  mkdir "$lock" 2>/dev/null
+  exit 0
+fi
+
+# Only the first 500 KB are read below, once the transcript is past them the
+# answer can no longer change, so a pass that finds nothing gives up for good.
+early_window_bytes=500000
+early_window_full=false
+[ "$(wc -c <"$transcript_path")" -gt "$early_window_bytes" ] && early_window_full=true
+
+# Usage:
+#   give_up_when_window_full
+give_up_when_window_full() {
+  [ "$early_window_full" = true ] && mkdir "$lock" 2>/dev/null
+  exit 0
+}
 
 # Wait for enough signal that a summary is meaningful (skip a bare "hi").
 # Counts only turns with real text content, tool-result echoes also carry
@@ -30,13 +47,13 @@ grep -q '"type":"custom-title"' "$transcript_path" 2>/dev/null && exit 0
 # not lines, since every tool call and result is its own line and a tool heavy
 # first turn would push the second message past any line limit. The cut line is
 # partial JSON, `fromjson?` skips it so it cannot fail the whole parse.
-early_transcript=$(head -c 500000 "$transcript_path" | jq -cR 'fromjson?' 2>/dev/null)
+early_transcript=$(head -c "$early_window_bytes" "$transcript_path" | jq -cR 'fromjson?' 2>/dev/null)
 user_message_count=$(printf '%s' "$early_transcript" | jq -rs '
   [.[] | select(.type == "user") | .message.content |
     (if type == "string" then . elif type == "array" then (map(select(.type == "text") | .text) | first // "") else "" end)
   ] | map(select(length > 0)) | length
 ' 2>/dev/null || echo 0)
-[ "${user_message_count:-0}" -ge 2 ] || exit 0
+[ "${user_message_count:-0}" -ge 2 ] || give_up_when_window_full
 
 # Find the first substantive user message: skip system-injected/command-wrapped
 # content and skip trivial exit-type turns ("exit", "bye", "ok") so a session
@@ -55,7 +72,7 @@ first_message=$(printf '%s' "$early_transcript" | jq -rs '
   first // empty
 ' 2>/dev/null | head -c 800)
 
-[ -n "$first_message" ] || exit 0
+[ -n "$first_message" ] || give_up_when_window_full
 
 # Claim a lock only once there's real content worth summarizing, so an
 # empty/trivial-only session can still pick up a title from a later message

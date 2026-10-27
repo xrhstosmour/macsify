@@ -20,7 +20,6 @@ brew 'fastfetch'
 brew 'fdupes'
 brew 'ffmpeg'
 brew 'fish'
-brew 'fisher'
 brew 'fzf'
 brew 'gemini-cli'
 brew 'getsentry/tools/sentry-cli', trusted: true

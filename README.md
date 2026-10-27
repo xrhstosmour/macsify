@@ -29,7 +29,11 @@ Opinionated `macOS` setup via shell scripts, plus a shared configuration for `AI
 
 ## Installation
 
-1. Use an Apple silicon `Mac`, the scripts hardcode `/opt/homebrew` and `arm64` paths. Install `Xcode Command Line Tools` with `xcode-select --install`.
+1. Use an Apple silicon `Mac` and an administrator account, the scripts hardcode `/opt/homebrew` and `arm64` paths and ask for your password for `Homebrew`, the login shell and the reboot. Install `Xcode Command Line Tools` with `xcode-select --install`, it brings `git`, then clone this repository:
+
+    ```bash
+    git clone https://github.com/xrhstosmour/macsify.git && cd macsify
+    ```
 
 2. Add Terminal to `System Settings → Privacy & Security`: **Files & Folders**, **Full Disk Access** and **Accessibility**.
 
@@ -41,7 +45,7 @@ Opinionated `macOS` setup via shell scripts, plus a shared configuration for `AI
     - [packages/personal.skills.txt](packages/personal.skills.txt), the agentic skills removed on a work machine.
     - [packages/additional_packages.txt](packages/additional_packages.txt).
 
-5. Run, and answer whether it is a work or a personal machine:
+5. Run it and stay at the terminal, it asks whether this is a work or a personal machine, your `Git` name and email, and a few yes or no questions on the way:
 
     ```bash
     ./install.sh
@@ -49,10 +53,10 @@ Opinionated `macOS` setup via shell scripts, plus a shared configuration for `AI
 
     The answer is saved to `~/.config/macsify/profile`, so later runs of any script reuse it. Export `MACSIFY_PROFILE=work` or `personal` to skip the question or to switch profile. Switching to work stops installing personal applications, it does not uninstall them.
 
-To pull only the shared `AI` configuration, without the rest of macsify:
+To pull only the shared `AI` configuration, without the rest of macsify, run from the repository root, it copies `.config/agentic` into `~/.config` itself:
 
 ```bash
-mkdir -p ~/.config && cp -R .config/agentic ~/.config/ && bash setup/agentic.sh
+bash setup/agentic.sh
 ```
 
 It asks for the work or personal profile too, unless `MACSIFY_PROFILE` is set or a profile is already saved, a work profile leaves out the skills in [`packages/personal.skills.txt`](packages/personal.skills.txt).
@@ -92,5 +96,5 @@ It asks for the work or personal profile too, unless `MACSIFY_PROFILE` is set or
 - `Displays`: disable **`True Tone`**.
 - `Internet Accounts`: add your accounts (`iCloud`, `Google`, etc.) so events show up in the time widget's popup.
 - `Finder` sidebar: remove Recents, Shared, `iCloud`, `AirDrop`, add the `Home` folder to Locations and the `Developer` folder to Favorites.
-- `1Password`: [enable SSH key management](https://developer.1password.com/docs/ssh/get-started) and [commit signing](https://1password.com/blog/git-commit-signing), then in `Settings → General → Keyboard Shortcuts` set Autofill to `Key 2 + Shift + A`, Quick Access to `Key 2 + Shift + S` and clear the rest to avoid conflicts.
+- `1Password`: [enable SSH key management](https://developer.1password.com/docs/ssh/get-started) and [commit signing](https://1password.com/blog/git-commit-signing), the tracked `.gitconfig` sets no signing keys, so paste the snippet from the key's `Configure Commit Signing` in `1Password` into `~/.gitconfig`, otherwise commits stay unsigned without any error, then in `Settings → General → Keyboard Shortcuts` set Autofill to `Key 2 + Shift + A`, Quick Access to `Key 2 + Shift + S` and clear the rest to avoid conflicts.
 - `PWA`s: in `Google Chrome` open [`Google Messages`](https://messages.google.com/web) and [`Google Photos`](https://photos.google.com/), install each with `Chrome main menu → Cast, Save, and Share → Install Page as App...`, then enable `chrome://settings/content → Additional content settings → On-device site data → Allow sites to save data on your device`.

@@ -74,7 +74,8 @@ export const AgenticGuardsPlugin = async () => {
       const url = String(output.args?.url ?? "");
       let host = url;
       try {
-        host = new URL(url).hostname;
+        // A trailing root dot (`github.com.`) names the same host.
+        host = new URL(url).hostname.replace(/\.$/, "");
       } catch {
         // Not a parseable absolute URL, fall back to matching the raw string.
       }
