@@ -56,7 +56,7 @@ end
 # Terminal tools abbreviations.
 abbr cat "bat"
 abbr ls "eza --long --all --icons --color=always --group-directories-first --git"
-abbr eva "calc"
+abbr calc "eva"
 abbr cd "z"
 abbr cl "clear"
 abbr fd "find"
