@@ -39,6 +39,8 @@ make_clone() {
 }
 
 behind=$(make_clone behind)
+# An unreachable extra remote must not block the sync, only `origin` is fetched.
+git -C "$behind" remote add unreachable "$TEST_HOME/missing.git"
 feature=$(make_clone feature)
 git -C "$feature" switch --quiet -c feature/x
 dirty=$(make_clone dirty)

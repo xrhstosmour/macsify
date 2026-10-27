@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
 # Runs what the `gfrb` fish abbreviation (`git_fetch_and_rebase`) does, in every
-# herdr pane whose checkout is on `main` or `master`: fetch all remotes, then
-# rebase onto the origin default branch with `--autosquash --autostash`. Run by
+# herdr pane whose checkout is on `main` or `master`: fetch `origin`, then
+# rebase onto the origin default branch with `--autosquash --autostash`. Only
+# `origin` is fetched, unlike `gfrb`, the rebase reads nothing else and every
+# extra remote would lengthen the pass that holds the lock. Run by
 # herdr on startup and on workspace, worktree and tab events (see
 # `herdr-plugin.toml`), or by hand with explicit paths. Checkouts on any other
 # branch, with uncommitted changes, or mid rebase, merge or cherry-pick are left
@@ -134,7 +136,7 @@ sync_checkout() {
     return
   fi
 
-  if ! git -C "$checkout" fetch --all --prune --quiet 2>>"$LOG_FILE"; then
+  if ! git -C "$checkout" fetch origin --prune --quiet 2>>"$LOG_FILE"; then
     log "fetch failed: $checkout"
     return
   fi
