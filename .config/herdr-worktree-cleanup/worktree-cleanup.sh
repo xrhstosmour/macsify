@@ -13,7 +13,7 @@
 # `review` or `reviews`, or listed in the `protected` file, is never touched. A
 # process outside `herdr`, such as an editor, does not count as a pane. Runs from
 # `~/.config` without the macsify repository, so it carries its own logging,
-# like `herdr-repo-sync`.
+# like `herdr-repository-sync`.
 # Usage:
 #   worktree-cleanup.sh <event name>
 

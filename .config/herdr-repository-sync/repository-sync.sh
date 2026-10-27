@@ -11,12 +11,12 @@
 # own configuration or hooks would run code are left alone. A rebase that stops on a conflict is aborted, restoring the checkout, and
 # logged. Each checkout is synced at most once per throttle window.
 # Usage:
-#   repo-sync.sh [event name] [--force] [path...]
+#   repository-sync.sh [event name] [--force] [path...]
 
 set -u
 
-REPO_SYNC_SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
-STATE_DIRECTORY="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-repo-sync"
+REPOSITORY_SYNC_SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+STATE_DIRECTORY="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-repository-sync"
 LOG_FILE="$STATE_DIRECTORY/sync.log"
 LOCK_DIRECTORY="$STATE_DIRECTORY/lock"
 THROTTLE_SECONDS=600
@@ -49,7 +49,7 @@ done
 
 # Return to herdr right away, fetching every repository can take a while.
 if [ "$detached" = false ]; then
-  nohup bash "$REPO_SYNC_SCRIPT_PATH" "$@" --detached >/dev/null 2>&1 &
+  nohup bash "$REPOSITORY_SYNC_SCRIPT_PATH" "$@" --detached >/dev/null 2>&1 &
   exit 0
 fi
 

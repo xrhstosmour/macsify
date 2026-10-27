@@ -521,13 +521,22 @@ if brewfile_declares herdr; then
     # Local plugin from this repository, runs the `gfrb` fetch and rebase in every
     # herdr pane checked out on `main` or `master`. `install.sh` copied it into `~/.config` already, a
     # link points herdr at it in place, so later edits need no re-link.
-    if ! herdr plugin list 2>/dev/null | grep -q '^- herdr-repo-sync '; then
-        install_herdr_component "herdr-repo-sync plugin" herdr plugin link "$HOME/.config/herdr-repo-sync" --enabled
+    # Previous name of the plugin, a leftover link would run every sync twice.
+    if herdr plugin list 2>/dev/null | grep -q '^- herdr-repo-sync '; then
+        log_info "Unlinking the 'herdr-repo-sync' plugin, renamed to 'herdr-repository-sync'..."
+        if run_with_timeout 30 herdr plugin unlink herdr-repo-sync </dev/null; then
+            rm -rf "$HOME/.config/herdr-repo-sync" "${XDG_CACHE_HOME:-$HOME/.cache}/herdr-repo-sync"
+        else
+            log_warning "Could not unlink 'herdr-repo-sync', run 'herdr plugin unlink herdr-repo-sync' by hand."
+        fi
+    fi
+    if ! herdr plugin list 2>/dev/null | grep -q '^- herdr-repository-sync '; then
+        install_herdr_component "herdr-repository-sync plugin" herdr plugin link "$HOME/.config/herdr-repository-sync" --enabled
     fi
 
     # Local plugin from this repository, removes a clean worktree under
     # `~/Developer/worktrees` once its herdr workspace is closed, same link
-    # reasoning as `herdr-repo-sync` above.
+    # reasoning as `herdr-repository-sync` above.
     if ! herdr plugin list 2>/dev/null | grep -q '^- herdr-worktree-cleanup '; then
         install_herdr_component "herdr-worktree-cleanup plugin" herdr plugin link "$HOME/.config/herdr-worktree-cleanup" --enabled
     fi

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Checks that `repo-sync.sh` fast-forwards a `main` checkout that is behind
+# Checks that `repository-sync.sh` fast-forwards a `main` checkout that is behind
 # origin, leaves a feature branch, a checkout with uncommitted changes and one
 # whose own configuration or hooks would run a command alone, and aborts a conflicting
 # rebase with the checkout restored. Runs against a
@@ -10,7 +10,7 @@ set -e
 
 TESTS_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # Overridable so the test can be pointed at an older copy of the script.
-REPOSITORY_SYNC_SCRIPT="${REPOSITORY_SYNC_SCRIPT:-$TESTS_SCRIPT_DIRECTORY/../.config/herdr-repo-sync/repo-sync.sh}"
+REPOSITORY_SYNC_SCRIPT="${REPOSITORY_SYNC_SCRIPT:-$TESTS_SCRIPT_DIRECTORY/../.config/herdr-repository-sync/repository-sync.sh}"
 
 TEST_HOME=$(mktemp -d)
 trap 'rm -rf "$TEST_HOME"' EXIT
