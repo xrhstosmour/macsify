@@ -11,6 +11,17 @@ DOCK_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # Import functions and flags.
 source "$DOCK_SCRIPT_DIRECTORY/../helpers/logs.sh"
 
+# Function to check whether the `Dock` still holds only Apple's applications, the
+# default of a machine nobody has set up yet. A `Dock` with no saved applications
+# counts as the default too.
+# Usage:
+#   dock_is_default
+dock_is_default() {
+    local dock_applications
+    dock_applications=$(defaults read com.apple.dock persistent-apps 2>/dev/null) || return 0
+    [ "$(grep -c '"_CFURLString" =' <<<"$dock_applications")" -eq "$(grep -c '"bundle-identifier" = "com\.apple\.' <<<"$dock_applications")" ]
+}
+
 # Function to apply `Dock` configuration.
 # Usage:
 #   apply_dock_configuration
