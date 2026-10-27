@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Personal macOS dotfiles/configuration repository.
-Installed on a new machine via `install.sh`, which copies `.config/*` into `~/.config/`, installs `Homebrew` and Brewfile dependencies, runs `setup/agentic.sh`, then `configure.sh` (developer tools, packages, `setup/*.sh`, `utilities/*.sh`).
+Installed on a new machine via `install.sh`, which copies `.config/*` into `~/.config/`, installs `Homebrew` and Brewfile dependencies, runs `setup/agentic.sh`, then `configure.sh` (App Store applications, developer tools, `additional_packages.txt`, `setup/*.sh`, `utilities/*.sh`).
 This file documents the repository itself. For the agentic (AI assistant) subsystem's own architecture, see `.config/agentic/README.md`, don't duplicate it here.
 
 ## Directory map
@@ -69,4 +69,4 @@ In `Claude Code`, `bash-output-cap.sh` caps `Bash` output and idle compaction ha
 
 `tests/` holds plain `bash` tests, `agentic.sh` (personal skills are removed whatever the line ending, and the `opencode.json` agent models are injected), `auto-session-title.sh` (the title hook stops rescanning a transcript whose answer cannot change), `bash-output-cap.sh` (the hook rewrites a command without changing its output or exit status, cuts it at the cap, and never rewrites a denied or asked command), `webfetch-guard.sh` (the `Claude Code` hook and the `opencode` plugin block the same hosts, userinfo and trailing-dot forms included), `worktree-cleanup.sh` (the cleanup keeps a worktree when `herdr`'s pane list is unreadable or it holds untracked work, and deletes its branch only when merged), `repo-sync.sh` (only a clean `main` checkout is rebased, a conflicting rebase is aborted), `profile.sh` (how the work or personal profile is picked and saved, and which Brewfiles it reads) and `dock.sh` (which `Dock` is Apple's default and where missing applications go, it needs macOS and skips on the `Linux` runner, so run it locally after a `Dock` change), all run by `.github/workflows/lint.yml` next to the `shellcheck`, `fish` and `JSON` checks. Everything else has no automated test.
 Verify by running the specific script that changed directly, most `setup/*.sh` and `utilities/*.sh` scripts are idempotent shell scripts safe to re-run. Use `brew bundle list --all --file=packages/personal.Brewfile` and the same for `work.Brewfile` to validate Brewfile changes without installing anything, never run `brew bundle` on `base.Brewfile` alone.
-`configure.sh` assumes `install.sh` already installed `Homebrew` and Brewfile dependencies, running it standalone on a machine without `Homebrew` on `PATH` fails inside `setup/developer.sh`.
+`configure.sh` assumes `install.sh` already installed `Homebrew` and Brewfile dependencies, running it standalone on a machine without `Homebrew` on `PATH` stops at its own `brew` check and asks for `install.sh` first.
