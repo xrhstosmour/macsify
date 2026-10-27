@@ -9,7 +9,7 @@ This file documents the repository itself. For the agentic (AI assistant) subsys
 | Path | Purpose |
 | ---- | ------- |
 | `core/` | Shell constants shared across scripts |
-| `helpers/` | Shared shell functions: logging (`logs.sh`), prompts (`ui.sh`), Brewfile parsing (`brewfile.sh`), work or personal profile (`profile.sh`) |
+| `helpers/` | Shared shell functions: logging (`logs.sh`), prompts (`ui.sh`), Brewfile parsing (`brewfile.sh`), work or personal profile (`profile.sh`), the testable steps of `setup/agentic.sh` (`agentic.sh`) |
 | `setup/` | Installation steps, `homebrew.sh` and `agentic.sh` run directly by `install.sh`, `agentic.sh` also copies `.config/agentic` itself first so it can be rerun alone after a merge, the rest (developer tools, mobile toolchain, applications, shell, macOS preferences) run by `configure.sh` |
 | `utilities/` | macOS system preference scripts, one per domain (`dock.sh`, `finder.sh`, `keyboard.sh`, `trackpad.sh`, etc.) |
 | `settings/` | Third-party app config/preference files restored during install (`aerospace.toml`, `flameshot.ini`, `.plist.xml` files) |
@@ -57,8 +57,8 @@ Anything added under `.config/` must be safe to drop onto a real home directory 
 
 ## `opencode.json` is a template
 
-`.config/opencode/opencode.json` is copied verbatim to `~/.config/opencode/opencode.json` by `setup/agentic.sh`, which then injects an `"agent"` block (models from `.config/agentic/models.txt`) via `sed`.
-Edits to this file must stay valid JSON before that injection, and must not touch the line containing `"default_agent": "leader",` in a way that breaks the `sed` insertion anchor.
+`.config/opencode/opencode.json` is copied verbatim to `~/.config/opencode/opencode.json` by `setup/agentic.sh`, which then sets its `"agent"` block (models from `.config/agentic/models.txt`) with `jq`, through `inject_opencode_agent_models` in `helpers/agentic.sh`.
+Edits to this file must stay valid JSON, an `"agent"` key in it is replaced by the injection.
 
 ## Usage
 
@@ -67,6 +67,6 @@ The rules for all three live in the global `standards.md` Context Management, th
 In `Claude Code`, `bash-output-cap.sh` caps `Bash` output and idle compaction handles stale sessions, so session age and subagent use stay a written rule.
 ## Testing changes
 
-`tests/` holds plain `bash` tests, `bash-output-cap.sh` (the hook rewrites a command without changing its output or exit status), `webfetch-guard.sh` (the `Claude Code` hook and the `opencode` plugin block the same hosts, userinfo and trailing-dot forms included), `worktree-cleanup.sh` (the cleanup keeps a worktree when `herdr`'s pane list is unreadable or it holds untracked work, and deletes its branch only when merged), `repo-sync.sh` (only a clean `main` checkout is rebased, a conflicting rebase is aborted), `profile.sh` (how the work or personal profile is picked and saved, and which Brewfiles it reads) and `dock.sh` (which `Dock` is Apple's default and where missing applications go, it needs macOS and skips on the `Linux` runner, so run it locally after a `Dock` change), all run by `.github/workflows/lint.yml` next to the `shellcheck`, `fish` and `JSON` checks. Everything else has no automated test.
+`tests/` holds plain `bash` tests, `agentic.sh` (personal skills are removed whatever the line ending, and the `opencode.json` agent models are injected), `bash-output-cap.sh` (the hook rewrites a command without changing its output or exit status), `webfetch-guard.sh` (the `Claude Code` hook and the `opencode` plugin block the same hosts, userinfo and trailing-dot forms included), `worktree-cleanup.sh` (the cleanup keeps a worktree when `herdr`'s pane list is unreadable or it holds untracked work, and deletes its branch only when merged), `repo-sync.sh` (only a clean `main` checkout is rebased, a conflicting rebase is aborted), `profile.sh` (how the work or personal profile is picked and saved, and which Brewfiles it reads) and `dock.sh` (which `Dock` is Apple's default and where missing applications go, it needs macOS and skips on the `Linux` runner, so run it locally after a `Dock` change), all run by `.github/workflows/lint.yml` next to the `shellcheck`, `fish` and `JSON` checks. Everything else has no automated test.
 Verify by running the specific script that changed directly, most `setup/*.sh` and `utilities/*.sh` scripts are idempotent shell scripts safe to re-run. Use `brew bundle list --all --file=packages/personal.Brewfile` and the same for `work.Brewfile` to validate Brewfile changes without installing anything, never run `brew bundle` on `base.Brewfile` alone.
 `configure.sh` assumes `install.sh` already installed `Homebrew` and Brewfile dependencies, running it standalone on a machine without `Homebrew` on `PATH` fails inside `setup/developer.sh`.
