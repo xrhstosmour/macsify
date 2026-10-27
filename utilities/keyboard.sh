@@ -130,15 +130,28 @@ keyboard_clear_hidutil_mappings() {
 configure_password_less_sudo() {
     log_info "Configuring password-less 'sudo' for 'hidutil'..."
 
+    # Only the `property --set` call the launch agent makes, not every `hidutil` subcommand.
+    local rule="$USER ALL=(ALL) NOPASSWD: /usr/bin/hidutil property --set *"
+    local sudoers_file="/etc/sudoers.d/hidutil-mapping"
+
     # Check if already configured.
-    if sudo grep -q "^$USER ALL=(ALL) NOPASSWD: /usr/bin/hidutil$" /etc/sudoers.d/hidutil-mapping 2>/dev/null; then
+    if sudo grep -qxF "$rule" "$sudoers_file" 2>/dev/null; then
         log_info "Password-less 'sudo' for 'hidutil' already configured."
         return
     fi
 
-    # Create or append to the file safely.
-    echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/hidutil" | sudo tee -a /etc/sudoers.d/hidutil-mapping >/dev/null
-    sudo chmod 440 /etc/sudoers.d/hidutil-mapping
+    # A malformed file in `sudoers.d` breaks every `sudo` call, so validate the rule
+    # first, then install it whole with its final owner and mode in one step.
+    local temporary_file
+    temporary_file=$(mktemp)
+    printf '%s\n' "$rule" >"$temporary_file"
+    if ! /usr/sbin/visudo -cf "$temporary_file" >/dev/null; then
+        rm -f "$temporary_file"
+        log_error "Invalid 'sudoers' rule for 'hidutil', password-less 'sudo' not configured."
+        return 1
+    fi
+    sudo install -m 440 -o root -g wheel "$temporary_file" "$sudoers_file"
+    rm -f "$temporary_file"
     log_success "Password-less 'sudo' configured for 'hidutil'."
 }
 
