@@ -7,8 +7,8 @@
 # extra remote would lengthen the pass that holds the lock. Run by
 # herdr on startup and on workspace, worktree and tab events (see
 # `herdr-plugin.toml`), or by hand with explicit paths. Checkouts on any other
-# branch, with uncommitted changes, or mid rebase, merge or cherry-pick are left
-# alone. A rebase that stops on a conflict is aborted, restoring the checkout, and
+# branch, with uncommitted changes, mid rebase, merge or cherry-pick, or whose
+# own configuration or hooks would run code are left alone. A rebase that stops on a conflict is aborted, restoring the checkout, and
 # logged. Each checkout is synced at most once per throttle window.
 # Usage:
 #   repo-sync.sh [event name] [--force] [path...]
@@ -111,6 +111,32 @@ if [ ${#paths[@]} -eq 0 ]; then
   done < <(printf '%s\n' "$pane_directories" | sort -u)
 fi
 
+# A checkout's own configuration and hooks run code during `status`, `fetch` and
+# `rebase`. A plain clone has neither, one copied or extracted from elsewhere can
+# carry both, and this runs unattended in every pane, so such a checkout is left
+# alone. `core.fsmonitor` set to `true` or `false` is the built-in monitor, not a
+# command. Only the repository's own scopes count, `local` and `worktree`, the
+# user's global signing program or credential helper is trusted.
+# Usage:
+#   repository_code_reason <checkout path>, prints why and succeeds when it would run code
+repository_code_reason() {
+  local checkout="$1" setting hooks_directory hook
+  setting=$(git -C "$checkout" config --show-scope --includes --get-regexp '^(core\.(sshcommand|gitproxy|fsmonitor|hookspath|askpass)|remote\..*\.uploadpack|filter\..*\.(clean|smudge|process)|merge\..*\.driver|credential\.(.*\.)?helper|gpg\.(.*\.)?program|protocol\.(.*\.)?allow)$' 2>/dev/null | grep -E '^(local|worktree)[[:space:]]' | grep -viE '[[:space:]]core\.fsmonitor (true|false)$' | head -n 1)
+  if [ -n "$setting" ]; then
+    setting=$(printf '%s' "$setting" | cut -f2)
+    echo "sets ${setting%% *}"
+    return 0
+  fi
+  hooks_directory=$(git -C "$checkout" rev-parse --path-format=absolute --git-path hooks)
+  for hook in pre-rebase post-rewrite post-checkout post-merge post-index-change reference-transaction pre-auto-gc; do
+    if [ -x "$hooks_directory/$hook" ]; then
+      echo "has a $hook hook"
+      return 0
+    fi
+  done
+  return 1
+}
+
 # Usage:
 #   sync_checkout <checkout path> <throttle stamp file>
 sync_checkout() {
@@ -125,6 +151,13 @@ sync_checkout() {
   esac
 
   if ! git -C "$checkout" remote get-url origin >/dev/null 2>&1; then
+    return
+  fi
+
+  # Before `status` below, it already runs `core.fsmonitor`.
+  local reason
+  if reason=$(repository_code_reason "$checkout"); then
+    log "skipped $branch, the repository $reason: $checkout"
     return
   fi
 
