@@ -11,10 +11,13 @@ SYSTEM_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # Import constant variables.
 source "$SYSTEM_SCRIPT_DIRECTORY/../helpers/logs.sh"
 
-# Function to apply System configuration.
+# Function to apply System configuration. Pass "true" when the `Dock` was still the
+# default before this run, which lets a work machine remove its existing `Login Items`.
 # Usage:
-#   apply_system_configuration
+#   apply_system_configuration "false"
 apply_system_configuration() {
+    local dock_was_default="${1:-false}"
+
     log_info "Applying System configuration..."
 
     # Enable `sudo` authentication using `Touch ID` on supported MacBooks.
@@ -157,24 +160,29 @@ apply_system_configuration() {
     # Get all current `Login Items` names.
     current_login_items=$(osascript -e 'tell application "System Events" to get the name of every login item' | sed 's/, /\n/g')
 
-    # Remove `Login Items` that are not in the desired list.
-    while IFS= read -r current_login_item; do
-        if [ -n "$current_login_item" ]; then
-            # Check if the current item is in the desired list.
-            item_found=false
-            for desired_item in "${desired_login_items[@]}"; do
-                if [ "$current_login_item" = "$desired_item" ]; then
-                    item_found=true
-                    break
-                fi
-            done
+    # Remove `Login Items` that are not in the desired list. On a work machine that is
+    # already set up they can be the employer's, a VPN or a security agent, so they stay.
+    if [ "$MACSIFY_PROFILE" = "work" ] && [ "$dock_was_default" != "true" ]; then
+        log_info "Keeping the existing 'Login Items' of this set up work machine..."
+    else
+        while IFS= read -r current_login_item; do
+            if [ -n "$current_login_item" ]; then
+                # Check if the current item is in the desired list.
+                item_found=false
+                for desired_item in "${desired_login_items[@]}"; do
+                    if [ "$current_login_item" = "$desired_item" ]; then
+                        item_found=true
+                        break
+                    fi
+                done
 
-            # Remove only if not found in desired list.
-            if [ "$item_found" = false ]; then
-                osascript -e "tell application \"System Events\" to delete login item \"$current_login_item\""
+                # Remove only if not found in desired list.
+                if [ "$item_found" = false ]; then
+                    osascript -e "tell application \"System Events\" to delete login item \"$current_login_item\""
+                fi
             fi
-        fi
-    done <<< "$current_login_items"
+        done <<< "$current_login_items"
+    fi
 
     # Add desired applications to `Login Items` if not already there.
     items_to_add=0

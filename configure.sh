@@ -11,6 +11,11 @@ CONFIGURE_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 # Import functions and flags.
 source "$CONFIGURE_SCRIPT_DIRECTORY/helpers/ui.sh"
+source "$CONFIGURE_SCRIPT_DIRECTORY/helpers/profile.sh"
+source "$CONFIGURE_SCRIPT_DIRECTORY/helpers/brewfile.sh"
+
+# `install.sh` already chose the profile, a standalone run reads the saved one.
+profile_resolve
 
 # `Homebrew` and Brewfile dependencies are installed by `install.sh` before this
 # script runs, agentic setup in between needs them already in place.
@@ -18,20 +23,25 @@ command -v brew &>/dev/null || { log_error "'brew' not found, run install.sh fir
 
 # Install `Mac App Store` applications, before the developer tools because the
 # mobile toolchain's iOS half needs `Xcode` already installed.
-# Loop through the list of app IDs in `packages/store_applications_ids.txt`.
+# Loop through the list of app IDs in `packages/store_applications_ids.txt`, then in the
+# active profile's `packages/<profile>.store_applications_ids.txt` when it has one.
 if command -v mas &>/dev/null; then
     installed_application_ids=$(mas list | awk '{print $1}')
 
-    while IFS= read -r application_id || [[ -n "$application_id" ]]; do
-        [[ -z "$application_id" || "$application_id" =~ ^# ]] && continue
+    for application_ids_file in packages/store_applications_ids.txt "packages/${MACSIFY_PROFILE:-personal}.store_applications_ids.txt"; do
+        [[ -f "$application_ids_file" ]] || continue
 
-        if grep -qx "$application_id" <<<"$installed_application_ids"; then
-            continue
-        fi
+        while IFS= read -r application_id || [[ -n "$application_id" ]]; do
+            [[ -z "$application_id" || "$application_id" =~ ^# ]] && continue
 
-        # A Mac not signed into the App Store fails here, keep going so the rest of the setup still runs.
-        mas purchase "$application_id" || log_warning "Failed to install App Store application '$application_id', sign in to the App Store and rerun."
-    done <packages/store_applications_ids.txt
+            if grep -qx "$application_id" <<<"$installed_application_ids"; then
+                continue
+            fi
+
+            # A Mac not signed into the App Store fails here, keep going so the rest of the setup still runs.
+            mas purchase "$application_id" || log_warning "Failed to install App Store application '$application_id', sign in to the App Store and rerun."
+        done <"$application_ids_file"
+    done
 fi
 
 # Install developer tools & programming languages.
@@ -44,8 +54,8 @@ bash setup/agentic.sh
 
 # Set up the mobile development toolchain. Asked with a no-op command and run
 # afterwards, so the command substitution the answer needs does not swallow the
-# script's own output.
-if [ "$(ask_user_before_execution "Do you want to install the mobile development toolchain?" "true" ":")" = "y" ]; then
+# script's own output. Skipped when the profile does not install `flutter`.
+if brewfile_declares flutter && [ "$(ask_user_before_execution "Do you want to install the mobile development toolchain?" "true" ":")" = "y" ]; then
     bash setup/mobile.sh
 fi
 log_divider

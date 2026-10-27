@@ -1,0 +1,7 @@
+# Agentic skills installed only on a personal machine, one skill directory name per
+# line. `setup/agentic.sh` removes them from the installed copy on any other profile.
+audit-home-network
+audit-tailscale
+marketing
+promo-video
+seo

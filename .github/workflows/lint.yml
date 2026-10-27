@@ -44,7 +44,10 @@ jobs:
       - name: Validate skill frontmatter
         run: .github/scripts/check-skill-frontmatter.sh
 
-      - name: Test cleanup and output cap scripts
+      # `tests/dock.sh` needs macOS, it reports a skip on this runner.
+      - name: Test cleanup, output cap, profile and Dock scripts
         run: |
           bash tests/bash-output-cap.sh
           bash tests/worktree-cleanup.sh
+          bash tests/profile.sh
+          bash tests/dock.sh

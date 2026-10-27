@@ -1,19 +1,19 @@
+# Packages installed on every machine, work and personal. `personal.Brewfile` and
+# `work.Brewfile` include this file, `brew bundle` runs on one of those, never on this one alone.
+
 # Set the directory for installing applications and casks.
 cask_args appdir: '/Applications'
 
 # Install necessary `homebrew`, `macOS` and third party taps.
 tap 'buo/cask-upgrade', trusted: true
-tap 'wickenico/wailbrew'
 tap 'xrhstosmour/stege', trusted: true
 
 # Install dependencies for various utilities and applications.
-brew 'airsync'
 brew 'anomalyco/tap/opencode', trusted: true
 brew 'aria2'
 brew 'atuin'
 brew 'bat'
 brew 'bottom'
-brew 'cocoapods'
 brew 'eva'
 brew 'eza'
 brew 'fastfetch'
@@ -50,17 +50,11 @@ brew 'zoxide'
 cask '1password'
 cask '1password-cli'
 cask 'adobe-acrobat-reader'
-cask 'android-commandlinetools'
-cask 'brave-browser'
 cask 'bruno'
-cask 'claude'
 cask 'claude-code'
-cask 'datagrip'
 cask 'dockdoor'
 cask 'docker-desktop'
-cask 'filen'
 cask 'flameshot'
-cask 'flutter'
 cask 'font-fira-code'
 cask 'font-fira-code-nerd-font'
 cask 'gitify'
@@ -68,25 +62,11 @@ cask 'google-chrome'
 cask 'google-drive'
 cask 'google-gemini'
 cask 'grafviktor/goto/goto-ssh-manager', trusted: true
-cask 'libreoffice'
-cask 'localsend'
 cask 'maccy'
-cask 'macfuse'
-cask 'macusb'
 cask 'mediosz/tap/swipeaerospace', trusted: true
 cask 'nikitabobko/tap/aerospace', trusted: true
-cask 'nordvpn'
 cask 'obsidian'
-cask 'rustdesk'
-cask 'signal'
 cask 'spotify'
 cask 'stege'
-cask 'syncthing-app'
-cask 'tailscale-app'
-cask 'utm'
-cask 'veracrypt'
-cask 'viber'
 cask 'visual-studio-code'
-cask 'wailbrew'
 cask 'wezterm'
-cask 'whatsapp'

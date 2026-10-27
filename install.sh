@@ -15,6 +15,11 @@ cd "$INSTALL_SCRIPT_DIRECTORY"
 # Import functions and flags.
 source "$INSTALL_SCRIPT_DIRECTORY/helpers/logs.sh"
 source "$INSTALL_SCRIPT_DIRECTORY/helpers/ui.sh"
+source "$INSTALL_SCRIPT_DIRECTORY/helpers/brewfile.sh"
+source "$INSTALL_SCRIPT_DIRECTORY/helpers/profile.sh"
+
+# Ask whether this is a work or a personal machine, every later step reads the answer.
+profile_resolve
 
 # Copy the needed configuration files to the new machine.
 log_info "Copying configuration files to '~/.config'..."
@@ -28,7 +33,7 @@ chmod +x ~/.config/scripts/*.sh
 # installed, not just declared in the Brewfile.
 log_info "Installing 'Homebrew', dependencies and applications..."
 source "$INSTALL_SCRIPT_DIRECTORY/setup/homebrew.sh"
-brew bundle install --file="$INSTALL_SCRIPT_DIRECTORY/packages/Brewfile" || log_warning "Some Brewfile entries failed, continuing."
+brew bundle install --file="$(brewfile_path)" || log_warning "Some Brewfile entries failed, continuing."
 
 # Set up agentic configuration: inject models, symlink shared content.
 log_info "Setting up agentic configuration..."
