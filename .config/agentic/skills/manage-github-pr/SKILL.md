@@ -330,7 +330,7 @@ After creating the PR, check if the project has CI/CD workflows that do not star
 - `.github/workflows/` files with `on: push: branches: ["tests/**"]` or `workflow_dispatch` triggers.
 - Project docs, README, `copilot/dev-tools.md`, or equivalent, that mention manual CI trigger steps.
 
-If manual triggers exist, show the user the exact command and let them decide whether to run it. Do not trigger CI automatically. Example for projects using a `tests/` branch convention:
+If manual triggers exist, show the user the exact command and let them decide whether to run it. Do not trigger CI automatically here, except from the "Prepare for review" step of the `resolve-github-pr-comments` skill, which runs it itself. Example for projects using a `tests/` branch convention:
 
 ```bash
 git push origin HEAD:tests/<branch-name>
