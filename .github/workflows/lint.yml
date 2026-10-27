@@ -45,9 +45,11 @@ jobs:
         run: .github/scripts/check-skill-frontmatter.sh
 
       # `tests/dock.sh` needs macOS, it reports a skip on this runner.
-      - name: Test cleanup, output cap, profile and Dock scripts
+      # Runs every test before failing, so one broken test does not hide the rest.
+      - name: Run tests
         run: |
-          bash tests/bash-output-cap.sh
-          bash tests/worktree-cleanup.sh
-          bash tests/profile.sh
-          bash tests/dock.sh
+          status=0
+          for test in tests/*.sh; do
+            bash "$test" || status=1
+          done
+          exit "$status"
