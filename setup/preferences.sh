@@ -25,15 +25,16 @@ source "$PREFERENCES_SCRIPT_DIRECTORY/../utilities/displays.sh"
 # The profile decides whether `apply_system_configuration` may remove existing `Login Items`.
 profile_resolve
 
-# Read before `apply_dock_configuration` rewrites the `Dock`, a default one marks a
-# machine nobody has set up yet.
+# Read before `apply_dock_configuration` changes the `Dock`. Only a default one, the
+# mark of a machine nobody has set up yet, is rebuilt and lets a work machine lose
+# its existing `Login Items`.
 dock_was_default="false"
 if dock_is_default; then
     dock_was_default="true"
 fi
 
 apply_finder_configuration
-apply_dock_configuration
+apply_dock_configuration "$dock_was_default"
 apply_menu_bar_configuration
 apply_keyboard_configuration
 apply_trackpad_configuration
