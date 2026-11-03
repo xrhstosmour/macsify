@@ -10,7 +10,6 @@ AGENT_SOURCE_DIRECTORY="$AGENTIC_DIRECTORY/agents"
 source "$AGENTIC_SCRIPT_DIRECTORY/../helpers/logs.sh"
 source "$AGENTIC_SCRIPT_DIRECTORY/../helpers/brewfile.sh"
 source "$AGENTIC_SCRIPT_DIRECTORY/../helpers/symlink.sh"
-source "$AGENTIC_SCRIPT_DIRECTORY/../helpers/phabricator.sh"
 source "$AGENTIC_SCRIPT_DIRECTORY/../helpers/profile.sh"
 source "$AGENTIC_SCRIPT_DIRECTORY/../helpers/agentic.sh"
 
@@ -164,7 +163,17 @@ if [ ! -f "$MODELS_FILE_PATH" ]; then
     exit 1
 fi
 
-PHABRICATOR_MCP_URL="${PHABRICATOR_MCP_URL:-$(derive_phabricator_mcp_url)}"
+# Derive the org's Phabricator MCP URL from `~/.arcrc`, standard `arc`/Phabricator
+# tooling config, not company-specific. `/ai/mcp` is a path convention, not guaranteed
+# universal, but a reasonable first guess before falling back to asking the user
+# (handled per-skill, see the read-phabricator-task/manage-phabricator-task skills).
+# Never hardcode an org's actual URL in this repo. Stays empty when `~/.arcrc` or `jq`
+# aren't available yet, callers decide what "nothing derived" means for them.
+PHABRICATOR_MCP_URL="${PHABRICATOR_MCP_URL:-}"
+if [ -z "$PHABRICATOR_MCP_URL" ] && [ -f "$HOME/.arcrc" ] && command -v jq &>/dev/null; then
+    phabricator_host=$(jq -r '.hosts | to_entries[] | select(.key | test("phabricator")) | .key' "$HOME/.arcrc" 2>/dev/null | head -1)
+    [ -n "$phabricator_host" ] && PHABRICATOR_MCP_URL="${phabricator_host%/api/}/ai/mcp"
+fi
 
 if brewfile_declares "anomalyco/tap/opencode"; then
     log_info "Injecting OpenCode agent models..."
@@ -550,4 +559,4 @@ if brewfile_declares herdr; then
 fi
 
 # The `Herdr` desktop app has no `Homebrew` cask, its own script installs it with its mods.
-bash "$AGENTIC_SCRIPT_DIRECTORY/herdr-application.sh" || log_warning "'Herdr' app setup failed, run 'setup/herdr-application.sh' later."
+bash "$AGENTIC_SCRIPT_DIRECTORY/../settings/herdr.sh" || log_warning "'Herdr' app setup failed, run 'settings/herdr.sh' later."
