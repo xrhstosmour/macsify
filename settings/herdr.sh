@@ -54,7 +54,7 @@ if [ ! -x "$HERDR_APPLICATION_BINARY" ]; then
   if ! curl -fsSL "$HERDR_APPLICATION_INSTALLER_URL" -o "$installer"; then
     log_warning "Could not download the 'Herdr' app installer, the app is skipped."
   elif ! printf '%s  %s\n' "$HERDR_APPLICATION_INSTALLER_SHA256" "$installer" | shasum -a 256 -c --status; then
-    log_error "The 'Herdr' app installer changed since it was reviewed, the app is skipped, read it and bump the checksum in 'setup/herdr-application.sh'."
+    log_error "The 'Herdr' app installer changed since it was reviewed, the app is skipped, read it and bump the checksum in 'settings/herdr.sh'."
   elif ! sh "$installer"; then
     log_warning "The 'Herdr' app installer failed, the app is skipped."
   fi
@@ -140,7 +140,7 @@ if [ -x "$HERDR_APPLICATION_BINARY" ]; then
     "$HERDR_APPLICATION_BINARY" check "$HERDR_APPLICATION_MODS_DIRECTORY/$folder" || log_warning "'$folder' mod fails its check, 'Herdr' keeps it unloaded."
   done
 else
-  log_warning "Mod checks skipped, 'herdr-app' is not installed, run 'setup/herdr-application.sh' again once it is."
+  log_warning "Mod checks skipped, 'herdr-app' is not installed, run 'settings/herdr.sh' again once it is."
 fi
 
 log_success "'Herdr' app set up, switch to the 'workbench' layout once with 'ctrl-shift-l'."

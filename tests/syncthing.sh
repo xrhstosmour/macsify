@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Checks `helpers/syncthing.sh`: the API key and GUI URL are read out of
+# Checks `settings/syncthing.sh`: the API key and GUI URL are read out of
 # `config.xml` (the scheme follows `tls`, the host is always loopback), and the
 # hardening sends the exact options and GUI payloads with the key in a header and
 # the body on standard input. `curl` is stubbed, nothing reaches a real `Syncthing`.
@@ -10,8 +10,8 @@ set -e
 TESTS_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPOSITORY_DIRECTORY="$TESTS_SCRIPT_DIRECTORY/.."
 
-# shellcheck source=../helpers/syncthing.sh
-source "$REPOSITORY_DIRECTORY/helpers/syncthing.sh"
+# shellcheck source=../settings/syncthing.sh
+source "$REPOSITORY_DIRECTORY/settings/syncthing.sh"
 
 TEST_DIRECTORY=$(mktemp -d)
 trap 'rm -rf "$TEST_DIRECTORY"' EXIT

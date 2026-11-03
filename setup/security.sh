@@ -14,9 +14,9 @@ source "$SECURITY_SCRIPT_DIRECTORY/../helpers/brewfile.sh"
 
 # Security tooling, each part only on a profile whose Brewfile installs it.
 if brewfile_declares syncthing-app; then
-  bash "$SECURITY_SCRIPT_DIRECTORY/syncthing.sh"
+  bash "$SECURITY_SCRIPT_DIRECTORY/../settings/syncthing.sh"
 fi
 
 if brewfile_declares clamav; then
-  bash "$SECURITY_SCRIPT_DIRECTORY/antivirus.sh"
+  bash "$SECURITY_SCRIPT_DIRECTORY/../settings/clamav.sh"
 fi
