@@ -518,9 +518,16 @@ if brewfile_declares herdr; then
     # same reasoning as the plugin install right before this one.
     install_herdr_component "herdr-reviewr plugin" herdr plugin install persiyanov/herdr-reviewr --ref v0.38.0 --yes
 
+    # Refresh the local plugins in `~/.config` like the agentic copy above, so a
+    # rerun after a merge picks up a new or renamed plugin without `install.sh`.
+    for plugin in herdr-repository-sync herdr-worktree-cleanup; do
+        mkdir -p "$HOME/.config/$plugin"
+        cp -R "$AGENTIC_SCRIPT_DIRECTORY/../.config/$plugin/." "$HOME/.config/$plugin/"
+    done
+
     # Local plugin from this repository, runs the `gfrb` fetch and rebase in every
-    # herdr pane checked out on `main` or `master`. `install.sh` copied it into `~/.config` already, a
-    # link points herdr at it in place, so later edits need no re-link.
+    # herdr pane checked out on `main` or `master`. A link points herdr at the copy
+    # above in place, so later edits need no re-link.
     # Previous name of the plugin, a leftover link would run every sync twice.
     if herdr plugin list 2>/dev/null | grep -q '^- herdr-repo-sync '; then
         log_info "Unlinking the 'herdr-repo-sync' plugin, renamed to 'herdr-repository-sync'..."
