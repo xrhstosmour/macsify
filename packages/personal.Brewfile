@@ -8,6 +8,7 @@ tap 'wickenico/wailbrew'
 
 # Install dependencies for various utilities and applications.
 brew 'airsync'
+brew 'clamav'
 brew 'cocoapods'
 
 # Install applications.

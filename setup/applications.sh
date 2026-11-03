@@ -80,4 +80,8 @@ if brewfile_declares syncthing-app; then
   bash "$APPLICATIONS_SCRIPT_DIRECTORY/syncthing.sh"
 fi
 
+if brewfile_declares clamav; then
+  bash "$APPLICATIONS_SCRIPT_DIRECTORY/antivirus.sh"
+fi
+
 log_success "All applications configurations restored successfully."
