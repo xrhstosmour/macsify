@@ -25,6 +25,12 @@
 #   - Right Shift → Delete
 #
 
+# Version 2 no longer guesses the persistent workspaces from the bindings, so the
+# ten that `ctrl-1` to `ctrl-0` switch to are listed explicitly, keeping them alive
+# when empty as version 1 did.
+config-version = 2
+persistent-workspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+
 # Start `Aerospace` at login.
 start-at-login = true
 
