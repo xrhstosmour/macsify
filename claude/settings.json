@@ -231,6 +231,10 @@
           {
             "type": "command",
             "command": "bash ~/.config/agentic/hooks/herdr-application-status.sh done"
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.config/agentic/hooks/herdr-application-title.sh"
           }
         ]
       }

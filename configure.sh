@@ -79,3 +79,6 @@ bash setup/shell.sh
 
 # Configure `macOS` Preferences.
 bash setup/preferences.sh
+
+# Set up security tooling and applications hardening.
+bash setup/security.sh

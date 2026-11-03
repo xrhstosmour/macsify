@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Checks `setup/herdr-application.sh`: an installer whose checksum does not match
+# Checks `settings/herdr.sh`: an installer whose checksum does not match
 # the pinned one is never run, an installed app is not installed again, every
 # pinned mod is copied from a checkout at its pinned commit, also before the app
 # is installed, an installed mod folder is never overwritten, and a mod that
@@ -9,7 +9,7 @@
 # configuration.
 
 TESTS_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-HERDR_APPLICATION_SCRIPT="$TESTS_SCRIPT_DIRECTORY/../setup/herdr-application.sh"
+HERDR_APPLICATION_SCRIPT="$TESTS_SCRIPT_DIRECTORY/../settings/herdr.sh"
 
 TEST_DIRECTORY=$(mktemp -d)
 trap 'rm -rf "$TEST_DIRECTORY"' EXIT

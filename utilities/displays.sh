@@ -27,32 +27,34 @@ apply_displays_configuration() {
     log_divider
 }
 
-# Function to compile the `display_watcher.swift` source into a standalone binary.
-# Skips recompiling when the existing binary is already newer than the source.
+# Function to compile one `.config/scripts/<name>.swift` source into a standalone
+# binary at `~/.config/scripts/<name>`. Skips recompiling when the existing binary
+# is already newer than the source.
 # Usage:
-#   displays_compile_watcher
-displays_compile_watcher() {
-    local source_path="$DISPLAYS_SCRIPT_DIRECTORY/../.config/scripts/display_watcher.swift"
-    local binary_path="$HOME/.config/scripts/display_watcher"
+#   displays_compile "display_watcher"
+displays_compile() {
+    local name="$1"
+    local source_path="$DISPLAYS_SCRIPT_DIRECTORY/../.config/scripts/$name.swift"
+    local binary_path="$HOME/.config/scripts/$name"
 
     if [ -f "$binary_path" ] && [ "$binary_path" -nt "$source_path" ]; then
-        log_info "Display watcher already up to date, skipping compile."
+        log_info "'$name' already up to date, skipping compile."
         return 0
     fi
 
-    log_info "Compiling display watcher..."
+    log_info "Compiling '$name'..."
 
     if ! command -v swiftc &>/dev/null; then
-        log_warning "'swiftc' not found, skipping display watcher (install Xcode Command Line Tools to enable it)."
+        log_warning "'swiftc' not found, skipping '$name' (install Xcode Command Line Tools to enable it)."
         return 1
     fi
 
     if ! swiftc -O "$source_path" -o "$binary_path"; then
-        log_error "Failed to compile display watcher."
+        log_error "Failed to compile '$name'."
         return 1
     fi
 
-    log_success "Display watcher compiled."
+    log_success "'$name' compiled."
 }
 
 # Function to create a launch agent that runs the compiled display watcher, an
@@ -68,7 +70,8 @@ displays_create_launch_agent() {
     # the binary open would make `swiftc` fail to overwrite it.
     remove_launch_agent "com.local.DisplayWatcher"
 
-    displays_compile_watcher || return 1
+    displays_compile "display_watcher" || return 1
+    displays_compile "arrange_displays" || log_warning "Display arrangement skipped."
 
     # `KeepAlive` restarts the daemon if it ever exits/crashes, there is no
     # `StartInterval` since the daemon itself blocks on the display

@@ -126,6 +126,7 @@ apply_dock_configuration() {
         "$HOME/Applications/Chrome Apps.localized/Messages.app"
         "/Applications/Viber.app"
         "/Applications/Visual Studio Code.app"
+        "$HOME/Applications/Herdr.app"
         "/Applications/DataGrip.app"
         "/Applications/Docker.app"
         "/Applications/Bruno.app"
