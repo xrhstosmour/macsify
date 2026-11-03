@@ -135,7 +135,8 @@ Skills are loaded by agents and triggered via commands. The `Command` column bel
 | Skill | Command | Purpose |
 | ----- | ------ | ------- |
 | `manage-github-pr` | `/manage-github-pr` | Create a `PR` with structured description, split commits, feature branch, auto-assign, and labels, also reviews/edits/comments on existing PRs |
-| `resolve-github-pr-comments` | `/resolve-github-pr-comments` | Review `PR` comments, assess validity, make fixup commits, push, reply with `SHA` links |
+| `prepare-github-pr-for-review` | `/prepare-github-pr-for-review` | Rebase onto the default branch, autosquash fixups, push with a lease, trigger CI, re-request reviews when asked |
+| `resolve-github-pr-comments` | `/resolve-github-pr-comments` | Review `PR` comments, assess validity, make fixup commits, push, reply with `SHA` links, then prepare the `PR` for review |
 | `review-github-pr` | `/review-github-pr` | Multi-agent `PR` review, spawns agents in parallel, can post inline comments |
 
 ### Diagnostic Skills
