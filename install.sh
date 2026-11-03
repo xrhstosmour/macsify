@@ -26,7 +26,7 @@ log_info "Copying configuration files to '~/.config'..."
 mkdir -p ~/.config && cp -R .config/* ~/.config/
 
 # Give execute permission to all scripts in the directory.
-chmod +x ~/.config/scripts/*.sh
+chmod +x ~/.config/scripts/*/*.sh
 
 # Install `Homebrew` and Brewfile dependencies before agentic setup below, its
 # MCP registration steps need `opencode`/`claude`/`codex`/`copilot` actually

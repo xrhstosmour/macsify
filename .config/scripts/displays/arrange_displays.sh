@@ -8,7 +8,7 @@
 # Run on every display change by `reload_environment.sh`, before `AeroSpace`
 # distributes workspaces.
 
-ARRANGE_BINARY="$HOME/.config/scripts/arrange_displays"
+ARRANGE_BINARY="$HOME/.config/scripts/displays/arrange_displays"
 [ -x "$ARRANGE_BINARY" ] || exit 0
 
 # True when a keyboard that is not the built-in one is connected, any HID keyboard
