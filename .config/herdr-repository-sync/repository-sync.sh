@@ -6,7 +6,8 @@
 # `origin` is fetched, unlike `gfrb`, the rebase reads nothing else and every
 # extra remote would lengthen the pass that holds the lock. Run by
 # herdr on startup and on workspace, worktree and tab events (see
-# `herdr-plugin.toml`), or by hand with explicit paths. Checkouts on any other
+# `herdr-plugin.toml`), by the `Herdr` app's `repository-sync` mod (see
+# `.config/herdr-app/mods/repository-sync/`), or by hand with explicit paths. Checkouts on any other
 # branch, with uncommitted changes, mid rebase, merge or cherry-pick, or whose
 # own configuration or hooks would run code are left alone. A rebase that stops on a conflict is aborted, restoring the checkout, and
 # logged. Each checkout is synced at most once per throttle window.
