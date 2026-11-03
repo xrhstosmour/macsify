@@ -1,0 +1,231 @@
+{
+  "background": "canvas",
+  "children": [
+    {
+      "background": "chrome",
+      "children": [
+        {
+          "content": {
+            "mod": "workspace-chrome"
+          },
+          "id": "brand",
+          "size": {
+            "px": 46
+          },
+          "type": "block",
+          "window_drag": true
+        },
+        {
+          "children": [
+            {
+              "content": {
+                "mod": "space-folders"
+              },
+              "id": "spaces",
+              "min": 90,
+              "size": {
+                "weight": 1
+              },
+              "type": "block"
+            },
+            {
+              "content": {
+                "mod": "agents"
+              },
+              "id": "agents",
+              "min": 90,
+              "size": {
+                "weight": 1
+              },
+              "type": "block"
+            }
+          ],
+          "id": "sidebar-lists",
+          "type": "column"
+        },
+        {
+          "content": {
+            "mod": "workspace-chrome",
+            "props": {
+              "footer": true
+            }
+          },
+          "id": "sidebar-footer",
+          "size": {
+            "px": 69
+          },
+          "type": "block"
+        }
+      ],
+      "id": "sidebar",
+      "max": 480,
+      "min": 44,
+      "resizable": false,
+      "size": {
+        "px": 268
+      },
+      "type": "column"
+    },
+    {
+      "children": [
+        {
+          "content": {
+            "mod": "tabs"
+          },
+          "id": "tabs",
+          "size": {
+            "px": 42
+          },
+          "type": "block",
+          "window_drag": true
+        },
+        {
+          "children": [
+            {
+              "content": {
+                "pane": {
+                  "background": "background",
+                  "border": {
+                    "color": "border",
+                    "width": 1
+                  },
+                  "focus": {
+                    "color": "accent",
+                    "width": 1
+                  },
+                  "gap": 8,
+                  "header": {
+                    "content": {
+                      "mod": "pane"
+                    },
+                    "height": 30,
+                    "position": "top",
+                    "reveal": "always"
+                  },
+                  "lone": true,
+                  "radius": 10
+                },
+                "tab": "active"
+              },
+              "id": "main",
+              "type": "block"
+            },
+            {
+              "children": [
+                {
+                  "active": "pull-requests",
+                  "children": [
+                    {
+                      "id": "pull-requests",
+                      "type": "block",
+                      "content": {
+                        "mod": "roundup"
+                      }
+                    },
+                    {
+                      "id": "git-graph",
+                      "type": "block",
+                      "content": {
+                        "mod": "git-graph"
+                      }
+                    },
+                    {
+                      "content": {
+                        "mod": "files"
+                      },
+                      "id": "files",
+                      "type": "block"
+                    },
+                    {
+                      "content": {
+                        "mod": "changes"
+                      },
+                      "id": "changes",
+                      "type": "block"
+                    }
+                  ],
+                  "id": "panel-body",
+                  "type": "stack"
+                }
+              ],
+              "hidden": true,
+              "id": "panel",
+              "max": 900,
+              "min": 280,
+              "size": {
+                "px": 420
+              },
+              "type": "column"
+            }
+          ],
+          "gap": 8,
+          "id": "work-body",
+          "padding": 8,
+          "type": "row"
+        },
+        {
+          "content": {
+            "mod": "workspace-status"
+          },
+          "id": "status",
+          "size": {
+            "px": 28
+          },
+          "type": "block"
+        },
+        {
+          "id": "worktree-cleanup",
+          "type": "block",
+          "size": {
+            "px": 0
+          },
+          "content": {
+            "mod": "worktree-cleanup"
+          }
+        },
+        {
+          "id": "repository-sync",
+          "type": "block",
+          "size": {
+            "px": 0
+          },
+          "content": {
+            "mod": "repository-sync"
+          }
+        },
+        {
+          "id": "tab-names",
+          "type": "block",
+          "size": {
+            "px": 0
+          },
+          "content": {
+            "mod": "tab-names"
+          }
+        }
+      ],
+      "id": "work",
+      "resizable": false,
+      "type": "column"
+    }
+  ],
+  "divider": {
+    "color": "border",
+    "width": 1
+  },
+  "id": "root",
+  "terminal_padding": [
+    14,
+    12
+  ],
+  "titlebar": "none",
+  "traffic_lights": [
+    12,
+    16
+  ],
+  "type": "row",
+  "cloned_from": {
+    "name": "main",
+    "version": "0.1.10"
+  }
+}
