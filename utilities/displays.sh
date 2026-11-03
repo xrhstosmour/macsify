@@ -27,15 +27,15 @@ apply_displays_configuration() {
     log_divider
 }
 
-# Function to compile one `.config/scripts/<name>.swift` source into a standalone
-# binary at `~/.config/scripts/<name>`. Skips recompiling when the existing binary
+# Function to compile one `.config/scripts/displays/<name>.swift` source into a standalone
+# binary at `~/.config/scripts/displays/<name>`. Skips recompiling when the existing binary
 # is already newer than the source.
 # Usage:
 #   displays_compile "display_watcher"
 displays_compile() {
     local name="$1"
-    local source_path="$DISPLAYS_SCRIPT_DIRECTORY/../.config/scripts/$name.swift"
-    local binary_path="$HOME/.config/scripts/$name"
+    local source_path="$DISPLAYS_SCRIPT_DIRECTORY/../.config/scripts/displays/$name.swift"
+    local binary_path="$HOME/.config/scripts/displays/$name"
 
     if [ -f "$binary_path" ] && [ "$binary_path" -nt "$source_path" ]; then
         log_info "'$name' already up to date, skipping compile."
@@ -43,6 +43,8 @@ displays_compile() {
     fi
 
     log_info "Compiling '$name'..."
+
+    mkdir -p "$(dirname "$binary_path")"
 
     if ! command -v swiftc &>/dev/null; then
         log_warning "'swiftc' not found, skipping '$name' (install Xcode Command Line Tools to enable it)."
@@ -88,7 +90,7 @@ displays_create_launch_agent() {
     <string>com.local.DisplayWatcher</string>
     <key>ProgramArguments</key>
     <array>
-        <string>$HOME/.config/scripts/display_watcher</string>
+        <string>$HOME/.config/scripts/displays/display_watcher</string>
     </array>
     <key>RunAtLoad</key>
     <true/>

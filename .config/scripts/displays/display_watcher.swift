@@ -66,7 +66,7 @@ func scheduleReload() {
                 return
             }
 
-            let reloadScriptPath = NSHomeDirectory() + "/.config/scripts/reload_environment.sh"
+            let reloadScriptPath = NSHomeDirectory() + "/.config/scripts/displays/reload_environment.sh"
             let task = Process()
             task.executableURL = URL(fileURLWithPath: "/bin/bash")
             // Pass the live display count so the reload script can wait out any lag
