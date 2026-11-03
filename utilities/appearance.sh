@@ -29,6 +29,10 @@ apply_appearance_configuration() {
     log_info "Setting dark mode..."
     defaults write NSGlobalDomain AppleInterfaceStyle -string "Dark"
 
+    # Set icon and widget style to dark.
+    log_info "Setting icon and widget style to dark..."
+    defaults write NSGlobalDomain AppleIconAppearanceTheme -string "RegularDark"
+
     # Set accent color to blue.
     log_info "Setting accent color to blue..."
     defaults write NSGlobalDomain AppleAccentColor -int 4
