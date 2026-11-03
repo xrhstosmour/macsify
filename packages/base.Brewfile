@@ -64,7 +64,6 @@ cask 'grafviktor/goto/goto-ssh-manager', trusted: true
 cask 'maccy'
 cask 'mediosz/tap/swipeaerospace', trusted: true
 cask 'nikitabobko/tap/aerospace', trusted: true
-cask 'obsidian'
 cask 'spotify'
 cask 'stege'
 cask 'visual-studio-code'
