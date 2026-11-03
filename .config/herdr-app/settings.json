@@ -1,0 +1,8 @@
+{
+  "appearance": "dark",
+  "theme": "wezterm",
+  "font": "Fira Code",
+  "font_size": 14,
+  "sounds": { "enabled": true },
+  "telemetry": false
+}
