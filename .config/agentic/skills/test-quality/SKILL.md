@@ -26,3 +26,11 @@ Test authoring rules, on top of the patterns above:
 - Cover scenarios, branches, and complications, not lines, line coverage is automatic and proves little.
 - Integration first, unit second. A few large scenarios for the big picture, then small tests for what they do not reach.
 Don't flag a test just for looking similar, verify it protects a distinct contract first. A bug regression test must fail on the pre-fix code for the intended reason and pass after the fix, the author checks this, it is not verifiable from a diff, do not flag it in review.
+
+## Mutation Check
+
+Optional, run it when a test's value is in doubt, not by default. Break only the production code the test covers, in a scratch worktree per the Worktrees rule in `versioning.md`, never the user's checkout, run that single test, then remove the worktree. Label each test:
+
+- PROVEN: it fails for the intended reason.
+- VACUOUS: it still passes, treat it as a junk test.
+- INCONCLUSIVE: it fails for an unrelated reason, or the covered code cannot be isolated.
