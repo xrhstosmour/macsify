@@ -4,13 +4,15 @@
 # `worktree.created` and `worktree.opened` record the worktree path and its
 # workspace ID from the event payload, only worktrees `herdr` created or opened
 # are ever tracked. `workspace.closed` checks the worktrees of the closed
-# workspace, the `sweep` action checks every tracked one. A worktree is removed
+# workspace and the ones an earlier close kept unmerged, the `sweep` action
+# checks every tracked one. A worktree is removed
 # with `git worktree remove` only when no herdr pane is left inside it, it is on a
 # branch, it has no uncommitted or untracked changes and no rebase, merge,
-# cherry-pick, revert or bisect is in progress. Anything else is kept and logged.
-# Ignored files such as `.env` or a build cache go with the worktree. Its branch
-# is deleted only when merged, see `delete_merged_branch`. A worktree named
-# `review` or `reviews`, or listed in the `protected` file, is never touched. A
+# cherry-pick, revert or bisect is in progress, and its branch is merged, see
+# `branch_is_merged`. Anything else is kept whole and logged.
+# Ignored files such as `.env` or a build cache go with the worktree, and the
+# merged branch is deleted. A worktree named `review`, `reviews`, `playground`,
+# `trivial` or `trivials`, or listed in the `protected` file, is never touched. A
 # process outside `herdr`, such as an editor, does not count as a pane. Runs from
 # `~/.config` without the macsify repository, so it carries its own logging,
 # like `herdr-repository-sync`.
@@ -26,6 +28,10 @@ LOG_FILE="$STATE_DIRECTORY/cleanup.log"
 TRACKED_FILE="$STATE_DIRECTORY/tracked"
 LOCK_DIRECTORY="$STATE_DIRECTORY/lock"
 PROTECTED_FILE="$HOME/.config/herdr-worktree-cleanup/protected"
+# Workspace ID of a worktree kept unmerged after its workspace closed.
+CLOSED_WORKSPACE="closed"
+# Directory names kept whatever their state, the `Herdr` app's mod keeps the same list.
+PROTECTED_NAMES="review reviews playground trivial trivials"
 WORKTREES_ROOT="$HOME/Developer/worktrees"
 LOG_MAX_BYTES=200000
 # Upper bound for each network call made while the pass lock is held, a stalled
@@ -184,38 +190,42 @@ run_bounded() {
 }
 
 # A worktree kept on purpose, never tracked, removed or stripped of its branch.
-# Any directory named `review` or `reviews`, plus every directory name or
-# physical absolute path (symlinks resolved, no `~`) listed one per line in
-# `~/.config/herdr-worktree-cleanup/protected`.
+# Any directory named `review`, `reviews`, `playground`, `trivial` or `trivials`,
+# plus every directory name or physical absolute path (symlinks resolved, no `~`)
+# listed one per line in `~/.config/herdr-worktree-cleanup/protected`. The `Herdr`
+# app's `worktree-cleanup` mod shares the file and keeps the same names.
 # Usage:
 #   is_protected <path>
 is_protected() {
-  case "$(basename "$1")" in
-    review | reviews) return 0 ;;
-  esac
+  local name protected_name
+  name=$(basename "$1")
+  for protected_name in $PROTECTED_NAMES; do
+    [ "$name" = "$protected_name" ] && return 0
+  done
   [ -f "$PROTECTED_FILE" ] || return 1
   grep -qxF -e "$1" -e "$(basename "$1")" "$PROTECTED_FILE"
 }
 
-# Deletes the branch a removed worktree was on, only when its work is merged:
-# the tip is an ancestor of the origin default branch, or the tip is exactly the
-# head of a merged pull request, which covers squash and rebase merges. A branch
-# that gained commits after its pull request merged is kept. The default branch
-# is never deleted.
+# Succeeds only when a branch's work is merged: the tip is an ancestor of the
+# origin default branch, or the tip is exactly the head of a merged pull request,
+# which covers squash and rebase merges. A branch that gained commits after its
+# pull request merged is not merged, and the default branch never counts. A
+# worktree is removed only when this succeeds.
 # Usage:
-#   delete_merged_branch <main checkout> <branch>
-delete_merged_branch() {
+#   branch_is_merged <main checkout> <branch>
+branch_is_merged() {
   local main_checkout="$1" branch="$2" default_reference tip merged_head
   default_reference=$(git -C "$main_checkout" symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null) || {
-    log "branch kept, no origin default branch: $branch"
-    return
+    log "not merged, no origin default branch: $branch"
+    return 1
   }
   if [ "$branch" = "${default_reference#origin/}" ]; then
-    return
+    log "not merged, on the default branch: $branch"
+    return 1
   fi
   tip=$(git -C "$main_checkout" rev-parse --verify --quiet "refs/heads/$branch") || {
-    log "branch kept, no local branch named: $branch"
-    return
+    log "not merged, no local branch named: $branch"
+    return 1
   }
 
   # Already merged by the last known refs needs no fetch, the network calls run
@@ -234,29 +244,31 @@ delete_merged_branch() {
   fi
 
   if git -C "$main_checkout" merge-base --is-ancestor "$tip" "$default_reference"; then
-    # `git branch -d` compares against the branch's upstream or the checkout's
-    # `HEAD`, not the default branch, so it can refuse a provably merged branch.
-    if git -C "$main_checkout" branch -D "$branch" >>"$LOG_FILE" 2>&1; then
-      log "branch deleted, merged into $default_reference: $branch"
-    else
-      log "branch delete failed: $branch"
-    fi
-    return
+    return 0
   fi
 
   if command -v gh >/dev/null 2>&1; then
     merged_head=$(cd "$main_checkout" && run_bounded "$NETWORK_TIMEOUT_SECONDS" gh pr list --head "$branch" --state merged --json headRefOid --jq '.[].headRefOid' 2>>"$LOG_FILE") || merged_head=""
+    # `git branch -d` cannot see a squash merge, the tip match is the proof.
     if printf '%s\n' "$merged_head" | grep -qx -- "$tip"; then
-      # `git branch -d` cannot see a squash merge, the tip match above is the proof.
-      if git -C "$main_checkout" branch -D "$branch" >>"$LOG_FILE" 2>&1; then
-        log "branch deleted, its tip is the head of a merged pull request: $branch"
-      else
-        log "branch delete failed: $branch"
-      fi
-      return
+      return 0
     fi
   fi
-  log "branch kept, not merged: $branch"
+  log "not merged: $branch"
+  return 1
+}
+
+# Deletes the branch of a worktree just removed, already proven merged.
+# `git branch -d` compares against the branch's upstream or the checkout's `HEAD`,
+# not the default branch, so it can refuse a provably merged branch.
+# Usage:
+#   delete_merged_branch <main checkout> <branch>
+delete_merged_branch() {
+  if git -C "$1" branch -D "$2" >>"$LOG_FILE" 2>&1; then
+    log "branch deleted, merged: $2"
+  else
+    log "branch delete failed: $2"
+  fi
 }
 
 # Usage:
@@ -269,6 +281,37 @@ pane_inside() {
     esac
   done <<<"$pane_directories"
   return 1
+}
+
+# Usage:
+#   read_pane_directories, fills $pane_directories with the resolved directories
+#   of every pane, returns 1 and logs when the pane list cannot be trusted
+read_pane_directories() {
+  local pane_list directory normalized_directories
+  if ! pane_list=$(herdr pane list 2>>"$LOG_FILE"); then
+    log "could not list herdr panes"
+    return 1
+  fi
+  # An unexpected output shape must stop the sweep, an empty directory list would
+  # read as no pane anywhere and every clean worktree would be removed. Panes with
+  # no `cwd` at all mean `herdr` renamed the key, an empty list is a real answer.
+  if ! printf '%s' "$pane_list" | jq -e '.result.panes | type == "array" and (length == 0 or any(.[]; (.cwd // "") != ""))' >/dev/null 2>&1; then
+    log "unexpected herdr pane list output"
+    return 1
+  fi
+  if ! pane_directories=$(printf '%s' "$pane_list" | jq -r '.result.panes[] | (.cwd // empty), (.foreground_cwd // empty)'); then
+    log "could not read the herdr pane directories"
+    return 1
+  fi
+
+  # Compare resolved paths, the tracked ones are resolved the same way.
+  normalized_directories=""
+  while IFS= read -r directory; do
+    if [ -n "$directory" ] && [ -d "$directory" ]; then
+      normalized_directories="$normalized_directories$(cd "$directory" && pwd -P)"$'\n'
+    fi
+  done <<<"$pane_directories"
+  pane_directories="$normalized_directories"
 }
 
 # Usage:
@@ -332,6 +375,26 @@ sweep_worktree() {
   branch=$(git -C "$path" symbolic-ref HEAD)
   branch="${branch#refs/heads/}"
 
+  # Work that is not merged keeps its worktree whole, not only its branch. Checked
+  # last, it can cost a fetch and a `gh` call.
+  if ! branch_is_merged "$main_checkout" "$branch"; then
+    log "kept, branch not merged: $path"
+    # Its workspace is gone and will not close again, so it is looked at on
+    # every later close instead, until the branch is merged.
+    if [ "$event" = "workspace.closed" ]; then
+      untrack "$path"
+      printf '%s\t%s\n' "$path" "$CLOSED_WORKSPACE" >>"$TRACKED_FILE"
+    fi
+    return
+  fi
+
+  # The merge check can take a while, a pane may have opened in the worktree
+  # since the list was read. A list that cannot be read keeps the worktree too.
+  if ! read_pane_directories || pane_inside "$path"; then
+    log "kept, a pane is open inside or the pane list is unreadable: $path"
+    return
+  fi
+
   # No `--force`, git itself refuses a locked or dirty worktree.
   if git -C "$main_checkout" worktree remove "$path" >>"$LOG_FILE" 2>&1; then
     log "removed, ignored files deleted: $path"
@@ -349,9 +412,9 @@ case "$event" in
     ;;
 esac
 
-# A `workspace.closed` event sweeps only the closed workspace's worktrees. If its
-# payload carries no workspace ID, fall back to every tracked worktree, the pane
-# check still protects the ones in use.
+# A `workspace.closed` event sweeps the closed workspace's worktrees and the ones
+# kept unmerged after an earlier close. If its payload carries no workspace ID,
+# fall back to every tracked worktree, the pane check still protects the ones in use.
 closed_workspace=""
 if [ "$event" = "workspace.closed" ]; then
   closed_workspace=$(printf '%s' "${HERDR_PLUGIN_EVENT_JSON:-}" | jq -r '.data.workspace_id // .data.workspace.workspace_id // empty' 2>/dev/null)
@@ -360,34 +423,11 @@ if [ "$event" = "workspace.closed" ]; then
   fi
 fi
 
-if ! pane_list=$(herdr pane list 2>>"$LOG_FILE"); then
-  log "could not list herdr panes"
-  exit 1
-fi
-# An unexpected output shape must stop the sweep, an empty directory list would
-# read as no pane anywhere and every clean worktree would be removed. Panes with
-# no `cwd` at all mean `herdr` renamed the key, an empty list is a real answer.
-if ! printf '%s' "$pane_list" | jq -e '.result.panes | type == "array" and (length == 0 or any(.[]; (.cwd // "") != ""))' >/dev/null 2>&1; then
-  log "unexpected herdr pane list output"
-  exit 1
-fi
-if ! pane_directories=$(printf '%s' "$pane_list" | jq -r '.result.panes[] | (.cwd // empty), (.foreground_cwd // empty)'); then
-  log "could not read the herdr pane directories"
-  exit 1
-fi
-
-# Compare resolved paths, the tracked ones are resolved the same way.
-normalized_directories=""
-while IFS= read -r directory; do
-  if [ -n "$directory" ] && [ -d "$directory" ]; then
-    normalized_directories="$normalized_directories$(cd "$directory" && pwd -P)"$'\n'
-  fi
-done <<<"$pane_directories"
-pane_directories="$normalized_directories"
+read_pane_directories || exit 1
 
 while IFS=$'\t' read -r path workspace; do
   [ -n "$path" ] || continue
-  if [ -n "$closed_workspace" ] && [ "$workspace" != "$closed_workspace" ]; then
+  if [ -n "$closed_workspace" ] && [ "$workspace" != "$closed_workspace" ] && [ "$workspace" != "$CLOSED_WORKSPACE" ]; then
     continue
   fi
   sweep_worktree "$path"
