@@ -90,7 +90,7 @@
                     "width": 1
                   },
                   "focus": {
-                    "color": "accent",
+                    "color": "border",
                     "width": 1
                   },
                   "gap": 8,

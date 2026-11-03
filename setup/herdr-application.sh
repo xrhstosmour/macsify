@@ -102,6 +102,28 @@ for entry in "${HERDR_APPLICATION_MODS[@]}"; do
 done
 log_divider
 
+# Small patches to mods we do not own, in `.config/herdr-app/patches/`, named
+# after the mod they change. `space-folders` drew the repo and branch after a
+# space's name and `agents` the program name after an agent's, both only repeat
+# what the icon and the tab already say. Each applies to the pinned commit or the
+# app version it was made against, so a bump rechecks it. A mod that already
+# carries a patch is left alone.
+for patch_file in "$HERDR_APPLICATION_SCRIPT_DIRECTORY/../.config/herdr-app/patches/"*.patch; do
+  patched_mod=$(basename "$patch_file" | cut -d. -f1)
+  [ -d "$HERDR_APPLICATION_MODS_DIRECTORY/$patched_mod" ] || continue
+
+  # The forward check comes first, a reverse check also passes on an unpatched file
+  # when the patch only removes lines.
+  if patch -p0 -N --dry-run -s -d "$HERDR_APPLICATION_MODS_DIRECTORY" <"$patch_file" &>/dev/null; then
+    patch -p0 -N -s -d "$HERDR_APPLICATION_MODS_DIRECTORY" <"$patch_file"
+    log_success "Applied the '$patched_mod' patch."
+  elif patch -p0 -R --dry-run -s -d "$HERDR_APPLICATION_MODS_DIRECTORY" <"$patch_file" &>/dev/null; then
+    log_info "The '$patched_mod' patch is already applied."
+  else
+    log_warning "The '$patched_mod' patch does not apply, the mod changed, update the patch."
+  fi
+done
+
 # The vendored mods in `.config/herdr-app/mods/` are copied again on every run,
 # so a rerun of `setup/agentic.sh` alone refreshes them after a merge.
 VENDORED_MODS_DIRECTORY="$HERDR_APPLICATION_SCRIPT_DIRECTORY/../.config/herdr-app/mods"
