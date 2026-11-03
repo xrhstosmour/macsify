@@ -1112,6 +1112,17 @@ function _herdr_open_worktree_pane
         set focus_flag --no-focus
     end
 
+    # Inside the `Herdr` app a worktree gets its own space, the app nests it under
+    # its repository.
+    if test -n "$HC_TERMINAL_ID"; and not test "$HERDR_ENV" = 1; and command -v herdr-app >/dev/null 2>&1
+        if herdr-app do space.new --name "$branch_slug" --folder "$worktree_path" >/dev/null 2>&1
+            log_success "Opened as a space in the `Herdr` app."
+            return 0
+        end
+        log_warning "Herdr app space failed, falling back to a plain cd."
+        return 1
+    end
+
     if not test -n "$HERDR_SOCKET_PATH"; or not command -v herdr >/dev/null 2>&1; or not command -v jq >/dev/null 2>&1
         return 1
     end

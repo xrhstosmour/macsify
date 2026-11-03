@@ -82,7 +82,8 @@ end
 # Function to prefix the current herdr tab's label with a color emoji.
 # Strips a color emoji this function previously added so colors don't stack.
 # Renaming a tab opts it out of herdr-automatic-rename's live naming from then
-# on, an accepted tradeoff since herdr has no other way to color a tab.
+# on, an accepted tradeoff since herdr has no other way to color a tab. The app's
+# `tab-names` mod keeps the color instead.
 # Usage:
 #   herdr_tab_color <emoji>
 function herdr_tab_color
@@ -90,19 +91,34 @@ function herdr_tab_color
         log_error "Usage: herdr_tab_color <emoji>"
         return 1
     end
-    if not test "$HERDR_ENV" = 1; or not test -n "$HERDR_PANE_ID"
+    # The `Herdr` app sets `$HC_TERMINAL_ID` in its terminals, the multiplexer
+    # `$HERDR_ENV`. The app's `tab-names` mod keeps the color across its renames.
+    set -l in_app false
+    if test -n "$HC_TERMINAL_ID"; and not test "$HERDR_ENV" = 1
+        set in_app true
+    else if not test "$HERDR_ENV" = 1; or not test -n "$HERDR_PANE_ID"
         log_error "Not inside a herdr pane!"
         return 1
     end
 
-    set -l tab_id (_herdr_current_pane_field tab_id)
+    set -l tab_id
+    set -l current_label
+    if test $in_app = true
+        set -l app_tab (herdr-app ls | jq -r --arg terminal "$HC_TERMINAL_ID" '.spaces[].tabs[] | select(any(.terminals[]; .terminal == $terminal)) | "\(.id)\t\(.name)"' | string split \t)
+        set tab_id $app_tab[1]
+        set current_label $app_tab[2]
+    else
+        set tab_id (_herdr_current_pane_field tab_id)
+        if test -n "$tab_id"
+            set current_label (herdr tab get "$tab_id" | jq -re '.result.tab.label // empty')
+        end
+    end
     if test -z "$tab_id"
         log_error "Could not resolve the current tab! (see any herdr error above)"
         return 1
     end
 
     set -l emoji "$argv[1]"
-    set -l current_label (herdr tab get "$tab_id" | jq -re '.result.tab.label // empty')
     if test -z "$current_label"
         log_error "Could not read the current tab's label! (see any herdr error above)"
         return 1
@@ -116,5 +132,9 @@ function herdr_tab_color
         end
     end
 
-    herdr tab rename "$tab_id" "$emoji $current_label"
+    if test $in_app = true
+        herdr-app do tab.rename --id "$tab_id" --name "$emoji $current_label" >/dev/null
+    else
+        herdr tab rename "$tab_id" "$emoji $current_label"
+    end
 end
