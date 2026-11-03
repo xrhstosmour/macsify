@@ -195,6 +195,54 @@
             "command": "bash ~/.config/agentic/hooks/auto-session-title.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.config/agentic/hooks/herdr-application-status.sh working"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.config/agentic/hooks/herdr-application-status.sh idle"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.config/agentic/hooks/herdr-application-status.sh notification"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.config/agentic/hooks/herdr-application-status.sh done"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.config/agentic/hooks/herdr-application-status.sh clear"
+          }
+        ]
       }
     ],
     "PreToolUse": [
@@ -213,6 +261,16 @@
           {
             "type": "command",
             "command": "bash ~/.config/agentic/hooks/webfetch-guard.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.config/agentic/hooks/herdr-application-status.sh working"
           }
         ]
       }

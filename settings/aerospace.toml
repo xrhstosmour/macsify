@@ -25,6 +25,12 @@
 #   - Right Shift → Delete
 #
 
+# Version 2 no longer guesses the persistent workspaces from the bindings, so the
+# ten that `ctrl-1` to `ctrl-0` switch to are listed explicitly, keeping them alive
+# when empty as version 1 did.
+config-version = 2
+persistent-workspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+
 # Start `Aerospace` at login.
 start-at-login = true
 
@@ -160,6 +166,8 @@ alt-backtick = 'exec-and-forget open -a Finder'
 alt-m = 'exec-and-forget open -a /Applications/Spotify.app'
 
 alt-k = 'exec-and-forget open -a /Applications/Obsidian.app'
+
+alt-h = 'exec-and-forget open -a Herdr'
 
 alt-quote = 'exec-and-forget open -a "/System/Applications/System Settings.app"'
 

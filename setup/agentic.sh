@@ -548,3 +548,6 @@ if brewfile_declares herdr; then
         install_herdr_component "herdr-worktree-cleanup plugin" herdr plugin link "$HOME/.config/herdr-worktree-cleanup" --enabled
     fi
 fi
+
+# The `Herdr` desktop app has no `Homebrew` cask, its own script installs it with its mods.
+bash "$AGENTIC_SCRIPT_DIRECTORY/herdr-application.sh" || log_warning "'Herdr' app setup failed, run 'setup/herdr-application.sh' later."

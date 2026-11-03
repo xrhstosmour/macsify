@@ -40,6 +40,12 @@ jobs:
         run: |
           cp .config/agentic/hooks/opencode-guards.js "$RUNNER_TEMP/opencode-guards.mjs"
           node --check "$RUNNER_TEMP/opencode-guards.mjs"
+          # The mods are ES modules in `.js` files, so each is checked as `.mjs`.
+          for mod in .config/herdr-app/mods/*/main.js .config/herdr-app/mods/*/logic.js; do
+            [ -f "$mod" ] || continue
+            cp "$mod" "$RUNNER_TEMP/mod-check.mjs"
+            node --check "$RUNNER_TEMP/mod-check.mjs"
+          done
 
       - name: Validate skill frontmatter
         run: .github/scripts/check-skill-frontmatter.sh
