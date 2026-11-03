@@ -12,7 +12,6 @@ APPLICATIONS_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 # Import functions and flags.
 source "$APPLICATIONS_SCRIPT_DIRECTORY/../helpers/logs.sh"
-source "$APPLICATIONS_SCRIPT_DIRECTORY/../helpers/brewfile.sh"
 
 # Declare application configuration sources, destinations and names.
 APPLICATIONS_SOURCES=(
@@ -73,15 +72,5 @@ for i in "${!APPLICATIONS_SOURCES[@]}"; do
     killall cfprefsd 2>/dev/null || true
   fi
 done
-
-# Configure applications that need more than a settings file, each only on a
-# profile whose Brewfile installs it.
-if brewfile_declares syncthing-app; then
-  bash "$APPLICATIONS_SCRIPT_DIRECTORY/syncthing.sh"
-fi
-
-if brewfile_declares clamav; then
-  bash "$APPLICATIONS_SCRIPT_DIRECTORY/antivirus.sh"
-fi
 
 log_success "All applications configurations restored successfully."
