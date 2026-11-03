@@ -63,7 +63,7 @@ Wrong: `git commit --fixup <fixup_sha>`. Right: `git commit --fixup <original_sh
 - Never push directly to `main`/`master`, use a pull request. Force-push is fine on feature branches with `--force-with-lease`.
 - Keep pull requests single-topic, non-stacked, independently mergeable against `main`.
 - Before merging, verify `CI`/`CD` is green if configured, fix issues on the branch, never merge around a red check.
-- Before merging, rebase onto the default branch and autosquash `fixup!`/`squash!` commits: `git fetch origin && git rebase -i --autosquash $(git rev-parse --abbrev-ref origin/HEAD)`, then push with `--force-with-lease`.
+- Before merging, rebase onto the default branch and autosquash `fixup!`/`squash!`/`amend!` commits with the `prepare-github-pr-for-review` skill.
 - Merge with `gh pr merge <number> --merge --delete-branch --subject 'Merge branch `<branch>`'`, or the platform's equivalent.
 
 ## Change Summaries
