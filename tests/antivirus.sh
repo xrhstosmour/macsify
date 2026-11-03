@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Checks `.config/antivirus/scan.sh`: an infected file moves into quarantine with a
+# Checks `.config/scripts/antivirus/scan.sh`: an infected file moves into quarantine with a
 # note and without execute bits, a clean file and a file outside the scanned paths
 # stay, `--recent` skips old files, and nothing is ever deleted. `clamscan` is
 # stubbed to flag any file containing the word EICAR, no engine or signatures needed.
@@ -8,7 +8,7 @@
 set -e
 
 TESTS_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-SCAN_SCRIPT="$TESTS_SCRIPT_DIRECTORY/../.config/antivirus/scan.sh"
+SCAN_SCRIPT="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/antivirus/scan.sh"
 
 TEST_DIRECTORY=$(mktemp -d)
 trap 'rm -rf "$TEST_DIRECTORY"' EXIT
@@ -73,7 +73,7 @@ bash "$SCAN_SCRIPT" --recent "$TEST_DIRECTORY/watched"
 # Startup diff: the first run only saves a baseline, a new item is reported once.
 export ANTIVIRUS_DATA_DIRECTORY="$TEST_DIRECTORY/data"
 export ANTIVIRUS_STARTUP_DIRECTORIES="$TEST_DIRECTORY/launch"
-STARTUP_SCRIPT="$TESTS_SCRIPT_DIRECTORY/../.config/antivirus/startup-difference.sh"
+STARTUP_SCRIPT="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/antivirus/startup-difference.sh"
 mkdir -p "$TEST_DIRECTORY/launch"
 touch "$TEST_DIRECTORY/launch/known.plist"
 : >"$ANTIVIRUS_LOG_FILE"
@@ -88,7 +88,7 @@ bash "$STARTUP_SCRIPT"
 
 # Report: says what it found and does not repeat it on the next run.
 export ANTIVIRUS_REPORT_DIRECTORY="$TEST_DIRECTORY/reports"
-REPORT_SCRIPT="$TESTS_SCRIPT_DIRECTORY/../.config/antivirus/report.sh"
+REPORT_SCRIPT="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/antivirus/report.sh"
 echo "$(date '+%Y-%m-%d %H:%M:%S') QUARANTINED '/x/bad' as '/q/bad', Eicar" >>"$ANTIVIRUS_LOG_FILE"
 first=$(bash "$REPORT_SCRIPT")
 grep -q '^HIGH:' "$first" || fail "report has no HIGH line for a quarantined file"

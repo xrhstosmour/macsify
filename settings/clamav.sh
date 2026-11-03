@@ -13,7 +13,7 @@ ANTIVIRUS_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 source "$ANTIVIRUS_SCRIPT_DIRECTORY/../helpers/logs.sh"
 source "$ANTIVIRUS_SCRIPT_DIRECTORY/../helpers/launch_agent.sh"
 
-SCAN_SCRIPT="$HOME/.config/antivirus/scan.sh"
+SCAN_SCRIPT="$HOME/.config/scripts/antivirus/scan.sh"
 QUARANTINE_DIRECTORY="$HOME/.local/share/antivirus/quarantine"
 
 if ! command -v clamscan &>/dev/null; then
@@ -83,7 +83,7 @@ install_launch_agent "com.local.antivirus.startup" "<?xml version=\"1.0\" encodi
 <plist version=\"1.0\">
 <dict>
     <key>Label</key><string>com.local.antivirus.startup</string>
-    <key>ProgramArguments</key><array><string>/bin/bash</string><string>-c</string><string>$HOME/.config/antivirus/startup-difference.sh; $HOME/.config/antivirus/report.sh</string></array>
+    <key>ProgramArguments</key><array><string>/bin/bash</string><string>-c</string><string>/bin/bash $HOME/.config/scripts/antivirus/startup-difference.sh; /bin/bash $HOME/.config/scripts/antivirus/report.sh</string></array>
     <key>StartCalendarInterval</key><dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>0</integer></dict>
 </dict>
 </plist>"
