@@ -701,7 +701,10 @@ export default class Spaces extends View {
   // A space named like its folder repeats it, so the row says its branch instead.
   // A space in a folder of several repositories keeps its own name, it is the one
   // telling them apart.
+  // A name the app already cut with "…" has lost its end for good, the folder it
+  // works in is the whole name left.
   rowName(w, g, tree, folder) {
+    if (w.name.endsWith("…")) return base(place(w, panes()) ?? "") || w.name;
     const folderName = folders(w.machine ?? null).list.find((f) => f.id === folder)?.name;
     const repeats = folderName && w.name.toLowerCase() === folderName.toLowerCase();
     return !tree && repeats && g?.branch ? g.branch : w.name;
