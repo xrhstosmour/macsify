@@ -17,7 +17,8 @@ source "$HERDR_APPLICATION_SCRIPT_DIRECTORY/../helpers/logs.sh"
 # it in `~/Applications` and links `herdr-app` into `~/.local/bin`, which is the
 # one place checked for it being installed.
 HERDR_APPLICATION_BINARY="$HOME/.local/bin/herdr-app"
-HERDR_APPLICATION_MODS_DIRECTORY="${HERDR_APPLICATION_HOME:-$HOME/.config/herdr-app}/mods"
+HERDR_APPLICATION_HOME_DIRECTORY="${HERDR_APPLICATION_HOME:-$HOME/.config/herdr-app}"
+HERDR_APPLICATION_MODS_DIRECTORY="$HERDR_APPLICATION_HOME_DIRECTORY/mods"
 
 # The installer, read on 2026-11-03 and pinned by its checksum, so a changed
 # installer stops here instead of running unread. It still downloads the app
@@ -134,11 +135,16 @@ else
 fi
 
 # The vendored mods only run as blocks of the active layout, so select it here.
-# `herdr-app do` needs the app running, a closed app keeps the manual switch.
+# A running app owns `shared.json` and would overwrite an edit of it, so it gets
+# `layout.switch`, a closed one reads the `layout` key from the file on start.
+HERDR_APPLICATION_SHARED_FILE="$HERDR_APPLICATION_HOME_DIRECTORY/shared.json"
 if [ -x "$HERDR_APPLICATION_BINARY" ] && pgrep -x Herdr >/dev/null; then
   "$HERDR_APPLICATION_BINARY" "do" layout.switch '{"name":"workbench"}' >/dev/null || log_warning "Could not switch to the 'workbench' layout, use 'ctrl-shift-l'."
+elif [ -s "$HERDR_APPLICATION_SHARED_FILE" ]; then
+  # Written to a copy first, so an invalid file is left as it was.
+  { jq '.layout = "workbench"' "$HERDR_APPLICATION_SHARED_FILE" >"$WORK_DIRECTORY/shared.json" && mv "$WORK_DIRECTORY/shared.json" "$HERDR_APPLICATION_SHARED_FILE"; } || log_warning "Could not set the 'workbench' layout in '$HERDR_APPLICATION_SHARED_FILE', use 'ctrl-shift-l'."
 else
-  log_info "The 'Herdr' app is not running, switch to the 'workbench' layout once with 'ctrl-shift-l'."
+  printf '{"layout":"workbench"}\n' >"$HERDR_APPLICATION_SHARED_FILE"
 fi
 
 log_success "'Herdr' app set up."
