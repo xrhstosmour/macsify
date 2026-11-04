@@ -14,9 +14,11 @@ function expect(label, actual, wanted) {
 
 const home = "/Users/someone";
 const shell = { name: "zsh", shell: true };
-const agent = { name: "Claude Code", shell: false };
+const agent = { name: "Claude Code", shell: false, icon: "icons/claude.svg" };
+const unlisted = { name: "htop", shell: false, icon: null };
 
-expect("folder and program", autoName({ cwd: `${home}/Developer/macsify`, program: agent }, home), "macsify · Claude Code");
+expect("a program with an icon adds nothing", autoName({ cwd: `${home}/Developer/macsify`, program: agent }, home), "macsify");
+expect("a program without an icon keeps its name", autoName({ cwd: `${home}/Developer/macsify`, program: unlisted }, home), "macsify · htop");
 expect("a shell adds nothing", autoName({ cwd: `${home}/Developer/macsify`, program: shell }, home), "macsify");
 expect("home", autoName({ cwd: home, program: shell }, home), "~");
 expect("no folder yet", autoName({ cwd: null, program: shell }, home), null);
