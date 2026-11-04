@@ -49,6 +49,7 @@ New shell scripts should match the existing pattern (see `install.sh`, `configur
 - A `*_SCRIPT_DIRECTORY` constant computed with `cd "$(dirname "$0")" && pwd` (or `"${BASH_SOURCE[0]}"`), used for all relative paths.
 - Source `helpers/logs.sh` (and `helpers/ui.sh`, `helpers/brewfile.sh` where relevant) instead of re-implementing logging or Brewfile parsing.
 - Use `log_info`/`log_success`/`log_error`/`log_divider` for output, not raw `echo`.
+- `log_divider` belongs to orchestrators (`install.sh`, `configure.sh`, `setup/preferences.sh`, `setup/security.sh`) and goes between two steps, never first or last. Leaf scripts and `apply_*` functions print none, so a step never doubles or drops its separator.
 - Comments end with a period, placed above the line they describe.
 
 ## `.config/` is copied blindly
