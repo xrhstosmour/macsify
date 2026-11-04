@@ -1,8 +1,9 @@
 // The decisions of the `worktree-cleanup` mod, kept free of the `herdr` module
 // so `tests/worktree-cleanup-application.sh` can run them against real `git` in Node.
 // Mirrors `.config/herdr-worktree-cleanup/worktree-cleanup.sh`, the multiplexer
-// plugin, with one stricter rule: a worktree whose work is not merged is kept
-// whole, not only its branch.
+// plugin, with two differences: a worktree whose work is neither merged nor
+// pushed is kept whole, not only its branch, and a clean one whose branch is
+// pushed in full is removed too, the remote still holds every commit.
 
 // Worktrees kept on purpose, whatever their state. The same names the plugin
 // skips, plus the scratch ones. More go in the shared `protected` file.
@@ -122,8 +123,22 @@ export async function branchMerged(exec, mainCheckout, branch, fetched = new Set
   return { merged: false, reason: "not merged" };
 }
 
+// Whether every commit of a branch is on its own origin branch, as of the last
+// fetch, so deleting the local branch loses nothing. Never true for a branch
+// with no origin counterpart, or one with commits made after the last push.
+export async function branchPushed(exec, mainCheckout, branch) {
+  const tip = await git(exec, mainCheckout, ["rev-parse", "--verify", "--quiet", `refs/heads/${branch}`]);
+  const remote = await git(exec, mainCheckout, ["rev-parse", "--verify", "--quiet", `refs/remotes/origin/${branch}`]);
+  if (!tip || !remote) return false;
+  try {
+    return (await exec("git", ["merge-base", "--is-ancestor", tip, remote], { cwd: mainCheckout })).code === 0;
+  } catch {
+    return false;
+  }
+}
+
 // Removes one linked worktree when it is safe to, and its branch once the work
-// is merged. Resolves to `{ outcome, reason }` with outcome one of `removed`,
+// is merged or pushed. Resolves to `{ outcome, reason }` with outcome one of `removed`,
 // `kept` (check again later) or `untrack` (nothing left to watch). Never forces:
 // git itself refuses a locked or dirty worktree. `isOccupied` is asked right
 // before the removal, the merge check can take a while and a terminal may have
@@ -153,8 +168,13 @@ export async function sweepWorktree(path, { exec, protectedEntries = [], fetched
     }
   }
 
+  // Merged, or pushed in full, either way no commit exists only here.
   const merged = await branchMerged(exec, mainCheckout, branch, fetched);
-  if (!merged.merged) return { outcome: "kept", reason: `branch '${branch}' ${merged.reason}` };
+  if (!merged.merged && (await branchPushed(exec, mainCheckout, branch))) {
+    merged.merged = true;
+    merged.reason = "pushed to origin";
+  }
+  if (!merged.merged) return { outcome: "kept", reason: `branch '${branch}' ${merged.reason}, not pushed` };
 
   if (await isOccupied()) return { outcome: "kept", reason: "a terminal opened in it" };
 
