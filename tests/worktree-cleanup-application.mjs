@@ -1,7 +1,8 @@
 // Runs `sweepWorktree` from the `Herdr` app's `worktree-cleanup` mod against real
 // temporary `git` repositories. Started by `tests/worktree-cleanup-application.sh`.
 // `tests/worktree-cleanup.sh` runs the same cases against the multiplexer plugin,
-// a case added here belongs there too, the two must decide alike.
+// a case added here belongs there too, the two must decide alike, except the
+// pushed branch cases below, which only the app's mod keeps.
 import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -89,6 +90,21 @@ await check("fresh branch", worktree("fresh"), "removed", true);
 const unmerged = worktree("unmerged", { commit: true });
 await check("not merged", unmerged, "kept", false);
 if (!branchExists("unmerged")) fail("an unmerged branch was deleted");
+
+// Not merged but pushed in full: the remote holds every commit, so the worktree and branch go.
+// A commit made after the push is only here, so it stays. This is the app's own rule, the plugin
+// keeps an unmerged branch.
+const pushed = worktree("pushed", { commit: true });
+git(pushed, "push", "--quiet", "origin", "feature/pushed");
+await check("pushed in full", pushed, "removed", true);
+if (branchExists("pushed")) fail("a branch pushed in full was not deleted");
+const pushedMore = worktree("pushed-more", { commit: true });
+git(pushedMore, "push", "--quiet", "origin", "feature/pushed-more");
+writeFileSync(join(pushedMore, "after.txt"), "after");
+git(pushedMore, "add", ".");
+git(pushedMore, "commit", "--quiet", "-m", "after the push");
+await check("commit after the push", pushedMore, "kept", false);
+if (!branchExists("pushed-more")) fail("a branch with an unpushed commit was deleted");
 
 // A squash merge cannot be seen by ancestry, a merged pull request whose head is the
 // branch tip proves it. A head from before later commits does not.
