@@ -68,9 +68,12 @@ for commit in $(grep -oE '\b[0-9a-f]{40}\b' "$HERDR_APPLICATION_SCRIPT"); do
   grep -q "^checkout $commit$" "$CALLS" || fail "a mod was not checked out at its pinned commit $commit"
 done
 grep -q '^check ' "$CALLS" && fail "a mod was checked without 'herdr-app' installed"
-for folder in tmux-prefix space-folders agents-compact worktree-cleanup repository-sync tab-names; do
+for folder in tmux-prefix space-folders agents-compact worktree-developer worktree-cleanup repository-sync tab-names; do
   [ -f "$MODS_DIRECTORY/$folder/mod.json" ] || fail "the vendored '$folder' mod was not copied"
 done
+
+# Worktrees of the `worktree` mod land in `~/Developer/worktrees` through a link.
+[ "$(readlink "$HOME/.herdr/worktrees")" = "$HOME/Developer/worktrees" ] || fail "the worktrees folder of 'herdr' was not linked"
 
 # The app is installed now, a second run neither downloads it nor touches the installed mods.
 cat >"$HOME/.local/bin/herdr-app" <<'FAKE'
@@ -92,6 +95,14 @@ echo "stale" >"$MODS_DIRECTORY/tab-names/mod.json"
 run_script >/dev/null
 grep -q "^check .*/reviewer$" "$CALLS" || fail "an installed mod was not checked"
 cmp -s "$MODS_DIRECTORY/tab-names/mod.json" "$TESTS_SCRIPT_DIRECTORY/../.config/herdr-app/mods/tab-names/mod.json" || fail "a vendored mod was not refreshed"
+
+# A real worktrees folder is never replaced by the link.
+rm "$HOME/.herdr/worktrees"
+mkdir -p "$HOME/.herdr/worktrees/kept"
+output=$(run_script)
+[ -d "$HOME/.herdr/worktrees/kept" ] || fail "a real worktrees folder was replaced"
+grep -q "is a real folder" <<<"$output" || fail "a real worktrees folder was not reported"
+rm -rf "$HOME/.herdr/worktrees"
 
 # A mod failing its check is reported, the rest still install.
 rm -rf "$MODS_DIRECTORY/open-vscode"
