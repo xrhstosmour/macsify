@@ -38,7 +38,7 @@ claude:designer:model:sonnet
 claude:designer:effort:medium
 claude:reviewer:model:opus
 claude:reviewer:effort:medium
-claude:explore:model:sonnet
+claude:explore:model:haiku
 claude:explore:effort:medium
 
 # Codex
