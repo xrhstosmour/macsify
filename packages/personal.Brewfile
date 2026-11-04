@@ -7,11 +7,11 @@ instance_eval(File.read(base_brewfile), base_brewfile, 1)
 tap 'wickenico/wailbrew'
 
 # Install dependencies for various utilities and applications.
-brew 'airsync'
 brew 'clamav'
 brew 'cocoapods'
 
 # Install applications.
+cask 'airsync'
 cask 'android-commandlinetools'
 cask 'brave-browser'
 cask 'filen'
