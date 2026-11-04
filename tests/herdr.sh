@@ -101,14 +101,27 @@ cmp -s "$MODS_DIRECTORY/tab-names/mod.json" "$TESTS_SCRIPT_DIRECTORY/../.config/
 
 # The layout is switched only while the app runs, the fake `pgrep` stands in for it.
 : >"$CALLS"
-output=$(run_script)
+run_script >/dev/null
 grep -q '^do layout.switch' "$CALLS" && fail "the layout was switched while the app was closed"
-grep -q "app is not running" <<<"$output" || fail "a closed app was not reported"
 printf '#!/bin/bash\nexit 0\n' >"$FAKE_BINARIES/pgrep"
 : >"$CALLS"
 run_script >/dev/null
 grep -q '^do layout.switch' "$CALLS" || fail "the layout was not switched while the app ran"
 printf '#!/bin/bash\nexit 1\n' >"$FAKE_BINARIES/pgrep"
+
+# A closed app starts on the layout the file names, the rest of the file stays.
+SHARED_FILE="$HOME/.config/herdr-app/shared.json"
+rm -f "$SHARED_FILE"
+run_script >/dev/null
+[ "$(jq -r '.layout' "$SHARED_FILE")" = "workbench" ] || fail "a missing state file did not get the layout"
+echo '{"sidebar.width":300,"layout":"main"}' >"$SHARED_FILE"
+run_script >/dev/null
+[ "$(jq -r '.layout' "$SHARED_FILE")" = "workbench" ] || fail "the layout of an existing state file was not set"
+[ "$(jq -r '."sidebar.width"' "$SHARED_FILE")" = "300" ] || fail "setting the layout dropped other state"
+echo 'not json' >"$SHARED_FILE"
+output=$(run_script)
+[ "$(cat "$SHARED_FILE")" = "not json" ] || fail "an invalid state file was overwritten"
+grep -q "Could not set the 'workbench' layout" <<<"$output" || fail "an invalid state file was not reported"
 
 # A real worktrees folder is never replaced by the link.
 rm "$HOME/.herdr/worktrees"
