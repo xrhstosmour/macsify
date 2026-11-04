@@ -208,6 +208,10 @@
           {
             "type": "command",
             "command": "bash ~/.config/agentic/hooks/herdr-application-status.sh idle"
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.config/agentic/hooks/herdr-application-resume.sh save claude"
           }
         ]
       }
@@ -242,6 +246,10 @@
           {
             "type": "command",
             "command": "bash ~/.config/agentic/hooks/herdr-application-status.sh clear"
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.config/agentic/hooks/herdr-application-resume.sh end"
           }
         ]
       }
