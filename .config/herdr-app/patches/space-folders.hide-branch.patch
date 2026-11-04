@@ -1,9 +1,0 @@
---- space-folders/main.js
-+++ space-folders/main.js
-@@ -669,5 +669,5 @@
-       .text_size(11.5)
-       .text_color(t.dim)
--      .when(Boolean(where), (el) => el.child(div().min_w(0).truncate().child(where)))
-+      // Repo and branch text hidden by macsify, the arrows below stay.
-       .when(g.ahead > 0, (el) => el.child(div().flex_none().text_color(t.ansi2).child(`↑${g.ahead}`)))
-       .when(g.behind > 0, (el) => el.child(div().flex_none().text_color(t.ansi1).child(`↓${g.behind}`)));
