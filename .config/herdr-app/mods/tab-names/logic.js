@@ -1,7 +1,8 @@
 // The naming rules of the `tab-names` mod, free of the `herdr` module so
 // `tests/tab-names.sh` can run them in Node. Mirrors `herdr-automatic-rename`
 // as configured in `.config/herdr-automatic-rename/config.sh`: `folder · program`,
-// no branch, no index, names cut at 40 characters.
+// no branch, no index, names cut at 40 characters, except that a program with an
+// icon is left out of the name, which the plugin does not do.
 
 export const COLORS = ["🔴", "🟡", "🟢"];
 export const MAX_NAME_LENGTH = 40;
@@ -22,11 +23,13 @@ function cut(text, length) {
 }
 
 // `terminal` is the tab's main terminal pane: its `cwd` and its `program`
-// (`name`, `shell`). A shell adds nothing the folder does not say.
+// (`name`, `shell`, `icon`). A shell adds nothing the folder does not say, and
+// neither does a program with an icon, the tab draws it. A program without one
+// keeps its name, it is the only thing that says what runs there.
 export function autoName({ cwd, program }, home) {
   if (!cwd) return null;
   const folder = cwd === home ? "~" : cwd.split("/").filter(Boolean).pop() ?? "/";
-  const name = program && !program.shell && program.name ? `${folder} · ${program.name}` : folder;
+  const name = program && !program.shell && !program.icon && program.name ? `${folder} · ${program.name}` : folder;
   return cut(name, MAX_NAME_LENGTH);
 }
 
