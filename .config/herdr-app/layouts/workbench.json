@@ -30,7 +30,7 @@
             },
             {
               "content": {
-                "mod": "agents"
+                "mod": "agents-compact"
               },
               "id": "agents",
               "min": 90,

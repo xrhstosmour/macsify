@@ -28,14 +28,13 @@ HERDR_APPLICATION_INSTALLER_SHA256="49e2b998ee311e131997447542869b99f888ef6c3cd4
 
 # Community mods, one per line as `repository commit mod-folder...`. Each commit
 # is the one reviewed on 2026-11-03, a mod can run programs and read files, and
-# `Herdr` does not review them. `herdr-space-folders` also writes
-# `~/.config/herdr-space-folders.json`, outside its own folder. Bump a commit
-# only after reading the diff. `tmux-prefix` is not here, it is vendored in
-# `.config/herdr-app/mods/` with its own key bindings.
+# `Herdr` does not review them. Bump a commit only after reading the diff.
+# `tmux-prefix`, `space-folders` and `agents-compact` are not here, they are
+# vendored in `.config/herdr-app/mods/`, each header says where it came from, at
+# which commit or app version, and what was changed, a bump diffs against that.
 HERDR_APPLICATION_MODS=(
   "vytasgavelis/herdr-reviewer 424ca3e9cbe3e739df12e356a250c72612477fb5 reviewer"
   "rabeeh-ta/herdr-git-graph 2226f5733165667fb214aa3bdf78427fb29900c8 git-graph"
-  "jankeesvw/herdr-space-folders 0f1bae881bd5053e607585d94e8cab2b94a8b0de space-folders"
   "NazzarenoGiannelli/herdr-roundup 1ee565326cb4ccde7ee872b451ef3fd468b62348 roundup roundup-dry"
   "CacaoRick/herdr-open-vscode 1dfa20974f6da63b195660b68dd120bed2412184 open-vscode"
 )
@@ -102,32 +101,10 @@ for entry in "${HERDR_APPLICATION_MODS[@]}"; do
 done
 log_divider
 
-# Small patches to mods we do not own, in `.config/herdr-app/patches/`, named
-# after the mod they change. `space-folders` drew the repo and branch after a
-# space's name and `agents` the program name after an agent's, both only repeat
-# what the icon and the tab already say. Each applies to the pinned commit or the
-# app version it was made against, so a bump rechecks it. A mod that already
-# carries a patch is left alone.
-for patch_file in "$HERDR_APPLICATION_SCRIPT_DIRECTORY/../.config/herdr-app/patches/"*.patch; do
-  patched_mod=$(basename "$patch_file" | cut -d. -f1)
-  [ -d "$HERDR_APPLICATION_MODS_DIRECTORY/$patched_mod" ] || continue
-
-  # The forward check comes first, a reverse check also passes on an unpatched file
-  # when the patch only removes lines.
-  if patch -p0 -N --dry-run -s -d "$HERDR_APPLICATION_MODS_DIRECTORY" <"$patch_file" &>/dev/null; then
-    patch -p0 -N -s -d "$HERDR_APPLICATION_MODS_DIRECTORY" <"$patch_file"
-    log_success "Applied the '$patched_mod' patch."
-  elif patch -p0 -R --dry-run -s -d "$HERDR_APPLICATION_MODS_DIRECTORY" <"$patch_file" &>/dev/null; then
-    log_info "The '$patched_mod' patch is already applied."
-  else
-    log_warning "The '$patched_mod' patch does not apply, the mod changed, update the patch."
-  fi
-done
-
 # The vendored mods in `.config/herdr-app/mods/` are copied again on every run,
 # so a rerun of `setup/agentic.sh` alone refreshes them after a merge.
 VENDORED_MODS_DIRECTORY="$HERDR_APPLICATION_SCRIPT_DIRECTORY/../.config/herdr-app/mods"
-for vendored_mod in tmux-prefix worktree-cleanup repository-sync tab-names; do
+for vendored_mod in tmux-prefix space-folders agents-compact worktree-cleanup repository-sync tab-names; do
   checked_folders+=("$vendored_mod")
   mkdir -p "$HERDR_APPLICATION_MODS_DIRECTORY/$vendored_mod"
   cp -R "$VENDORED_MODS_DIRECTORY/$vendored_mod/." "$HERDR_APPLICATION_MODS_DIRECTORY/$vendored_mod/" || log_warning "Could not copy the '$vendored_mod' mod."

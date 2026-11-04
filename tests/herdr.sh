@@ -34,7 +34,7 @@ cat >"$FAKE_BINARIES/git" <<'FAKE'
 if [ "$1" = "clone" ] && [ -n "$FAIL_CLONE" ] && [[ "$2$3" == *"$FAIL_CLONE"* ]]; then
   exit 128
 elif [ "$1" = "clone" ]; then
-  for folder in reviewer git-graph space-folders roundup roundup-dry open-vscode; do
+  for folder in reviewer git-graph roundup roundup-dry open-vscode; do
     mkdir -p "${!#}/mods/$folder"
     echo '{}' >"${!#}/mods/$folder/mod.json"
   done
@@ -61,14 +61,14 @@ run_script() {
 output=$(run_script)
 [ -e "$INSTALLER_RAN" ] && fail "an installer with a different checksum was run"
 grep -q "installer changed since it was reviewed" <<<"$output" || fail "a changed installer was not reported"
-for folder in reviewer git-graph space-folders roundup roundup-dry open-vscode; do
+for folder in reviewer git-graph roundup roundup-dry open-vscode; do
   [ -f "$MODS_DIRECTORY/$folder/mod.json" ] || fail "the '$folder' mod was not copied"
 done
 for commit in $(grep -oE '\b[0-9a-f]{40}\b' "$HERDR_APPLICATION_SCRIPT"); do
   grep -q "^checkout $commit$" "$CALLS" || fail "a mod was not checked out at its pinned commit $commit"
 done
 grep -q '^check ' "$CALLS" && fail "a mod was checked without 'herdr-app' installed"
-for folder in tmux-prefix worktree-cleanup repository-sync tab-names; do
+for folder in tmux-prefix space-folders agents-compact worktree-cleanup repository-sync tab-names; do
   [ -f "$MODS_DIRECTORY/$folder/mod.json" ] || fail "the vendored '$folder' mod was not copied"
 done
 
