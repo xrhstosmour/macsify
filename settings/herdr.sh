@@ -133,4 +133,12 @@ else
   log_warning "Mod checks skipped, 'herdr-app' is not installed, run 'settings/herdr.sh' again once it is."
 fi
 
-log_success "'Herdr' app set up, switch to the 'workbench' layout once with 'ctrl-shift-l'."
+# The vendored mods only run as blocks of the active layout, so select it here.
+# `herdr-app do` needs the app running, a closed app keeps the manual switch.
+if [ -x "$HERDR_APPLICATION_BINARY" ] && pgrep -x Herdr >/dev/null; then
+  "$HERDR_APPLICATION_BINARY" "do" layout.switch '{"name":"workbench"}' >/dev/null || log_warning "Could not switch to the 'workbench' layout, use 'ctrl-shift-l'."
+else
+  log_info "The 'Herdr' app is not running, switch to the 'workbench' layout once with 'ctrl-shift-l'."
+fi
+
+log_success "'Herdr' app set up."
