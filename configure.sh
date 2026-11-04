@@ -18,7 +18,7 @@ source "$CONFIGURE_SCRIPT_DIRECTORY/helpers/brewfile.sh"
 profile_resolve
 
 # `Homebrew` and Brewfile dependencies are installed by `install.sh` before this
-# script runs, agentic setup in between needs them already in place.
+# script runs, agentic setup below needs them already in place.
 command -v brew &>/dev/null || { log_error "'brew' not found, run install.sh first."; exit 1; }
 
 # Install `Mac App Store` applications, before the developer tools because the
@@ -48,8 +48,10 @@ fi
 source setup/developer.sh
 source utilities/development.sh
 
-# `node` and `npm` come from `mise` in the step above, so the agentic setup that
-# `install.sh` ran earlier skipped its `npm` plugin installs. Rerun it, it is idempotent.
+# Set up agentic configuration: inject models, symlink shared content. Runs once,
+# here, because its `npm` plugin installs need the `node` and `npm` that `mise`
+# provides in the step above.
+log_info "Setting up agentic configuration..."
 bash setup/agentic.sh
 
 # Set up the mobile development toolchain. Asked with a no-op command and run
