@@ -1,7 +1,9 @@
 // Vendored from jankeesvw/herdr-space-folders `space-folders` at commit
 // 0f1bae881bd5053e607585d94e8cab2b94a8b0de, reviewed on 2026-11-03. The only
-// change is the repo and branch text after a space's name, hidden because the
-// icon already says it. It also writes `~/.config/herdr-space-folders.json`.
+// changes are the repo and branch text after a space's name, hidden because the
+// icon already says it, and a branch button next to a folder's +, which opens
+// the `worktree-developer` dialog for a new worktree. It also writes
+// `~/.config/herdr-space-folders.json`.
 // Recheck the diff against upstream before bumping the commit.
 //
 // Workspace spaces: stable colored avatars, worktrees under their checkout,
@@ -56,6 +58,15 @@ async function newSpaceIn(machine, id) {
   const path = folders(machine).list.find((f) => f.id === id)?.path;
   const folder = path ? await expand(machine, path).catch(() => null) : null;
   run("space.new", { ...(machine ? { machine } : {}), ...(folder ? { folder } : {}) });
+}
+
+// A new worktree for a folder that is a repository, so a parallel session never
+// shares the main checkout. The `worktree-developer` dialog says so when it is not one.
+async function newWorktreeIn(machine, id) {
+  setShared("space-folders.new", { machine, id, before: spaces().map((s) => s.id), until: Date.now() + 60000 });
+  const path = folders(machine).list.find((f) => f.id === id)?.path;
+  const folder = path ? await expand(machine, path).catch(() => null) : null;
+  openOverlay({ mod: "worktree-developer", kind: "dialog", width: 440, height: 260, props: { ...(folder ? { folder } : {}), ...(machine ? { machine } : {}), action: "new" } });
 }
 
 // A rule of "Collect spaces from" takes a folder and everything in it. "~" is
@@ -522,8 +533,11 @@ export default class Spaces extends View {
       // Folded, it still says when something in it is running or needs you.
       .when(f.folded && status === "working", (el) => el.child(svg("mods/workspace-chrome/spinner.svg").size(11).flex_none().text_color(t.working).spin(900)))
       .when(f.folded && Boolean(status) && status !== "working", (el) => el.child(div().flex_none().text_color(tone(t, status)).child(glyph(status))))
-      .child(div().id(`folder-add-${f.id}`).flex_none().px(4).rounded(4).text_color(t.dim).hover((s) => s.bg(t.hover).text_color(t.foreground))
+      .child(h_flex().flex_none().items_center()
+        .child(div().id(`folder-add-${f.id}`).flex_none().px(4).rounded(4).text_color(t.dim).hover((s) => s.bg(t.hover).text_color(t.foreground))
         .on_click((_e, cx) => { cx.stop_propagation(); newSpaceIn(machine, f.id); }).child("+"))
+        .child(div().id(`folder-worktree-${f.id}`).flex_none().px(3).rounded(4).text_color(t.dim).hover((s) => s.bg(t.hover).text_color(t.foreground))
+        .on_click((_e, cx) => { cx.stop_propagation(); newWorktreeIn(machine, f.id); }).child(svg("mods/workspace-chrome/branch.svg").size(12))))
       .child(div().flex_none().text_size(11.5).text_color(t.dim).child(String(inside.length)))
       .child(svg(`mods/workspace-chrome/chevron-${f.folded ? "right" : "down"}.svg`).size(11).flex_none().text_color(t.dim));
   }
