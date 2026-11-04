@@ -41,7 +41,6 @@ if [ ! -f ~/.gitconfig ]; then
 else
   log_warning "'Git' is already configured."
 fi
-log_divider
 
 # Ensure `~/.ssh/config` contains the correct `1Password SSH IdentityAgent` directive.
 if [ ! -f "$SSH_CONFIG" ]; then
@@ -54,7 +53,6 @@ elif ! grep -q 'IdentityAgent.*1password/t/agent.sock' "$SSH_CONFIG"; then
 else
   log_warning "'1Password SSH IdentityAgent' is already configured in '.ssh/config'."
 fi
-log_divider
 
 # Create `Developer` directory.
 if [ ! -d ~/Developer ]; then
@@ -63,14 +61,12 @@ if [ ! -d ~/Developer ]; then
 else
   log_warning "'Developer' directory already exists."
 fi
-log_divider
 
 # Install `mise` version manager.
 if ! command -v mise &>/dev/null; then
     log_info "Installing 'mise' version manager..."
     brew install mise
     log_success "'mise' installed successfully."
-    log_divider
 fi
 
 # Trust every workspace under `~/Developer` (worktrees, clones) so `mise`'s
@@ -83,5 +79,4 @@ if command -v mise &>/dev/null; then
         mise settings add trusted_config_paths "$HOME/Developer/"
         log_success "'mise' trusted config paths configured."
     fi
-    log_divider
 fi

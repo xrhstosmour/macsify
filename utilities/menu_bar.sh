@@ -30,5 +30,4 @@ apply_menu_bar_configuration() {
     defaults write NSGlobalDomain _HIHideMenuBar -bool true
 
     log_success "'Menu Bar' configuration applied successfully."
-    log_divider
 }

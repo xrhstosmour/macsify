@@ -31,14 +31,17 @@ chmod +x ~/.config/scripts/*/*.sh
 # Install `Homebrew` and Brewfile dependencies before `configure.sh`, whose agentic
 # setup needs `opencode`/`claude`/`codex`/`copilot` actually installed, not just
 # declared in the Brewfile.
+log_divider
 log_info "Installing 'Homebrew', dependencies and applications..."
 source "$INSTALL_SCRIPT_DIRECTORY/setup/homebrew.sh"
 brew bundle install --file="$(brewfile_path)" || log_warning "Some Brewfile entries failed, continuing."
 
 # Configure `macOS`.
+log_divider
 log_info "Starting 'macOS' configuration..."
 bash "$INSTALL_SCRIPT_DIRECTORY/configure.sh"
 
+log_divider
 log_success "System configuration completed!"
 
 message="Do you want to reboot the system now?"

@@ -201,5 +201,4 @@ apply_system_configuration() {
     fi
 
     log_success "System configuration applied successfully."
-    log_divider
 }

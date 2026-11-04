@@ -59,7 +59,6 @@ if [ ! -x "$HERDR_APPLICATION_BINARY" ]; then
     log_warning "The 'Herdr' app installer failed, the app is skipped."
   fi
 fi
-log_divider
 
 mkdir -p "$HERDR_APPLICATION_MODS_DIRECTORY"
 
@@ -100,7 +99,6 @@ for entry in "${HERDR_APPLICATION_MODS[@]}"; do
     }
   done
 done
-log_divider
 
 # The vendored mods in `.config/herdr-app/mods/` are copied again on every run,
 # so a rerun of `setup/agentic.sh` alone refreshes them after a merge.

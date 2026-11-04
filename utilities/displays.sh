@@ -23,8 +23,6 @@ apply_displays_configuration() {
     else
         log_warning "Display Watcher configuration skipped."
     fi
-
-    log_divider
 }
 
 # Function to compile one `.config/scripts/displays/<name>.swift` source into a standalone

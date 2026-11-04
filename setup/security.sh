@@ -10,6 +10,7 @@ set -e
 SECURITY_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 # Import functions and flags.
+source "$SECURITY_SCRIPT_DIRECTORY/../helpers/logs.sh"
 source "$SECURITY_SCRIPT_DIRECTORY/../helpers/brewfile.sh"
 
 # Security tooling, each part only on a profile whose Brewfile installs it.
@@ -18,5 +19,9 @@ if brewfile_declares syncthing-app; then
 fi
 
 if brewfile_declares clamav; then
+  # Only between the two parts, not when `Syncthing` was skipped.
+  if brewfile_declares syncthing-app; then
+    log_divider
+  fi
   bash "$SECURITY_SCRIPT_DIRECTORY/../settings/clamav.sh"
 fi

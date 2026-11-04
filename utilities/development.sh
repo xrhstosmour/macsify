@@ -68,5 +68,3 @@ for i in "${!LANGUAGE_DISPLAY_NAMES[@]}"; do
         log_success "$display_name installation finished!"
     fi
 done
-
-log_divider

@@ -48,5 +48,4 @@ apply_appearance_configuration() {
     defaults write com.apple.Accessibility ReduceMotionEnabled -bool true || true
 
     log_success "Appearance configuration applied successfully."
-    log_divider
 }

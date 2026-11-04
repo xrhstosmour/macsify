@@ -34,11 +34,19 @@ if dock_is_default; then
 fi
 
 apply_finder_configuration
+log_divider
 apply_dock_configuration "$dock_was_default"
+log_divider
 apply_menu_bar_configuration
+log_divider
 apply_keyboard_configuration
+log_divider
 apply_trackpad_configuration
+log_divider
 apply_sound_configuration
+log_divider
 apply_appearance_configuration
+log_divider
 apply_system_configuration "$dock_was_default"
+log_divider
 apply_displays_configuration

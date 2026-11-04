@@ -154,7 +154,6 @@ PERSONAL_SKILLS_FILE_PATH="$AGENTIC_SCRIPT_DIRECTORY/../packages/personal.skills
 if [ "$MACSIFY_PROFILE" != "personal" ] && [ -f "$PERSONAL_SKILLS_FILE_PATH" ]; then
     remove_personal_skills "$AGENTIC_DIRECTORY" "$PERSONAL_SKILLS_FILE_PATH"
 fi
-log_divider
 
 # Only set up the tools declared in the Brewfile. `install.sh` runs `brew bundle` before
 # this script, so the Brewfile is the intent signal, not a runtime `command -v` check.

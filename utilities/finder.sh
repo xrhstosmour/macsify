@@ -90,5 +90,4 @@ apply_finder_configuration() {
     defaults write com.apple.sidebarlists systemitems -dict-add ShowHardDisks -bool true
 
     log_success "'Finder' configuration applied successfully."
-    log_divider
 }
