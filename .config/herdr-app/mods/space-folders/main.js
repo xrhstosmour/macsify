@@ -1,8 +1,9 @@
 // Vendored from jankeesvw/herdr-space-folders `space-folders` at commit
-// 0f1bae881bd5053e607585d94e8cab2b94a8b0de, reviewed on 2026-11-03. The only
-// changes are the repo and branch text after a space's name, hidden because the
-// icon already says it, and a branch button next to a folder's +, which opens
-// the `worktree-developer` dialog for a new worktree. It also writes
+// 0f1bae881bd5053e607585d94e8cab2b94a8b0de, reviewed on 2026-11-03. The changes
+// are the repo and branch text after a space's name, hidden because the icon
+// already says it, a branch button next to a folder's +, which opens the
+// `worktree-developer` dialog for a new worktree, and a space named like its
+// folder showing its branch instead of repeating the folder. It also writes
 // `~/.config/herdr-space-folders.json`.
 // Recheck the diff against upstream before bumping the commit.
 //
@@ -695,6 +696,15 @@ export default class Spaces extends View {
       .when(g.behind > 0, (el) => el.child(div().flex_none().text_color(t.ansi1).child(`\u2193${g.behind}`)));
   }
 
+  // A space named like its folder repeats it, so the row says its branch instead.
+  // A space in a folder of several repositories keeps its own name, it is the one
+  // telling them apart.
+  rowName(w, g, tree, folder) {
+    const folderName = folders(w.machine ?? null).list.find((f) => f.id === folder)?.name;
+    const repeats = folderName && w.name.toLowerCase() === folderName.toLowerCase();
+    return !tree && repeats && g?.branch ? g.branch : w.name;
+  }
+
   row({ w, i, g, tree, folder, nested }, t) {
     const on = w.active;
     const colors = shared("space.colors") ?? {};
@@ -747,7 +757,7 @@ export default class Spaces extends View {
           .items_center()
           .when(Boolean(tree), el => el.pl(22).child(svg("mods/workspace-chrome/branch.svg").size(13).text_color(t.dim)))
           .when(!tree, el => el.child(h_flex().size(18).flex_none().rounded(5).bg(fill).items_center().justify_center().text_size(10.5).font_bold().text_color("#ffffff").child([...w.name][0]?.toUpperCase() ?? "?")))
-          .child(div().flex_shrink(0).max_w(150).truncate().text_color(t.foreground).child(w.name))
+          .child(div().flex_shrink(0).max_w(150).truncate().text_color(t.foreground).child(this.rowName(w, g, tree, folder)))
           .child(g ? this.gitTail(g, tree, w.name, t) : div().flex_1()),
       );
   }
