@@ -28,16 +28,12 @@ mkdir -p ~/.config && cp -R .config/* ~/.config/
 # Give execute permission to all scripts in the directory.
 chmod +x ~/.config/scripts/*/*.sh
 
-# Install `Homebrew` and Brewfile dependencies before agentic setup below, its
-# MCP registration steps need `opencode`/`claude`/`codex`/`copilot` actually
-# installed, not just declared in the Brewfile.
+# Install `Homebrew` and Brewfile dependencies before `configure.sh`, whose agentic
+# setup needs `opencode`/`claude`/`codex`/`copilot` actually installed, not just
+# declared in the Brewfile.
 log_info "Installing 'Homebrew', dependencies and applications..."
 source "$INSTALL_SCRIPT_DIRECTORY/setup/homebrew.sh"
 brew bundle install --file="$(brewfile_path)" || log_warning "Some Brewfile entries failed, continuing."
-
-# Set up agentic configuration: inject models, symlink shared content.
-log_info "Setting up agentic configuration..."
-bash "$INSTALL_SCRIPT_DIRECTORY/setup/agentic.sh"
 
 # Configure `macOS`.
 log_info "Starting 'macOS' configuration..."

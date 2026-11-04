@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Personal macOS dotfiles/configuration repository.
-Installed on a new machine via `install.sh`, which copies `.config/*` into `~/.config/`, installs `Homebrew` and Brewfile dependencies, runs `setup/agentic.sh`, then `configure.sh` (App Store applications, developer tools, `additional_packages.txt`, `setup/*.sh`, `utilities/*.sh`).
+Installed on a new machine via `install.sh`, which copies `.config/*` into `~/.config/`, installs `Homebrew` and Brewfile dependencies, then runs `configure.sh` (App Store applications, developer tools, `setup/agentic.sh` once `mise` has provided `node`, `additional_packages.txt`, `setup/*.sh`, `utilities/*.sh`).
 This file documents the repository itself. For the agentic (AI assistant) subsystem's own architecture, see `.config/agentic/README.md`, don't duplicate it here.
 
 ## Directory map
@@ -10,7 +10,7 @@ This file documents the repository itself. For the agentic (AI assistant) subsys
 | ---- | ------- |
 | `core/` | Shell constants shared across scripts |
 | `helpers/` | Shared shell functions: logging (`logs.sh`), prompts (`ui.sh`), Brewfile parsing (`brewfile.sh`), work or personal profile (`profile.sh`), the testable steps of `setup/agentic.sh` (`agentic.sh`) |
-| `setup/` | Installation steps, `homebrew.sh` and `agentic.sh` run directly by `install.sh`, `agentic.sh` also copies `.config/agentic` and its local `herdr` plugins itself so it can be rerun alone after a merge, the rest (developer tools, mobile toolchain, applications, shell, macOS preferences) run by `configure.sh` |
+| `setup/` | Installation steps, `homebrew.sh` run directly by `install.sh`, `agentic.sh` run by `configure.sh` and also copies `.config/agentic` and its local `herdr` plugins itself so it can be rerun alone after a merge, the rest (developer tools, mobile toolchain, applications, shell, macOS preferences) run by `configure.sh` |
 | `utilities/` | macOS system preference scripts, one per domain (`dock.sh`, `finder.sh`, `keyboard.sh`, `trackpad.sh`, etc.) |
 | `settings/` | Third-party app config/preference files restored during install (`aerospace.toml`, `flameshot.ini`, `.plist.xml` files), and the scripts that configure applications |
 | `packages/` | `base.Brewfile` plus `personal.Brewfile` and `work.Brewfile` that include it (Homebrew), `store_applications_ids.txt` and `personal.store_applications_ids.txt` (Mac App Store, via `mas`), `personal.skills.txt` (agentic skills removed on a work machine), `additional_packages.txt` (arbitrary install commands) |
