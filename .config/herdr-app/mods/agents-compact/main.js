@@ -1,8 +1,8 @@
 // Vendored copy of the shipped `agents` mod (cloned, the app replaces the
 // shipped one on every start), under another name so it is never replaced. The
 // only changes are the program name under an agent hidden when the tab already
-// says it, the popup naming this mod, and an agent row showing the agent's own
-// title with the space as a small dim part before it. Cloned from `Herdr` app
+// says it, the popup naming this mod, and an agent row showing only the agent's
+// own title, the space name only when there is none. Cloned from `Herdr` app
 // 0.1.12, the version is also in `mod.json`. Recheck against the shipped mod
 // after an app update.
 //
@@ -341,9 +341,12 @@ export default class Agents extends View {
         })
         .child(svg(`mods/workspace-chrome/${isPinned ? "pin-off" : "pin"}.svg`).size(13));
       // Under a space header the space goes without saying; an automatic tab number says nothing.
-      // Without a space header above (priority, pinned) the row names its space.
+      // Without a space header above (priority, pinned) the row still shows only the
+      // conversation's name, the space only when it has none, the sidebar already lists it.
       const full = byPriority || isPinned;
-      const name = full ? a.space_name || label(a) : more ?? (/^\d+$/.test(label(a)) ? a.program?.name || label(a) : label(a));
+      // A bare tab number only tells two agents of one space apart, so it keeps the space beside it.
+      const name = full && /^\d+$/.test(more ?? "") ? `${a.space_name} · ${more}`
+        : more || (full ? a.space_name || label(a) : /^\d+$/.test(label(a)) ? a.program?.name || label(a) : label(a));
       return h_flex()
         .id(`ag-${a.address}`)
         .px(8)
@@ -368,12 +371,8 @@ export default class Agents extends View {
             cx.notify();
           })).child(pic)))
         .child(h_flex().flex_1().min_w(0).gap(5).items_center()
-          // With a task, the space is the small dim part and the task gets the width.
-          .child(div().min_w(0).truncate()
-            .when(full && Boolean(more), el => el.flex_none().max_w(64).text_size(11).text_color(t.dim))
-            .when(!(full && more), el => el.max_w(200).text_color(idle ? t.muted : t.foreground))
-            .child(name))
-          .when(full && Boolean(more), el => el.child(div().flex_1().min_w(0).truncate().text_color(idle ? t.muted : t.foreground).child(more))))
+          // Never cut or wrapped, a wider sidebar shows the whole title.
+          .child(div().flex_shrink(0).text_color(idle ? t.muted : t.foreground).child(name)))
         .when(Boolean(machine), el => el.child(div().text_size(10).text_color(t.dim).child(machine)))
         .when(subs.length > 0, el => el.child(fold(a, subs)))
         .when(this.hovered === a.address, el => el.child(pin))
