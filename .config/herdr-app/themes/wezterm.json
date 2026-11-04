@@ -2,7 +2,7 @@
   "background": "#000000",
   "foreground": "#ffffff",
   "selection": "#5ea1ff",
-  "cursor": "#bd5eff",
+  "cursor": "#ffffff",
   "ansi": [
     "#000000", "#ff6e5e", "#32ff32", "#f1ff5e", "#5ea1ff", "#bd5eff", "#13d4d4", "#ffffff",
     "#333333", "#ff6e5e", "#32ff32", "#f1ff5e", "#5ea1ff", "#bd5eff", "#13d4d4", "#ffffff"
