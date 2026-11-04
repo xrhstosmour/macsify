@@ -1,9 +1,10 @@
 // Vendored copy of the shipped `agents` mod (cloned, the app replaces the
 // shipped one on every start), under another name so it is never replaced. The
 // only changes are the program name under an agent hidden when the tab already
-// says it, and the popup naming this mod. Cloned from `Herdr` app 0.1.12, the
-// version is also in `mod.json`. Recheck against the shipped mod after an app
-// update.
+// says it, the popup naming this mod, and an agent row showing the agent's own
+// title with the space as a small dim part before it. Cloned from `Herdr` app
+// 0.1.12, the version is also in `mod.json`. Recheck against the shipped mod
+// after an app update.
 //
 // Agents in grouped or priority views; parents take their most urgent sub-agent's place.
 // A viewed done agent stays in Done until left.
@@ -280,9 +281,19 @@ export default class Agents extends View {
     // agent's own title, never an automatic tab number unless two rows would
     // otherwise read the same.
     const tabs = spaces().flatMap(s => s.tabs);
+    // The agent's own title is the task it works on. It wins over a tab name that
+    // is only `folder \u00b7 program`, the automatic one, which says nothing the
+    // space does not.
+    const task = (a) => {
+      const own = clean(a.title);
+      const telling = own && own !== a.program?.name && !/^[~/]|^[A-Za-z]:\\/.test(own) && !own.includes("@") && own.toLowerCase() !== a.program?.key;
+      return telling ? own : null;
+    };
     const label = (a) => {
       const tab = tabs.find(tab => tab.id === a.tab);
-      return tab ? title(tab, lead(tab)) : a.title || a.program?.name || "";
+      const shown = tab ? title(tab, lead(tab)) : a.title || a.program?.name || "";
+      const automatic = shown === a.space_name || shown.endsWith(` \u00b7 ${a.program?.name}`);
+      return automatic ? task(a) ?? shown : shown;
     };
     const detail = new Map(list.map(a => [a.address, /^\d+$/.test(label(a)) ? null : label(a)]));
     const seen = {};
@@ -357,8 +368,12 @@ export default class Agents extends View {
             cx.notify();
           })).child(pic)))
         .child(h_flex().flex_1().min_w(0).gap(5).items_center()
-          .child(div().min_w(0).max_w(full && more ? 120 : 200).truncate().text_color(idle ? t.muted : t.foreground).child(name))
-          .when(full && Boolean(more), el => el.child(div().flex_1().min_w(0).truncate().text_color(t.dim).child(`\u00b7 ${more}`))))
+          // With a task, the space is the small dim part and the task gets the width.
+          .child(div().min_w(0).truncate()
+            .when(full && Boolean(more), el => el.flex_none().max_w(64).text_size(11).text_color(t.dim))
+            .when(!(full && more), el => el.max_w(200).text_color(idle ? t.muted : t.foreground))
+            .child(name))
+          .when(full && Boolean(more), el => el.child(div().flex_1().min_w(0).truncate().text_color(idle ? t.muted : t.foreground).child(more))))
         .when(Boolean(machine), el => el.child(div().text_size(10).text_color(t.dim).child(machine)))
         .when(subs.length > 0, el => el.child(fold(a, subs)))
         .when(this.hovered === a.address, el => el.child(pin))
