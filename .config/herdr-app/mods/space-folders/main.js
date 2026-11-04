@@ -3,8 +3,9 @@
 // are the repo and branch text after a space's name, hidden because the icon
 // already says it, a branch button next to a folder's +, which opens the
 // `worktree-developer` dialog for a new worktree, and a space named like its
-// folder showing its branch instead of repeating the folder, and a folder color
-// from its id when none is chosen. It also writes
+// folder showing its branch instead of repeating the folder, a folder color
+// from its id when none is chosen, and the spaces in a folder drawn as a symbol
+// (terminal for the checkout, branch for a worktree) on one level. It also writes
 // `~/.config/herdr-space-folders.json`.
 // Recheck the diff against upstream before bumping the commit.
 //
@@ -726,6 +727,7 @@ export default class Spaces extends View {
     const colors = shared("space.colors") ?? {};
     const color = colors[w.id] ?? "ansi6";
     const fill = color.startsWith("#") ? color : (MARK[color] ?? t[color]);
+    const inFolder = Boolean(folder || nested);
     return v_flex()
       .relative()
       .id(`space-${w.id}`)
@@ -771,8 +773,10 @@ export default class Spaces extends View {
         h_flex()
           .gap(9)
           .items_center()
-          .when(Boolean(tree), el => el.pl(22).child(svg("mods/workspace-chrome/branch.svg").size(13).text_color(t.dim)))
-          .when(!tree, el => el.child(h_flex().size(18).flex_none().rounded(5).bg(fill).items_center().justify_center().text_size(10.5).font_bold().text_color("#ffffff").child([...w.name][0]?.toUpperCase() ?? "?")))
+          // Inside a folder the main checkout and its worktrees sit level, told apart by a symbol.
+          .when(Boolean(tree) && !inFolder, el => el.pl(22))
+          .when(Boolean(tree) || inFolder, el => el.child(svg(`mods/workspace-chrome/${tree ? "branch" : "terminal"}.svg`).size(13).flex_none().text_color(t.dim)))
+          .when(!tree && !inFolder, el => el.child(h_flex().size(18).flex_none().rounded(5).bg(fill).items_center().justify_center().text_size(10.5).font_bold().text_color("#ffffff").child([...w.name][0]?.toUpperCase() ?? "?")))
           .child(div().flex_shrink(0).max_w(150).truncate().text_color(t.foreground).child(this.rowName(w, g, tree, folder)))
           .child(g ? this.gitTail(g, tree, w.name, t) : div().flex_1()),
       );
