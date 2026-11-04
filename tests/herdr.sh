@@ -50,6 +50,9 @@ echo "curl" >>"$CALLS"
 printf 'touch "%s"\n' "$INSTALLER_RAN" >"${!#}"
 FAKE
 
+# The app counts as closed unless a case says otherwise, so no run depends on the host's processes.
+printf '#!/bin/bash\nexit 1\n' >"$FAKE_BINARIES/pgrep"
+
 chmod +x "$FAKE_BINARIES"/*
 export CALLS INSTALLER_RAN
 
@@ -78,7 +81,7 @@ done
 # The app is installed now, a second run neither downloads it nor touches the installed mods.
 cat >"$HOME/.local/bin/herdr-app" <<'FAKE'
 #!/bin/bash
-echo "check $2" >>"$CALLS"
+echo "$1 $2" >>"$CALLS"
 [ -z "$FAIL_CHECK" ] || [ "$(basename "$2")" != "$FAIL_CHECK" ]
 FAKE
 chmod +x "$HOME/.local/bin/herdr-app"
@@ -95,6 +98,17 @@ echo "stale" >"$MODS_DIRECTORY/tab-names/mod.json"
 run_script >/dev/null
 grep -q "^check .*/reviewer$" "$CALLS" || fail "an installed mod was not checked"
 cmp -s "$MODS_DIRECTORY/tab-names/mod.json" "$TESTS_SCRIPT_DIRECTORY/../.config/herdr-app/mods/tab-names/mod.json" || fail "a vendored mod was not refreshed"
+
+# The layout is switched only while the app runs, the fake `pgrep` stands in for it.
+: >"$CALLS"
+output=$(run_script)
+grep -q '^do layout.switch' "$CALLS" && fail "the layout was switched while the app was closed"
+grep -q "app is not running" <<<"$output" || fail "a closed app was not reported"
+printf '#!/bin/bash\nexit 0\n' >"$FAKE_BINARIES/pgrep"
+: >"$CALLS"
+run_script >/dev/null
+grep -q '^do layout.switch' "$CALLS" || fail "the layout was not switched while the app ran"
+printf '#!/bin/bash\nexit 1\n' >"$FAKE_BINARIES/pgrep"
 
 # A real worktrees folder is never replaced by the link.
 rm "$HOME/.herdr/worktrees"
