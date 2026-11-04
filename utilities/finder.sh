@@ -85,6 +85,23 @@ apply_finder_configuration() {
     log_info "Disabling the warning when changing a file extension..."
     defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
 
+    # Start the `Desktop` icon grid below the `Stege` bar. The default `macOS` menu bar is hidden, so
+    # nothing is reserved at the top of the screen and new files would land behind the bar. Finder
+    # moves the grid in whole rows of about 112 points, measured on the built-in display with the
+    # default icon size in 2026-11: 40 to 80 change nothing, 90 and up skip the first row.
+    log_info "Offsetting the 'Desktop' icon grid below the 'Stege' bar..."
+    finder_plist="$HOME/Library/Preferences/com.apple.finder.plist"
+    desktop_grid_offset=90
+    desktop_grid_offset_key="DesktopViewSettings:IconViewSettings:gridOffsetY"
+    plist_buddy="/usr/libexec/PlistBuddy"
+    # Create the parent dictionaries first, `Add` cannot on a machine that never opened the
+    # view options.
+    $plist_buddy -c "Add :DesktopViewSettings dict" "$finder_plist" 2>/dev/null || true
+    $plist_buddy -c "Add :DesktopViewSettings:IconViewSettings dict" "$finder_plist" 2>/dev/null || true
+    $plist_buddy -c "Set :$desktop_grid_offset_key $desktop_grid_offset" "$finder_plist" 2>/dev/null ||
+        $plist_buddy -c "Add :$desktop_grid_offset_key real $desktop_grid_offset" "$finder_plist" ||
+        log_warning "Could not offset the 'Desktop' icon grid."
+
     # Show hard disks (including '/') under 'Finder' sidebar Locations.
     log_info "Showing hard disks under 'Finder' sidebar Locations..."
     defaults write com.apple.sidebarlists systemitems -dict-add ShowHardDisks -bool true
