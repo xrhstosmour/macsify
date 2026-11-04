@@ -1,9 +1,0 @@
---- agents/main.js
-+++ agents/main.js
-@@ -287,5 +287,5 @@
-     const row = (a, i, subs = []) => {
-       const pic = icon(a.program, 16, t.foreground);
--      const more = detail.get(a.address);
-+      const more = ((d) => (d === a.space_name || d?.endsWith(" · Claude Code") ? null : d))(detail.get(a.address));
-       // An agent on another machine (`vps/t7`) says which.
-       const machine = a.address.includes("/") ? a.address.split("/")[0] : null;
