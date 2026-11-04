@@ -3,7 +3,8 @@
 // are the repo and branch text after a space's name, hidden because the icon
 // already says it, a branch button next to a folder's +, which opens the
 // `worktree-developer` dialog for a new worktree, and a space named like its
-// folder showing its branch instead of repeating the folder. It also writes
+// folder showing its branch instead of repeating the folder, and a folder color
+// from its id when none is chosen. It also writes
 // `~/.config/herdr-space-folders.json`.
 // Recheck the diff against upstream before bumping the commit.
 //
@@ -148,6 +149,21 @@ const FALLBACK = 60000;
 // What a stored color name looks like on an avatar (the same in every mod
 // that draws space avatars): one strong color per hue, light and dark alike.
 const MARK = { ansi6: "#22a99a", ansi3: "#e3814f", ansi4: "#5b8def", ansi5: "#8b7cf6", ansi2: "#3fae6a", ansi1: "#d9649a" };
+
+// A folder without a chosen color gets its own from its id, so every folder in
+// the sidebar looks different. Hue spread by hash, fixed saturation and
+// lightness so each one reads like the `MARK` colors on both themes.
+export function autoColor(id) {
+  let hash = 0;
+  for (const character of id) hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
+  const hue = (hash * 137.508) % 360, saturation = 0.62, lightness = 0.56;
+  const chroma = saturation * Math.min(lightness, 1 - lightness);
+  const channel = (shift) => {
+    const offset = (shift + hue / 30) % 12;
+    return Math.round(255 * (lightness - chroma * Math.max(-1, Math.min(offset - 3, 9 - offset, 1)))).toString(16).padStart(2, "0");
+  };
+  return `#${channel(0)}${channel(8)}${channel(4)}`;
+}
 
 // A space speaks up only when something in it needs you.
 export function glyph(status) {
@@ -404,7 +420,7 @@ export default class Spaces extends View {
     saveFolders(machine, { ...f, list });
   }
 
-  // One of the spaces' avatar colors, or null for grey.
+  // One of the spaces' avatar colors, or null for its automatic color.
   paint(machine, id, color) {
     const f = folders(machine);
     saveFolders(machine, { ...f, list: f.list.map((x) => x.id === id ? { ...x, color } : x) });
@@ -525,7 +541,7 @@ export default class Spaces extends View {
       .on_click(() => this.toggleFolder(machine, f.id))
       .on_mouse_down("right", () => openOverlay({ mod: "space-folders", kind: "popup", width: 210, height: 160, props: { folderMenu: f.id, machine } }));
     // Built like a space's avatar: a filled 18px tile in the folder's color, its mark in white.
-    const tile = h_flex().size(18).flex_none().rounded(5).items_center().justify_center().bg(f.color ? (MARK[f.color] ?? f.color) : t.dim)
+    const tile = h_flex().size(18).flex_none().rounded(5).items_center().justify_center().bg(f.color ? (MARK[f.color] ?? f.color) : autoColor(f.id))
       .child(svg("mods/workspace-chrome/folder.svg").size(13).text_color("#ffffff"));
     if (collapsed) return head.justify_center().child(tile);
     return head
@@ -548,8 +564,8 @@ export default class Spaces extends View {
     const item = (key, label, action) => div().id(key).h(30).px(10).flex().items_center().rounded(6).cursor_pointer()
       .hover((s) => s.bg(t.hover)).on_click(() => { closeOverlay(overlay); action(); }).child(label);
     const current = folders(machine).list.find((x) => x.id === id)?.color ?? null;
-    const swatch = (color) => div().id(`folder-color-${color ?? "grey"}`).size(20).flex_none().rounded(10).cursor_pointer()
-      .bg(color ? MARK[color] : t.dim).border_2().border_color(color === current ? t.foreground : t.popover)
+    const swatch = (color) => div().id(`folder-color-${color ?? "auto"}`).size(20).flex_none().rounded(10).cursor_pointer()
+      .bg(color ? MARK[color] : autoColor(id)).border_2().border_color(color === current ? t.foreground : t.popover)
       .hover((s) => s.border_color(t.muted)).on_click(() => { this.paint(machine, id, color); closeOverlay(overlay); });
     return v_flex().id("folder-menu").size_full().p(5).gap(1).bg(t.popover).text_color(t.foreground).text_size(12.5)
       .child(h_flex().px(8).pt(6).pb(8).gap(6).items_center().children([null, ...Object.keys(MARK)].map(swatch)))
