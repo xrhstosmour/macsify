@@ -119,6 +119,10 @@ apply_dock_configuration() {
 
     log_info "Applying 'Dock' configuration..."
 
+    # The installer puts `Herdr` in `~/Applications`, a managed machine can have it in `/Applications`.
+    herdr_application="$HOME/Applications/Herdr.app"
+    [ -d "$herdr_application" ] || herdr_application="/Applications/Herdr.app"
+
     dock_apps=(
         "$HOME/Applications/Chrome Apps.localized/Google Photos.app"
         "/Applications/Google Chrome.app"
@@ -126,7 +130,7 @@ apply_dock_configuration() {
         "$HOME/Applications/Chrome Apps.localized/Messages.app"
         "/Applications/Viber.app"
         "/Applications/Visual Studio Code.app"
-        "$HOME/Applications/Herdr.app"
+        "$herdr_application"
         "/Applications/DataGrip.app"
         "/Applications/Docker.app"
         "/Applications/Bruno.app"
