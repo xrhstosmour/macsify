@@ -77,9 +77,10 @@ log_error() {
   printf "${prefix}${BOLD_RED}%s${NO_COLOR}\n" "$error" >&2
 }
 
-# Function to log a visual divider for better section separation.
+# Function to log a visual divider between two steps, only orchestrators call it, never the first
+# or last step and never a leaf script. The next log call adds the blank line after it.
 # Usage:
 #   log_divider
 log_divider() {
-  printf "\n\n${BOLD_BLUE}%s${NO_COLOR}\n\n" "──────────────────────────────────────────────────────────────────────────────────────" >&2
+  printf "\n${BOLD_BLUE}%s${NO_COLOR}\n" "──────────────────────────────────────────────────────────────────────────────────────" >&2
 }

@@ -55,7 +55,6 @@ apply_keyboard_configuration() {
     keyboard_apply_symbolic_hotkeys
 
     log_success "Keyboard configuration applied successfully."
-    log_divider
 }
 
 # Function to configure keyboard shortcuts via `AppleSymbolicHotKeys`.

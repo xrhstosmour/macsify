@@ -41,7 +41,6 @@ ANDROID_EMULATOR_IMAGE="system-images;android-$COMPILE_SDK_VERSION;google_apis_p
 # The `android` CLI updates itself apart from the cask, and nags on every command until it does.
 log_info "Updating the 'Android' CLI..."
 android update || log_warning "Could not update the 'Android' CLI, continuing with the installed version."
-log_divider
 
 # `android sdk install` also accepts each licence, which the Gradle build needs on disk.
 log_info "Installing the Android SDK packages for API $COMPILE_SDK_VERSION..."
@@ -52,7 +51,6 @@ android sdk install \
   "ndk;$NDK_VERSION" \
   "emulator" \
   "$ANDROID_EMULATOR_IMAGE"
-log_divider
 
 # `avdmanager` owns this, the `android` CLI cannot name an `AVD` or take a device profile.
 if avdmanager list avd --compact 2>/dev/null | grep -qx "$ANDROID_EMULATOR_DEVICE"; then
@@ -67,7 +65,6 @@ else
     --device "$ANDROID_EMULATOR_DEVICE" \
     2> >(grep -v 'devices.xml' >&2)
 fi
-log_divider
 
 if [ -d /Applications/Xcode.app ]; then
 
@@ -103,9 +100,7 @@ if [ -d /Applications/Xcode.app ]; then
 else
   log_warning "'Xcode' is not installed, skipping the iOS toolchain. Install it from the 'Mac App Store' and re-run this script."
 fi
-log_divider
 
 # `flutter doctor` exits non-zero on any unmet category, which must not abort the rest.
 log_info "Verifying the toolchain..."
 flutter doctor || true
-log_divider

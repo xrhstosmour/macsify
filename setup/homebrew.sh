@@ -53,4 +53,3 @@ if [ -n "$HOMEBREW_PATH" ]; then
             ;;
     esac
 fi
-log_divider

@@ -34,5 +34,3 @@ if [ "${CURRENT_SHELL}" != "${FISH_PATH}" ]; then
 else
   log_warning "Default shell is already set to '${FISH_PATH}'."
 fi
-
-log_divider

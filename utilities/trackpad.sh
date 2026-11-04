@@ -48,5 +48,4 @@ apply_trackpad_configuration() {
     defaults -currentHost write NSGlobalDomain com.apple.trackpad.fourFingerHorizSwipeGesture -int 0
 
     log_success "Trackpad configuration applied successfully."
-    log_divider
 }

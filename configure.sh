@@ -46,21 +46,25 @@ fi
 
 # Install developer tools & programming languages.
 source setup/developer.sh
+log_divider
 source utilities/development.sh
 
 # Set up agentic configuration: inject models, symlink shared content. Runs once,
 # here, because its `npm` plugin installs need the `node` and `npm` that `mise`
 # provides in the step above.
+log_divider
 log_info "Setting up agentic configuration..."
 bash setup/agentic.sh
 
 # Set up the mobile development toolchain. Asked with a no-op command and run
 # afterwards, so the command substitution the answer needs does not swallow the
 # script's own output. Skipped when the profile does not install `flutter`.
-if brewfile_declares flutter && [ "$(ask_user_before_execution "Do you want to install the mobile development toolchain?" "true" ":")" = "y" ]; then
-    bash setup/mobile.sh
+if brewfile_declares flutter; then
+    log_divider
+    if [ "$(ask_user_before_execution "Do you want to install the mobile development toolchain?" "true" ":")" = "y" ]; then
+        bash setup/mobile.sh
+    fi
 fi
-log_divider
 
 # Install additional packages from various sources by executing custom installation commands.
 if [[ -f packages/additional_packages.txt ]]; then
@@ -70,17 +74,19 @@ if [[ -f packages/additional_packages.txt ]]; then
         bash -c "$line" || log_warning "Failed to run additional package command: $line"
     done <packages/additional_packages.txt
 fi
-log_divider
 
 # Restore installed applications' configurations.
-bash setup/applications.sh
 log_divider
+bash setup/applications.sh
 
 # Configure shell.
+log_divider
 bash setup/shell.sh
 
 # Configure `macOS` Preferences.
+log_divider
 bash setup/preferences.sh
 
 # Set up security tooling and applications hardening.
+log_divider
 bash setup/security.sh

@@ -38,5 +38,4 @@ apply_sound_configuration() {
     launchctl unload -w /System/Library/LaunchAgents/com.apple.rcd.plist 2>/dev/null
 
     log_success "Sound configuration applied successfully."
-    log_divider
 }
