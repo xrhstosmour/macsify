@@ -209,6 +209,7 @@ if brewfile_declares "anomalyco/tap/opencode"; then
     # Previous name of the plugin, a leftover link would keep loading the old file next to the new one.
     rm -f "$HOME/.config/opencode/plugin/agentic-reminder.js"
     create_symlink "$AGENTIC_DIRECTORY/hooks/opencode-guards.js" "$HOME/.config/opencode/plugin/agentic-guards.js"
+    create_symlink "$AGENTIC_DIRECTORY/hooks/opencode-herdr-resume.js" "$HOME/.config/opencode/plugin/herdr-resume.js"
 
     # `opencode-status-hud`'s own local-install default is `~/.config/opencode/plugins`, which
     # OpenCode does not auto-load. Force it into the same directory as `agentic-guards.js` above.
