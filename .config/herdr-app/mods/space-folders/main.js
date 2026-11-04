@@ -774,8 +774,9 @@ export default class Spaces extends View {
           .gap(9)
           .items_center()
           // Inside a folder the main checkout and its worktrees sit level, told apart by a symbol.
+          // A worktree whose main checkout has no space of its own is still a worktree.
           .when(Boolean(tree) && !inFolder, el => el.pl(22))
-          .when(Boolean(tree) || inFolder, el => el.child(svg(`mods/workspace-chrome/${tree ? "branch" : "terminal"}.svg`).size(13).flex_none().text_color(t.dim)))
+          .when(Boolean(tree) || inFolder, el => el.child(svg(`mods/workspace-chrome/${tree || g?.linked ? "branch" : "terminal"}.svg`).size(13).flex_none().text_color(t.dim)))
           .when(!tree && !inFolder, el => el.child(h_flex().size(18).flex_none().rounded(5).bg(fill).items_center().justify_center().text_size(10.5).font_bold().text_color("#ffffff").child([...w.name][0]?.toUpperCase() ?? "?")))
           .child(div().flex_shrink(0).max_w(150).truncate().text_color(t.foreground).child(this.rowName(w, g, tree, folder)))
           .child(g ? this.gitTail(g, tree, w.name, t) : div().flex_1()),
