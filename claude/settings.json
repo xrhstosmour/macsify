@@ -53,7 +53,6 @@
     "allow": [
       "Bash(bundle exec rspec*)",
       "Bash(bundle exec rubocop*)",
-      "Bash(sed -n *)",
       "Bash(git grep *)",
       "Bash(git fetch *)",
       "Bash(git push --force-with-lease*)",
@@ -173,8 +172,6 @@
       "Bash(gh api *-f*)",
       "Bash(gh api *-F*)",
       "Bash(gh api *--input*)",
-      "Bash(sed -n *w*)",
-      "Bash(sed -n *-i*)",
       "Bash(git grep*-O*)",
       "Bash(git grep*--op*)",
       "Bash(git fetch*--upl*)",
