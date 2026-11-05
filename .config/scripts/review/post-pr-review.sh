@@ -4,6 +4,7 @@
 #
 # Usage: post-pr-review.sh <owner/repo> <pull request number> <head sha> <APPROVE|REQUEST_CHANGES|COMMENT> <body file> <comments file>
 #   comments file: a JSON array of {"path": string, "line": number, "body": string}, can be empty
+#   body file, comments file: regular files the caller wrote in a temporary directory, nothing else is read for them
 
 set -e
 
@@ -45,8 +46,40 @@ if [ ! -f "$body_file" ] || [ ! -f "$comments_file" ]; then
   echo "body or comments file missing" >&2
   exit 2
 fi
+# The script is allowed by path and reads these files for the caller, so a path the caller was talked into, such as a credential, must not be posted, the deny rules on `Read` never see it. Same rule as `post-thread-reply.sh`.
+# The roots are fixed, `TMPDIR` is the caller's and could point at the home folder. Each file is a regular file with one link, a hard link to a credential would pass the path check, and it is read once, right here, so a swap after the check posts nothing else.
+user_temporary_root="$(getconf DARWIN_USER_TEMP_DIR 2>/dev/null || true)"
+if [ -n "$user_temporary_root" ]; then
+  user_temporary_root="$(cd "$user_temporary_root" && pwd -P)"
+fi
+for file in "$body_file" "$comments_file"; do
+  if [ -L "$file" ]; then
+    echo "body and comments files must not be symlinks: $file" >&2
+    exit 2
+  fi
+  file_path="$(cd "$(dirname "$file")" && pwd -P)/$(basename "$file")"
+  case "$file_path" in
+    /tmp/* | /private/tmp/*) ;;
+    *)
+      if [ -z "$user_temporary_root" ] || [[ $file_path != "$user_temporary_root"/* ]]; then
+        echo "body and comments files must be in a temporary directory: $file_path" >&2
+        exit 2
+      fi
+      ;;
+  esac
+  if [ -z "$(find "$file" -prune -links 1)" ]; then
+    echo "body and comments files must have one link: $file" >&2
+    exit 2
+  fi
+done
+body="$(
+  cat -- "$body_file"
+  printf x
+)"
+body="${body%x}"
+comments="$(cat -- "$comments_file")"
 
-if ! jq -e 'type == "array" and all(.[]; (keys - ["path", "line", "body"] | length == 0) and (.path | type == "string") and (.line | type == "number") and (.body | type == "string"))' "$comments_file" >/dev/null; then
+if ! jq -e 'type == "array" and all(.[]; (keys - ["path", "line", "body"] | length == 0) and (.path | type == "string") and (.line | type == "number") and (.body | type == "string"))' <<<"$comments" >/dev/null; then
   echo "comments file must be an array of path, line and body objects" >&2
   exit 2
 fi
@@ -70,8 +103,8 @@ fi
 payload="$(jq -n \
   --arg commit_id "$head_sha" \
   --arg event "$event" \
-  --rawfile body "$body_file" \
-  --slurpfile comments "$comments_file" \
-  '{commit_id: $commit_id, event: $event, body: $body, comments: $comments[0]}')"
+  --arg body "$body" \
+  --argjson comments "$comments" \
+  '{commit_id: $commit_id, event: $event, body: $body, comments: $comments}')"
 
 printf '%s' "$payload" | gh api "repos/$repository/pulls/$number/reviews" --method POST --input - --jq .html_url
