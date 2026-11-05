@@ -23,7 +23,7 @@ HERDR_APPLICATION_MODS_DIRECTORY="$HERDR_APPLICATION_HOME_DIRECTORY/mods"
 # Community mods, one per line as `repository commit mod-folder...`. Each commit
 # is the one reviewed on 2026-11-03, a mod can run programs and read files, and
 # `Herdr` does not review them. Bump a commit only after reading the diff.
-# `tmux-prefix`, `space-folders` and `agents-compact` are not here, they are
+# `tmux-prefix`, `space-folders`, `agents-compact` and `tabs-inline` are not here, they are
 # vendored in `.config/herdr-app/mods/`, each header says where it came from, at
 # which commit or app version, and what was changed, a bump diffs against that.
 HERDR_APPLICATION_MODS=(
@@ -83,7 +83,7 @@ done
 # The vendored mods in `.config/herdr-app/mods/` are copied again on every run,
 # so a rerun of `setup/agentic.sh` alone refreshes them after a merge.
 VENDORED_MODS_DIRECTORY="$HERDR_APPLICATION_SCRIPT_DIRECTORY/../.config/herdr-app/mods"
-for vendored_mod in tmux-prefix space-folders agents-compact worktree-developer worktree-cleanup repository-sync tab-names; do
+for vendored_mod in tmux-prefix space-folders agents-compact tabs-inline worktree-developer worktree-cleanup repository-sync tab-names; do
   checked_folders+=("$vendored_mod")
   mkdir -p "$HERDR_APPLICATION_MODS_DIRECTORY/$vendored_mod"
   cp -R "$VENDORED_MODS_DIRECTORY/$vendored_mod/." "$HERDR_APPLICATION_MODS_DIRECTORY/$vendored_mod/" || log_warning "Could not copy the '$vendored_mod' mod."

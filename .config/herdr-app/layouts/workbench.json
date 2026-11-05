@@ -70,7 +70,7 @@
       "children": [
         {
           "content": {
-            "mod": "tabs"
+            "mod": "tabs-inline"
           },
           "id": "tabs",
           "size": {
