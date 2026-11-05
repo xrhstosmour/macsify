@@ -12,20 +12,13 @@ HERDR_APPLICATION_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # Import functions and flags.
 source "$HERDR_APPLICATION_SCRIPT_DIRECTORY/../helpers/logs.sh"
 
-# Installs the `Herdr` desktop app and sets up its community mods, run by
-# `setup/agentic.sh`. The app has no `Homebrew` cask, so its own installer puts
-# it in `~/Applications` and links `herdr-app` into `~/.local/bin`, which is the
-# one place checked for it being installed.
-HERDR_APPLICATION_BINARY="$HOME/.local/bin/herdr-app"
+# Sets up the `Herdr` desktop app's community mods, layout and worktrees link,
+# run by `setup/agentic.sh`. The app itself is the `herdr-app` cask in
+# `packages/base.Brewfile`, which links `herdr-app` into `Homebrew`'s binary
+# directory, checked here by being on `PATH`.
+HERDR_APPLICATION_BINARY="$(command -v herdr-app || true)"
 HERDR_APPLICATION_HOME_DIRECTORY="${HERDR_APPLICATION_HOME:-$HOME/.config/herdr-app}"
 HERDR_APPLICATION_MODS_DIRECTORY="$HERDR_APPLICATION_HOME_DIRECTORY/mods"
-
-# The installer, read on 2026-11-03 and pinned by its checksum, so a changed
-# installer stops here instead of running unread. It still downloads the app
-# build its release manifest names, checked against that manifest and the
-# bundle's signature. Bump the checksum only after reading the new installer.
-HERDR_APPLICATION_INSTALLER_URL="https://releases.herdr.dev/app/install.sh"
-HERDR_APPLICATION_INSTALLER_SHA256="49e2b998ee311e131997447542869b99f888ef6c3cd4610abfaa97f4f44b52eb"
 
 # Community mods, one per line as `repository commit mod-folder...`. Each commit
 # is the one reviewed on 2026-11-03, a mod can run programs and read files, and
@@ -46,20 +39,7 @@ export GIT_TERMINAL_PROMPT=0
 WORK_DIRECTORY=$(mktemp -d)
 trap 'rm -rf "$WORK_DIRECTORY"' EXIT
 
-# A failed install leaves the mods to set up, they are plain files, and only
-# their checks wait for the app.
-if [ ! -x "$HERDR_APPLICATION_BINARY" ]; then
-  log_info "Installing the 'Herdr' app..."
-  installer="$WORK_DIRECTORY/install.sh"
-  if ! curl -fsSL "$HERDR_APPLICATION_INSTALLER_URL" -o "$installer"; then
-    log_warning "Could not download the 'Herdr' app installer, the app is skipped."
-  elif ! printf '%s  %s\n' "$HERDR_APPLICATION_INSTALLER_SHA256" "$installer" | shasum -a 256 -c --status; then
-    log_error "The 'Herdr' app installer changed since it was reviewed, the app is skipped, read it and bump the checksum in 'settings/herdr.sh'."
-  elif ! sh "$installer"; then
-    log_warning "The 'Herdr' app installer failed, the app is skipped."
-  fi
-fi
-
+# The mods are plain files, only their checks wait for the app.
 mkdir -p "$HERDR_APPLICATION_MODS_DIRECTORY"
 
 # Mods that were just installed or already there, all of them are checked below.

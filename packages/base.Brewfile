@@ -27,7 +27,6 @@ brew 'gh'
 brew 'git-delta'
 brew 'graykode/tap/abtop', trusted: true
 brew 'helix'
-brew 'herdr'
 brew 'jless'
 brew 'jq'
 brew 'logcli'
@@ -61,6 +60,7 @@ cask 'google-chrome'
 cask 'google-drive'
 cask 'google-gemini'
 cask 'grafviktor/goto/goto-ssh-manager', trusted: true
+cask 'herdr-app'
 cask 'maccy'
 cask 'mediosz/tap/swipeaerospace', trusted: true
 cask 'nikitabobko/tap/aerospace', trusted: true
