@@ -165,6 +165,22 @@ STUB_REVIEWS="[{\"user\":{\"login\":\"me\"},\"commit_id\":\"$HEAD_SHA\"}]" post 
 STUB_REVIEWS="[{\"user\":{\"login\":\"me\"},\"commit_id\":\"$HEAD_SHA\"}]"$'\n'"[]" post && fail "the poster ignored a review on an earlier page"
 STUB_REVIEWS_FAIL=1 post && fail "the poster posted when the reviews could not be read"
 post "$(printf 'owner/repo\nx/y')" && fail "the poster accepted a repository with a newline"
+# Only files in a temporary directory are read, never another file or a link to one.
+# The reason is checked too, so an earlier refusal cannot make these pass. The caller's `TMPDIR` never makes another folder a temporary one.
+refused() {
+  local message
+  message="$("$POSTER" owner/repo 5 "$HEAD_SHA" COMMENT "$1" "$2" 2>&1 >/dev/null)" && return 1
+  [[ $message == *"$3"* ]]
+}
+OUTSIDE_FILE="$TESTS_SCRIPT_DIRECTORY/review-scripts.sh"
+refused "$OUTSIDE_FILE" "$TEST_DIRECTORY/comments.json" "temporary directory" || fail "the poster posted a file outside a temporary directory as the body"
+refused "$TEST_DIRECTORY/body.txt" "$OUTSIDE_FILE" "temporary directory" || fail "the poster read a file outside a temporary directory as the comments"
+TMPDIR="$TESTS_SCRIPT_DIRECTORY" refused "$OUTSIDE_FILE" "$TEST_DIRECTORY/comments.json" "temporary directory" || fail "the poster let the caller make another folder a temporary one"
+ln -s "$TEST_DIRECTORY/body.txt" "$TEST_DIRECTORY/link.txt"
+refused "$TEST_DIRECTORY/link.txt" "$TEST_DIRECTORY/comments.json" "symlinks" || fail "the poster accepted a symlink as the body"
+ln "$TEST_DIRECTORY/body.txt" "$TEST_DIRECTORY/hard.txt"
+refused "$TEST_DIRECTORY/hard.txt" "$TEST_DIRECTORY/comments.json" "one link" || fail "the poster accepted a hard linked file as the body"
+rm "$TEST_DIRECTORY/hard.txt"
 [ ! -e "$STUB_POSTED_FILE" ] || fail "a refused review was still posted"
 post >/dev/null || fail "the poster refused a valid review"
 [ "$(jq -r '.event, .commit_id, .comments[0].path' "$STUB_POSTED_FILE" | tr '\n' ' ')" = "COMMENT $HEAD_SHA a.rb " ] || fail "the posted payload is wrong"

@@ -37,17 +37,32 @@ if [ -L "$body_file" ] || [ ! -s "$body_file" ]; then
   exit 2
 fi
 # The script is allowed by path and reads this file for the caller, so a path the caller was talked into, such as a credential, must not be posted, the deny rules on `Read` never see it.
+# The roots are fixed, `TMPDIR` is the caller's and could point at the home folder. The file has one link, a hard link to a credential would pass the path check, and it is read once, right here, so a swap after the check posts nothing else.
+user_temporary_root="$(getconf DARWIN_USER_TEMP_DIR 2>/dev/null || true)"
+if [ -n "$user_temporary_root" ]; then
+  user_temporary_root="$(cd "$user_temporary_root" && pwd -P)"
+fi
 body_path="$(cd "$(dirname "$body_file")" && pwd -P)/$(basename "$body_file")"
-temporary_root="$(cd "${TMPDIR:-/tmp}" && pwd -P)"
 case "$body_path" in
-  "$temporary_root"/* | /tmp/* | /private/tmp/*) ;;
+  /tmp/* | /private/tmp/*) ;;
   *)
-    echo "body file must be in a temporary directory: $body_path" >&2
-    exit 2
+    if [ -z "$user_temporary_root" ] || [[ $body_path != "$user_temporary_root"/* ]]; then
+      echo "body file must be in a temporary directory: $body_path" >&2
+      exit 2
+    fi
     ;;
 esac
+if [ -z "$(find "$body_file" -prune -links 1)" ]; then
+  echo "body file must have one link: $body_file" >&2
+  exit 2
+fi
+body="$(
+  cat -- "$body_file"
+  printf x
+)"
+body="${body%x}"
 # GitHub rejects a comment above 65536 characters, stop before the call.
-if [ "$(wc -c <"$body_file")" -gt 65000 ]; then
+if [ "${#body}" -gt 65000 ]; then
   echo "body file is too long" >&2
   exit 2
 fi
@@ -77,4 +92,4 @@ root="$(jq -s -e -r --arg viewer "$viewer" --argjson target "$comment_id" '
   exit 1
 }
 
-jq -n --rawfile body "$body_file" '{body: $body}' | gh api "repos/$repository/pulls/$number/comments/$root/replies" --method POST --input - --jq .html_url
+jq -n --arg body "$body" '{body: $body}' | gh api "repos/$repository/pulls/$number/comments/$root/replies" --method POST --input - --jq .html_url
