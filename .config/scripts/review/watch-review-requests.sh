@@ -15,7 +15,7 @@
 #   requested  your review is requested, a first time or again
 #   pushed     you reviewed it without approving and the author pushed since
 #   reply      you reviewed it without approving and a person of the organization or a collaborator answered in a thread you took part in, the key ends in the epoch of the newest answer
-# A key is claimed at detection for two hours, so a review still running is not started twice, and recorded as done by `--mark`. A review that failed or was interrupted is reported again once its claim expires. Approximate on purpose, the poster refuses a second review at the same commit.
+# A key is claimed at detection for two hours, so a review still running is not started twice, and recorded as done by `--mark`. A review that failed or was interrupted is reported again once its claim expires. Approximate on purpose, the poster refuses a second review at the same commit. The poster also reads the claimed file, it posts an `APPROVE` only for a key claimed here less than `CLAIM_SECONDS` ago, so a review that outlives the claim cannot approve.
 # The newest 30 threads, 30 comments each and 50 reviews are read, a pull request with more is judged on those.
 
 set -u
