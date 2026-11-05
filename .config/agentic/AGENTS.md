@@ -13,7 +13,7 @@ A request to review a PR starts with the `review-github-pr` skill, never `gh pr 
 
 Pick the tool by what the question is about.
 
-- Code, symbols, call sites, config, and file contents of the current project: use `rg`, Grep, and Glob, never `qmd`.
+- Code, symbols, call sites, config, and file contents of the current project: use `rg`, never `qmd`, flags in `standards.md` Context Management.
 - Knowledge, business rules, domain facts, decisions and their why, documentation, notes, how a process works: use `qmd` first, `qmd collection list` shows the indexed knowledge bases. Do not `rg` or `find` the filesystem for what a collection covers, use `rg` as the fallback only when no collection covers it, such as a project's own docs.
 - Both: take the rule from `qmd`, then confirm it in code with `rg`. Code wins on conflict, say so.
 

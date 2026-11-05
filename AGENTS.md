@@ -23,7 +23,7 @@ This file documents the repository itself. For the agentic (AI assistant) subsys
 ## `Explore` override
 
 `claude/agents/explore.md` copies the built-in `Explore` `disallowedTools` and `omitClaudeMd`, which needs Claude Code 2.1.271 or later, re-check both against the built-in on each Claude Code upgrade.
-Since it skips the global instructions, its Rules carry the shell safety and privacy rules from `.config/agentic/instructions/security.md` and `privacy.md`, change them together.
+Since it skips the global instructions, its Rules carry the shell safety and privacy rules from `.config/agentic/instructions/security.md` and `privacy.md`, and the `rg` search rule from `standards.md` Context Management, change them together.
 
 ## Fish functions
 
