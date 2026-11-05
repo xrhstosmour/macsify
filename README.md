@@ -10,7 +10,7 @@ Opinionated `macOS` setup via shell scripts, plus a shared configuration for `AI
 | -------- | ------- |
 | Shell | `Fish` + `Starship` + `Atuin`, custom aliases |
 | Terminal | `WezTerm` + `Herdr` desktop app |
-| Editors | `Helix`, `VS Code`, `DataGrip` |
+| Editors | `Helix`, `VS Code` |
 | Window Manager | `AeroSpace` + `SwipeAeroSpace` + `DockDoor` |
 | Development Languages | `Node.js`, `Python`, `Go`, `Java`, `Ruby`, `.NET` (via `mise`) |
 | Mobile Development | `Flutter` + `Android` SDK + `Xcode` + emulators |

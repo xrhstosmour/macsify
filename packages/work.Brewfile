@@ -5,4 +5,3 @@ instance_eval(File.read(base_brewfile), base_brewfile, 1)
 
 # Install applications.
 cask 'claude'
-cask 'datagrip'
