@@ -14,7 +14,7 @@ Opinionated `macOS` setup via shell scripts, plus a shared configuration for `AI
 | Window Manager | `AeroSpace` + `SwipeAeroSpace` + `DockDoor` |
 | Development Languages | `Node.js`, `Python`, `Go`, `Java`, `Ruby`, `.NET` (via `mise`) |
 | Mobile Development | `Flutter` + `Android` SDK + `Xcode` + emulators |
-| AI Agents | Shared `OpenCode`, `Claude Code`, `Codex` and `Copilot CLI` configuration (agents, skills, commands, hooks, instructions), wired up by `setup/agentic.sh`, further details [here](.config/agentic/README.md) |
+| AI Agents | Shared `OpenCode`, `Claude Code`, `Codex` and `Copilot CLI` configuration (agents, skills, commands, hooks, instructions), wired up by `setup/agentic.sh` for each tool a Brewfile declares, `OpenCode` and `Claude Code` are, add a `codex` or `copilot-cli` line to a Brewfile first to get `Codex` or `Copilot CLI`, further details [here](.config/agentic/README.md) |
 | Keyboard | Remapping with persistence (`kbcs` for cheat sheet) |
 | Utilities | `Stege` (menu bar), `Maccy` (clipboard), `Flameshot` (screenshots), `Amphetamine` (keep awake), `Obsidian` (notes) |
 | Network | `NordVPN`, `Tailscale` |
