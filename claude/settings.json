@@ -189,6 +189,13 @@
       "Bash(git ls-remote*--exe*)",
       "Bash(git diff*--output*)",
       "Bash(git diff*--ext*)",
+      "Bash(git diff*--no-i*)",
+      "Bash(git diff* /*)",
+      "Bash(git diff* ~*)",
+      "Bash(git diff*$HOME*)",
+      "Bash(git diff*${HOME}*)",
+      "Bash(git diff*../*)",
+      "Bash(git grep*--no-i*)",
       "Bash(git log*--output*)",
       "Bash(git log*--ext*)"
     ]
