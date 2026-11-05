@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const logicUrl = new URL("../.config/herdr-app/mods/worktree-cleanup/logic.js", import.meta.url);
-const { sweepWorktree, parseProtected, isProtected, isOccupiedBy, linkedWorktreeRoot } = await import(fileURLToPath(logicUrl));
+const { sweepWorktree, parseProtected, isProtected, isOccupiedBy, linkedWorktreeRoot, trackedWorktree } = await import(fileURLToPath(logicUrl));
 
 const base = realpathSync(mkdtempSync(join(tmpdir(), "worktree-cleanup-")));
 let failures = 0;
@@ -136,6 +136,16 @@ const rootOf = (folder) => linkedWorktreeRoot(exec, folder);
 if ((await linkedWorktreeRoot(exec, terminalFolder)) !== linkedThrough) fail("a symlinked folder did not resolve to its worktree");
 if (await isOccupiedBy(linkedThrough, [join(base, "worktrees", "unmerged")], rootOf)) fail("a terminal in another worktree occupied this one");
 await check("terminal through a symlink", linkedThrough, "kept", false, { isOccupied: () => isOccupiedBy(linkedThrough, [terminalFolder], rootOf) });
+
+// A terminal is tracked only inside the roots, as spelled and as git resolves it.
+const roots = [join(base, "worktrees")];
+if ((await trackedWorktree(rootOf, terminalFolder, [join(base, "link-root")])) !== null) fail("a folder outside the roots was tracked");
+if ((await trackedWorktree(rootOf, join(base, "worktrees-old", "x"), roots)) !== null) fail("a folder next to a root, sharing its prefix, was tracked");
+if ((await trackedWorktree(rootOf, join(base, "worktrees", "linked"), roots)) !== linkedThrough) fail("a worktree inside the roots was not tracked");
+const outside = join(base, "outside");
+git(checkout, "worktree", "add", "--quiet", "-b", "feature/outside", outside);
+symlinkSync(outside, join(base, "worktrees", "escape"));
+if ((await trackedWorktree(rootOf, join(base, "worktrees", "escape"), roots)) !== null) fail("a symlink inside the roots tracked a worktree outside them");
 
 // Merged but dirty or untracked: kept.
 const dirty = worktree("dirty", { commit: true, merge: true });
