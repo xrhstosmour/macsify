@@ -30,6 +30,15 @@ export function isUnderAny(path, roots) {
   return roots.some((root) => path.startsWith(`${root}/`));
 }
 
+// The worktree a terminal folder may be tracked as, or null. Both the folder as
+// spelled and the worktree root git reports are checked, a symlink under a root
+// can point at a worktree elsewhere, and only the root is what gets removed.
+export async function trackedWorktree(rootOf, folder, roots) {
+  if (!isUnderAny(folder, roots)) return null;
+  const root = await rootOf(folder);
+  return root && isUnderAny(root, roots) ? root : null;
+}
+
 // The same limits as `.config/herdr-app/mods/repository-sync/repository-sync.sh`, so a
 // fetch cannot hang on a prompt or a stalled transfer. `exec` takes no
 // environment, so `env` sets it. `exec` also cuts a call off after 30 seconds,

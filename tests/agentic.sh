@@ -75,6 +75,21 @@ for template in pretty compact; do
   [ "$(jq -r '.default_agent' "$configuration")" = leader ] || fail "$template template lost its other keys"
 done
 
+# Machine specific `Claude Code` settings survive the copy of the committed file, whose own keys win.
+installed="$TEST_DIRECTORY/installed-settings.json"
+printf '{"autoMode":{"trusted":["repo"]},"skipDangerousModePermissionPrompt":true,"model":"old","other":1}\n' >"$installed"
+preserved=$(preserved_claude_settings "$installed")
+[ "$(jq -cS . <<<"$preserved")" = '{"autoMode":{"trusted":["repo"]},"skipDangerousModePermissionPrompt":true}' ] || fail "preserved settings were $preserved"
+printf '{"model":"new","permissions":{}}\n' >"$installed"
+restore_claude_settings "$installed" "$preserved" 2>/dev/null
+[ "$(jq -cS . "$installed")" = '{"autoMode":{"trusted":["repo"]},"model":"new","permissions":{},"skipDangerousModePermissionPrompt":true}' ] || fail "restored settings were $(jq -c . "$installed")"
+[ "$(preserved_claude_settings "$TEST_DIRECTORY/missing.json")" = "{}" ] || fail "a missing settings file preserved something"
+printf 'not json' >"$installed"
+[ "$(preserved_claude_settings "$installed")" = "{}" ] || fail "a broken settings file preserved something"
+printf '{"model":"new"}\n' >"$installed"
+restore_claude_settings "$installed" "{}"
+[ "$(jq -c . "$installed")" = '{"model":"new"}' ] || fail "an empty preserved object changed the settings"
+
 if [ "$failures" -gt 0 ]; then
   exit 1
 fi

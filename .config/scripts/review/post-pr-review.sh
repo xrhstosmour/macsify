@@ -42,6 +42,14 @@ case "$event" in
     exit 2
     ;;
 esac
+# This runs unattended on text a pull request author wrote, so an approval from the user's account is posted only for a pull request the detector claimed at this commit in the last two hours, `watch-review-requests.sh` writes the claim. Text in a pull request cannot get one approved that is not in the current review queue. The two hours must equal `CLAIM_SECONDS` in `watch-review-requests.sh`, which writes the claim, this script runs from `~/.config` without the repository, so the value is not shared. The key may end in `+epoch` for a reply.
+if [ "$event" = APPROVE ]; then
+  claimed_file="${XDG_CACHE_HOME:-$HOME/.cache}/review-github-pr-watcher/claimed"
+  if ! awk -v key="$repository#$number@$head_sha" -v now="$(date +%s)" '($2 == key || index($2, key "+") == 1) && now - $1 < 7200 { found = 1 } END { exit !found }' "$claimed_file" 2>/dev/null; then
+    echo "APPROVE only for a pull request the watcher claimed at $head_sha in the last two hours" >&2
+    exit 1
+  fi
+fi
 if [ ! -f "$body_file" ] || [ ! -f "$comments_file" ]; then
   echo "body or comments file missing" >&2
   exit 2

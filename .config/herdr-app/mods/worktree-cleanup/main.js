@@ -1,6 +1,6 @@
 import { View, div } from "gpui-kit";
 import { exec, home, machines, notify, panes, readTextFile, setShared, shared } from "herdr";
-import { isOccupiedBy, isUnderAny, linkedWorktreeRoot, parseProtected, sweepWorktree } from "./logic.js";
+import { isOccupiedBy, linkedWorktreeRoot, parseProtected, sweepWorktree, trackedWorktree } from "./logic.js";
 
 // Removes a linked worktree once the last terminal in it is gone. The app has
 // no workspace-closed event, so this watches `panes()` and sweeps a tracked
@@ -47,7 +47,7 @@ export default class WorktreeCleanup extends View {
 
   // Only under the known roots, so a terminal in some other repository is never tracked.
   async worktreeOf(folder) {
-    return isUnderAny(folder, WORKTREE_ROOTS) ? this.rootOf(folder) : null;
+    return trackedWorktree((path) => this.rootOf(path), folder, WORKTREE_ROOTS);
   }
 
   // Folders of the local terminal panes. Remote panes live on another

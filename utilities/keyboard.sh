@@ -12,6 +12,9 @@ KEYBOARD_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 source "$KEYBOARD_SCRIPT_DIRECTORY/../helpers/logs.sh"
 source "$KEYBOARD_SCRIPT_DIRECTORY/../helpers/launch_agent.sh"
 
+# Section Sign → Tilde and Right Shift → Delete, on one line without spaces. The `sudo` call, the launch agent and the `sudoers` rule must all pass this exact string.
+KEYBOARD_KEY_MAPPING='{"UserKeyMapping":[{"HIDKeyboardModifierMappingSrc":0x700000064,"HIDKeyboardModifierMappingDst":0x700000035},{"HIDKeyboardModifierMappingSrc":0x7000000E5,"HIDKeyboardModifierMappingDst":0x70000004C}]}'
+
 # Function to apply Keyboard configuration.
 #
 # More details:
@@ -129,8 +132,10 @@ keyboard_clear_hidutil_mappings() {
 configure_password_less_sudo() {
     log_info "Configuring password-less 'sudo' for 'hidutil'..."
 
-    # Only the `property --set` call the launch agent makes, not every `hidutil` subcommand.
-    local rule="$USER ALL=(ALL) NOPASSWD: /usr/bin/hidutil property --set *"
+    # Only the exact `property --set` call the launch agent makes, with the mapping as its one argument, so a process of the user cannot hand `hidutil` another property as root. `sudoers` reads `,` `:` `=` `\` as syntax and `[` `]` `*` `?` as wildcards in an argument.
+    local escaped_mapping
+    escaped_mapping=$(printf '%s' "$KEYBOARD_KEY_MAPPING" | sed 's/[][,:=\\*?]/\\&/g')
+    local rule="$USER ALL=(ALL) NOPASSWD: /usr/bin/hidutil property --set $escaped_mapping"
     local sudoers_file="/etc/sudoers.d/hidutil-mapping"
 
     # Check if already configured.
@@ -166,16 +171,7 @@ keyboard_apply_special_key_mappings() {
     configure_password_less_sudo
 
     # Apply mappings immediately for this session.
-    sudo /usr/bin/hidutil property --set '{"UserKeyMapping":[
-        {
-          "HIDKeyboardModifierMappingSrc": 0x700000064,
-          "HIDKeyboardModifierMappingDst": 0x700000035
-        },
-        {
-          "HIDKeyboardModifierMappingSrc": 0x7000000E5,
-          "HIDKeyboardModifierMappingDst": 0x70000004C
-        }
-    ]}' >/dev/null 2>&1
+    sudo /usr/bin/hidutil property --set "$KEYBOARD_KEY_MAPPING" >/dev/null 2>&1
 
     # Create launch agent for persistence.
     keyboard_create_launch_agent
@@ -193,7 +189,7 @@ keyboard_create_launch_agent() {
     # Build the launch agent plist with the correct `hidutil` mappings.
     local plist_content
     plist_content=$(
-        cat <<'EOF'
+        cat <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -206,16 +202,7 @@ keyboard_create_launch_agent() {
         <string>/usr/bin/hidutil</string>
         <string>property</string>
         <string>--set</string>
-        <string>{"UserKeyMapping":[
-            {
-              "HIDKeyboardModifierMappingSrc": 0x700000064,
-              "HIDKeyboardModifierMappingDst": 0x700000035
-            },
-            {
-              "HIDKeyboardModifierMappingSrc": 0x7000000E5,
-              "HIDKeyboardModifierMappingDst": 0x70000004C
-            }
-        ]}</string>
+        <string>$KEYBOARD_KEY_MAPPING</string>
     </array>
     <key>RunAtLoad</key>
     <true/>

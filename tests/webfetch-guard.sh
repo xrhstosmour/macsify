@@ -48,12 +48,39 @@ check "https://user:password@github.com/owner/repository" deny
 check "https://github.com./owner/repository" deny
 check 'https://github.com\@example.com/owner' deny
 check "https://github%2ecom/owner/repository" deny
+check "https://github。com/owner/repository" deny
+check "https://ｇｉｔｈｕｂ.com/owner/repository" deny
 check "https://phabricator.example.com/T1" deny
 check "https://grafana.example.com/explore" deny
 check "https://sentry.io/issues/1" deny
 check "https://blog.example.com/learn-grafana" allow
 check "https://github.com.example.com/owner" allow
 check "https://notgithub.com/owner" allow
+
+# The plugin also caps `bash` output like `bash-output-cap.sh` does. A cut inside a multi-byte character drops it whole, and a command that asks for the full output passes untouched.
+capped=$(node --input-type=module -e "
+  const { AgenticGuardsPlugin } = await import(process.argv[1]);
+  const hooks = await AgenticGuardsPlugin();
+  const run = async (command, text) => {
+    const output = { output: text };
+    await hooks['tool.execute.after']({ tool: 'bash', args: { command } }, output);
+    return output.output;
+  };
+  const long = 'a'.repeat(25000);
+  const capped = await run('ls', long);
+  const multibyte = await run('ls', 'a'.repeat(19999) + 'é'.repeat(10));
+  const full = await run('git diff', long);
+  const encoder = new TextEncoder();
+  console.log(JSON.stringify([
+    encoder.encode(capped).length < 20200 && capped.includes('bash-output-cap: truncated'),
+    !multibyte.includes('�'),
+    full === long,
+  ]));
+" "$temporary_directory/opencode-guards.mjs")
+if [ "$capped" != "[true,true,true]" ]; then
+  echo "FAIL: opencode output cap gave $capped, expected a capped plain command, no split character, and an untouched git diff"
+  failures=$((failures + 1))
+fi
 
 if [ "$failures" -gt 0 ]; then
   exit 1

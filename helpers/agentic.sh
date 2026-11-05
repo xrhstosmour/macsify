@@ -71,3 +71,35 @@ inject_opencode_agent_models() {
     return 1
   fi
 }
+
+# Prints the keys of an installed `Claude Code` settings file that belong to the
+# machine, as a `JSON` object, `{}` when there are none or the file is missing
+# or not `JSON`. `autoMode` holds this machine's trusted repositories and
+# `skipDangerousModePermissionPrompt` is a per-machine acknowledgement, neither
+# belongs in the committed file, so they are carried across its copy.
+# Usage:
+#   preserved_claude_settings <installed settings file>
+preserved_claude_settings() {
+  local file="$1" preserved=""
+  if [ -f "$file" ] && command -v jq >/dev/null 2>&1; then
+    preserved=$(jq -c '{autoMode, skipDangerousModePermissionPrompt} | with_entries(select(.value != null))' "$file" 2>/dev/null || true)
+  fi
+  [ -n "$preserved" ] || preserved="{}"
+  printf '%s\n' "$preserved"
+}
+
+# Adds the preserved keys back to the settings file just copied over the
+# installed one. The repository's own keys stay, the preserved ones are added.
+# Usage:
+#   restore_claude_settings <installed settings file> <preserved JSON>
+restore_claude_settings() {
+  local file="$1" preserved="$2" merged
+  [ -n "$preserved" ] && [ "$preserved" != "{}" ] || return 0
+  merged=$(mktemp)
+  if jq --argjson keep "$preserved" '. + $keep' "$file" >"$merged"; then
+    mv "$merged" "$file"
+  else
+    rm -f "$merged"
+    log_warning "Could not restore autoMode in ${file}, add it back by hand."
+  fi
+}

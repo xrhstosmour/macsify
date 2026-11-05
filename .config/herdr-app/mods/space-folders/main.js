@@ -5,7 +5,8 @@
 // `worktree-developer` dialog for a new worktree, and a space named like its
 // folder showing its branch instead of repeating the folder, and the spaces in a
 // folder drawn as a symbol (terminal for the checkout, branch for a worktree) on
-// one level. A folder stays plain grey until a color is chosen. It also writes
+// one level. A folder stays plain grey until a color is chosen. Changes made
+// outside Herdr are looked for every five minutes, not every minute. It also writes
 // `~/.config/herdr-space-folders.json`.
 // Recheck the diff against upstream before bumping the commit.
 //
@@ -144,8 +145,9 @@ const rowHeight = ({ tree }) => (tree ? 28 : 30);
 const where = (s, ps) => JSON.stringify([s.machine ?? null, place(s, ps)]);
 const base = (path) => path.replace(/\/+$/, "").split("/").pop();
 // Changes made outside Herdr (an editor's save, a commit in another app): looked
-// for this often, in repos the list shows, while the window is in front.
-const FALLBACK = 60000;
+// for this often, in repos the list shows, while the window is in front. Each
+// look is three `git` runs per repository, `git status` walks the whole tree.
+const FALLBACK = 5 * 60000;
 
 // What a stored color name looks like on an avatar (the same in every mod
 // that draws space avatars): one strong color per hue, light and dark alike.
