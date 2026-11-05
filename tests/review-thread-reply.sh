@@ -67,10 +67,20 @@ reply owner/repo 5 31 && fail "the replier answered an outsider"
 # Four of the viewer's comments in the last day are the limit for one thread.
 now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 STUB_COMMENTS="[{\"id\":40,\"created_at\":\"$now\",\"user\":{\"login\":\"me\",\"type\":\"User\"}},{\"id\":41,\"created_at\":\"$now\",\"in_reply_to_id\":40,\"user\":{\"login\":\"me\",\"type\":\"User\"}},{\"id\":42,\"created_at\":\"$now\",\"in_reply_to_id\":40,\"user\":{\"login\":\"me\",\"type\":\"User\"}},{\"id\":43,\"created_at\":\"$now\",\"in_reply_to_id\":40,\"user\":{\"login\":\"me\",\"type\":\"User\"}},{\"id\":44,\"created_at\":\"$now\",\"in_reply_to_id\":40,\"author_association\":\"MEMBER\",\"user\":{\"login\":\"author\",\"type\":\"User\"}}]" reply owner/repo 5 44 && fail "the replier answered a thread that reached its daily limit"
-# Only a file in a temporary directory is read as a body, never another file or a link to one.
-[ -e "$HOME/.zshrc" ] && reply owner/repo 5 2 "$HOME/.zshrc" && fail "the replier posted a file outside a temporary directory"
+# Only a file in a temporary directory is read as a body, never another file, a link to one or a hard link to one, and the caller's `TMPDIR` changes nothing.
+refused() {
+  local message
+  message="$("$REPLIER" owner/repo 5 2 "$1" 2>&1 >/dev/null)" && return 1
+  [[ $message == *"$2"* ]]
+}
+OUTSIDE_FILE="$TESTS_SCRIPT_DIRECTORY/review-thread-reply.sh"
+refused "$OUTSIDE_FILE" "temporary directory" || fail "the replier posted a file outside a temporary directory"
+TMPDIR="$TESTS_SCRIPT_DIRECTORY" refused "$OUTSIDE_FILE" "temporary directory" || fail "the replier let the caller make another folder a temporary one"
 ln -s "$TEST_DIRECTORY/body.txt" "$TEST_DIRECTORY/link.txt"
-reply owner/repo 5 2 "$TEST_DIRECTORY/link.txt" && fail "the replier accepted a symlink as the body"
+refused "$TEST_DIRECTORY/link.txt" "symlink" || fail "the replier accepted a symlink as the body"
+ln "$TEST_DIRECTORY/body.txt" "$TEST_DIRECTORY/hard.txt"
+refused "$TEST_DIRECTORY/hard.txt" "one link" || fail "the replier accepted a hard linked file as the body"
+rm "$TEST_DIRECTORY/hard.txt"
 STUB_STATE="closed false" reply && fail "the replier answered on a closed pull request"
 STUB_STATE="open true" reply && fail "the replier answered on a draft"
 STUB_COMMENTS_FAIL=1 reply && fail "the replier answered when the comments could not be read"
