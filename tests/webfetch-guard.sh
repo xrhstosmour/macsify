@@ -48,6 +48,8 @@ check "https://user:password@github.com/owner/repository" deny
 check "https://github.com./owner/repository" deny
 check 'https://github.com\@example.com/owner' deny
 check "https://github%2ecom/owner/repository" deny
+check "https://github。com/owner/repository" deny
+check "https://ｇｉｔｈｕｂ.com/owner/repository" deny
 check "https://phabricator.example.com/T1" deny
 check "https://grafana.example.com/explore" deny
 check "https://sentry.io/issues/1" deny

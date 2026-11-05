@@ -12,7 +12,10 @@ url=$(echo "$input" | jq -r '.tool_input.url // empty')
 host=$(echo "${url//\\//}" | sed -E 's#^[a-zA-Z]+://##; s#[/?#].*##; s#^.*@##; s#:[0-9]+$##')
 host=$(printf '%b' "${host//%/\\x}")
 host="${host%.}"
-if echo "$host" | grep -qiE '(^|\.)github\.com$'; then
+# A browser's URL parser maps ideographic dots and full width letters to ASCII, so `github。com` names `github.com`. The shell cannot redo that mapping, so any non-ASCII host is refused, the `opencode` plugin gets it from `new URL`.
+if echo "$host" | LC_ALL=C grep -q '[^ -~]'; then
+  reason="Use an ASCII host, a non-ASCII one can name a host this guard blocks."
+elif echo "$host" | grep -qiE '(^|\.)github\.com$'; then
   reason="Use the gh CLI per the read-github-pr/read-github-issue/read-github-files/manage-github-pr/manage-github-issue skills, not WebFetch."
 elif echo "$host" | grep -qiE '(^|\.)phabricator\.'; then
   reason="Use the Phabricator MCP tools per the read-phabricator-task skill, not WebFetch."
