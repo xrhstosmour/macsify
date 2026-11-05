@@ -2,7 +2,7 @@
 name: designer
 description: >-
   Subagent for frontend UX and UI design decisions.
-disallowedTools: Write, Edit, Bash, Task
+disallowedTools: Write, Edit, Bash, Agent
 permission:
   edit: deny
   bash: deny

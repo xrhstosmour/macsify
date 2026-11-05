@@ -2,7 +2,7 @@
 name: architect
 description: >-
   Subagent for architecture decisions and technical trade-offs only.
-disallowedTools: Write, Edit, Bash, Task
+disallowedTools: Write, Edit, Bash, Agent
 permission:
   edit: deny
   bash: deny
