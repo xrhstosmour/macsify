@@ -2,7 +2,7 @@
 # The only write the `review-github-pr-watcher` skill is allowed unattended: one review with inline comments on one open pull request.
 # Allowed in claude/settings.json by its path, so the script validates every input itself and calls one fixed endpoint, never a caller supplied one.
 #
-# Usage: post-pr-review.sh <owner/repo> <pull request number> <head sha> <APPROVE|REQUEST_CHANGES|COMMENT> <body file> <comments file>
+# Usage: post-pr-review.sh <owner/repo> <pull request number> <head sha> <REQUEST_CHANGES|COMMENT> <body file> <comments file>
 #   comments file: a JSON array of {"path": string, "line": number, "body": string}, can be empty
 #   body file, comments file: regular files the caller wrote in a temporary directory, nothing else is read for them
 
@@ -35,8 +35,9 @@ if ! [[ $head_sha =~ ^[0-9a-f]{40}$ ]]; then
   echo "invalid head sha: $head_sha" >&2
   exit 2
 fi
+# No `APPROVE`, this runs unattended on text a pull request author wrote, so an approval from the user's account stays a human decision.
 case "$event" in
-  APPROVE | REQUEST_CHANGES | COMMENT) ;;
+  REQUEST_CHANGES | COMMENT) ;;
   *)
     echo "invalid event: $event" >&2
     exit 2

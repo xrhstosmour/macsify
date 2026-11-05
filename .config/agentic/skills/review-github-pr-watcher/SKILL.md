@@ -57,7 +57,7 @@ Handle one line at a time, all the pull requests of a repository share one workt
    ~/.config/scripts/review/post-pr-review.sh <owner/repo> <number> <head sha> <event> <body file> <comments file>
    ```
 
-   Use the `HEAD_SHA` that `review-github-pr` pinned, and the event its mapping gives with no override, `REQUEST_CHANGES` for CRITICAL or HIGH, `COMMENT` for MEDIUM only, `APPROVE` otherwise, the re-review exception included, which is the case for a `pushed` line. The script refuses a pull request that is closed, a draft, or moved to another commit, and prints the review URL. On a refusal, skip the pull request, the next push or request is reported again.
+   Use the `HEAD_SHA` that `review-github-pr` pinned, and the event its mapping gives with no override, `REQUEST_CHANGES` for CRITICAL or HIGH, `COMMENT` otherwise, never `APPROVE`, the poster refuses it and the approval stays a human decision, the re-review exception included, which is the case for a `pushed` line. The script refuses a pull request that is closed, a draft, or moved to another commit, and prints the review URL. On a refusal, skip the pull request, the next push or request is reported again.
 6. Print one line per outcome: `reviewed <owner>/<repo>#<number> <event> <highest severity> <review url>` or `skipped <owner>/<repo>#<number> <reason>`. Then mark the key of the line done, whatever the outcome except a command failure, and remove the temporary directory:
 
    ```bash
