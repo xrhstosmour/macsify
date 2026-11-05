@@ -11,7 +11,6 @@ brew 'clamav'
 brew 'cocoapods'
 
 # Install applications.
-cask 'airsync'
 cask 'android-commandlinetools'
 cask 'brave-browser'
 cask 'filen'
