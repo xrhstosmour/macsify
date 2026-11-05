@@ -118,8 +118,9 @@ PLAN:
 
 Cost is context size times turns. Autocompaction acts near the window limit and Claude Code also compacts after an idle gap, so cost keeps growing every turn until one of them fires.
 
-- Never run `/handoff` or `/compact` yourself. Advise them only when a hook warning asks you to, compaction is otherwise left to the host.
+- Never run `/handoff` or `/compact` yourself, compaction is left to the host.
 - Split sessions at natural boundaries, after a PR merge or a phase change. Start fresh for unrelated work.
+- Switch `/model` at the start of a session, not mid-way, a switch rebuilds the whole prompt cache.
 - Use the explore subagent only for discovery that needs more than about 5 searches or reads, otherwise search and Read directly.
 - Delegate only what gains from isolation: a fresh subagent for verbose read-heavy work that returns a summary, a resumed agent or a fork, where the tool and the agent's prompt allow it, for work that needs the current context, see `leader.md`, its own session and worktree for independent long-lived work, none for a quick targeted change.
 - Search with `rg` through Bash, `-m` or `-c` to bound it, `rg --files -g '<glob>'` for file names, not `grep -r` or `find`. Use a Grep or Glob tool only when it is in your tool list, `Claude Code` has none. `rg` skips dot directories such as `.config` and `.github`, add `--hidden -g '!.git'` when the target may sit in one. Read with `offset` and `limit` for files over about 15KB, don't re-read a file you already have.
