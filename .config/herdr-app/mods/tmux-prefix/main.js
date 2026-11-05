@@ -18,7 +18,7 @@ const BINDINGS = [
   ["/", "Help", "app.help"],
   ["b", "Toggle sidebar", "layout.toggle", { id: "sidebar" }],
   ["p", "Toggle pull requests and git panel", "layout.toggle", { id: "panel" }],
-  ["d", "Review the diff", "mod.open", { name: "reviewer" }],
+  ["r", "Review the diff", "mod.open", { name: "reviewer" }],
   ["v", "Open in VS Code", "mod.open", { name: "open-vscode" }],
   ["h", "Focus left", "pane.go", { direction: "left" }, true],
   ["j", "Focus down", "pane.go", { direction: "down" }, true],
