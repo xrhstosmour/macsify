@@ -51,20 +51,23 @@ const BASH_OUTPUT_MAX_BYTES = 20000;
 const boundedOutputPattern = /\|\s*(head|tail|less|wc|fzf)\b|&\s*$|>/;
 const fullOutputCommandPattern = /^(git\s+(diff|log|show|blame)\b|diff\s|cat\s)/;
 
-// Drops a UTF-8 sequence straddling the cut instead of decoding it with a
-// replacement character, `head -c` truncation elsewhere in the stack cuts
-// blind too, and a replacement character can be wider than the partial
-// bytes it stands in for, pushing the result past maxBytes.
-function truncateUtf8(bytes, maxBytes) {
-  if (bytes.length <= maxBytes) return bytes;
-  let end = maxBytes;
-  // A continuation byte (10xxxxxx) right after the cut means it lands
-  // inside a multi-byte character, back off to that character's start and
-  // drop it whole. A lead byte or ASCII byte there means the cut is clean.
-  if ((bytes[end] & 0xc0) === 0x80) {
-    while (end > 0 && (bytes[end] & 0xc0) === 0x80) end--;
-  }
+// Both cuts drop a UTF-8 sequence straddling them instead of decoding it with
+// a replacement character, `head -c` and `tail -c` cut blind too, and a
+// replacement character can be wider than the partial bytes it stands in
+// for, pushing the result past the cap. A continuation byte (10xxxxxx) at
+// the cut means it lands inside a multi-byte character.
+const isContinuation = (byte) => (byte & 0xc0) === 0x80;
+
+function headUtf8(bytes, count) {
+  let end = count;
+  while (end > 0 && isContinuation(bytes[end])) end--;
   return bytes.subarray(0, end);
+}
+
+function tailUtf8(bytes, count) {
+  let start = bytes.length - count;
+  while (start < bytes.length && isContinuation(bytes[start])) start++;
+  return bytes.subarray(start);
 }
 
 export const AgenticGuardsPlugin = async () => {
@@ -92,11 +95,17 @@ export const AgenticGuardsPlugin = async () => {
 
       if (typeof output.output !== "string") return;
       // Byte length, not output.output.length (UTF-16 code units), to match
-      // what bash-output-cap.sh's `head -c` actually counts.
+      // the byte counts of bash-output-cap.sh.
       const encoded = new TextEncoder().encode(output.output);
       if (encoded.length <= BASH_OUTPUT_MAX_BYTES) return;
-      const truncated = new TextDecoder("utf-8").decode(truncateUtf8(encoded, BASH_OUTPUT_MAX_BYTES));
-      output.output = truncated + `\n\n[bash-output-cap: truncated at ${BASH_OUTPUT_MAX_BYTES} bytes]`;
+      // First and last halves, like bash-output-cap.sh, errors and test
+      // summaries land at the end.
+      const half = BASH_OUTPUT_MAX_BYTES / 2;
+      const decoder = new TextDecoder("utf-8");
+      const head = headUtf8(encoded, half);
+      const tail = tailUtf8(encoded, half);
+      const elided = encoded.length - head.length - tail.length;
+      output.output = decoder.decode(head) + `\n[${elided} bytes elided]\n` + decoder.decode(tail);
     },
   };
 };

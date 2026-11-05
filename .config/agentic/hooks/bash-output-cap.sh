@@ -84,8 +84,11 @@ case "$command" in
   *';') command="${command%;}" ;;
 esac
 
+# Output past the cap keeps its first and last halves, test summaries and
+# errors land at the end, and losing them costs a rerun.
+half_bytes=$((max_bytes / 2))
 capture_file="${TMPDIR:-/tmp}/bash-output-cap.$$"
-wrapped_command="{ $command ; } > '$capture_file' 2>&1; __bash_output_cap_exit=\$?; head -c $max_bytes '$capture_file'; rm -f '$capture_file'; exit \$__bash_output_cap_exit"
+wrapped_command="{ $command ; } > '$capture_file' 2>&1; __bash_output_cap_exit=\$?; __bash_output_cap_size=\$(wc -c < '$capture_file'); if [ \"\$__bash_output_cap_size\" -gt $max_bytes ]; then head -c $half_bytes '$capture_file'; printf '\n[%s bytes elided]\n' \$((__bash_output_cap_size - $max_bytes)); tail -c $half_bytes '$capture_file'; else cat '$capture_file'; fi; rm -f '$capture_file'; exit \$__bash_output_cap_exit"
 
 # No permissionDecision: the rewritten command still goes through Claude
 # Code's normal permission flow (allow/deny/ask rules, the interactive

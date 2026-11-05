@@ -2,9 +2,10 @@
 
 # Checks that the command `bash-output-cap.sh` rewrites runs exactly like the
 # original, same output and same exit status, including a trailing `;` that
-# used to turn the wrapper into a syntax error. Then that output past the cap is
-# cut to it, and that the commands `claude/settings.json` denies or asks about
-# are never rewritten, a wrapper would defeat their end-anchored patterns.
+# used to turn the wrapper into a syntax error. Then that output past the cap
+# keeps its first and last halves around an elision line, and that the
+# commands `claude/settings.json` denies or asks about are never rewritten, a
+# wrapper would defeat their end-anchored patterns.
 
 set -e
 
@@ -33,15 +34,18 @@ for command in 'echo hello' 'echo hello;' 'echo hello ;  ' 'false && echo no;' '
   fi
 done
 
-long_command="printf 'x%.0s' \$(seq 25000)"
+long_command="printf 'x%.0s' \$(seq 24997); printf END"
 rewritten=$(rewrite "$long_command")
 if [ -z "$rewritten" ]; then
   echo "FAIL: command printing 25000 bytes was not wrapped"
   failures=$((failures + 1))
 else
-  output_bytes=$(bash -c "$rewritten" | wc -c | tr -d ' ')
-  if [ "$output_bytes" -ne 20000 ]; then
-    echo "FAIL: command printing 25000 bytes gave $output_bytes bytes, expected the 20000-byte cap"
+  output=$(bash -c "$rewritten")
+  expected="$(printf 'x%.0s' $(seq 10000))
+[5000 bytes elided]
+$(printf 'x%.0s' $(seq 9997))END"
+  if [ "$output" != "$expected" ]; then
+    echo "FAIL: command printing 25000 bytes did not keep the first and last 10000 bytes around an elision line"
     failures=$((failures + 1))
   fi
 fi
