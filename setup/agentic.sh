@@ -120,33 +120,17 @@ register_mcp_server() {
   return 0
 }
 
-# Runs a `herdr integration`/`herdr plugin` install, logging before and warning (never
-# aborting the rest of the install) on failure. Factors out the repeated log-run-warn
-# shape six Herdr install sites below would otherwise each hand-roll. Guards on `herdr`
-# actually being on PATH, `brewfile_declares herdr` only proves the Brewfile lists it,
-# not that `brew bundle` succeeded. Wrapped in `run_with_timeout`/`</dev/null` like
-# `register_mcp_server` above, a `herdr integration install <agent>` call has no `--yes`
-# equivalent and would otherwise hang the whole script under `set -e` on a stuck prompt.
-# Usage:
-#   install_herdr_component <label> <herdr subcommand and arguments...>
-install_herdr_component() {
-  local label="$1"
-  shift
-
-  if ! command -v herdr &>/dev/null; then
-    log_warning "${label} skipped, herdr not found on PATH."
-    return 1
-  fi
-
-  log_info "Installing ${label}..."
-  run_with_timeout 30 "$@" </dev/null || log_warning "${label} install failed, run manually later."
-}
-
 # Refresh the installed copy every tool links to, so a rerun after a merge picks up new skills.
 # `cp -R` only adds and overwrites, files that exist only in the installed copy stay.
 log_info "Copying agentic configuration to ${AGENTIC_DIRECTORY}..."
 mkdir -p "$AGENTIC_DIRECTORY"
 cp -R "$AGENTIC_SCRIPT_DIRECTORY/../.config/agentic/." "$AGENTIC_DIRECTORY/"
+
+# The `review-github-pr-watcher` skill runs the scripts next to this copy, refreshed
+# here too so a rerun after a merge never leaves the skill ahead of its scripts.
+mkdir -p "$HOME/.config/scripts/review"
+cp -R "$AGENTIC_SCRIPT_DIRECTORY/../.config/scripts/review/." "$HOME/.config/scripts/review/"
+chmod +x "$HOME/.config/scripts/review/"*.sh
 
 # Skills listed as personal only are removed from the installed copy on any other
 # profile, also when a machine switches profile after an earlier install.
@@ -223,13 +207,6 @@ if brewfile_declares "anomalyco/tap/opencode"; then
         opencode-status-hud install --mode local --plugin-dir "$HOME/.config/opencode/plugin" || log_warning "opencode-status-hud plugin registration failed, run manually later."
     else
         log_warning "Skipping 'opencode-status-hud' plugin installation as 'npm' not found!"
-    fi
-
-    # `Herdr`'s own installer drops a plugin file into OpenCode's plugin directory, unlike
-    # the `settings.json`/`agentic.json` cases nothing here overwrites it on a re-run,
-    # so this mainly matters for a first-time install picking up the integration at all.
-    if brewfile_declares herdr; then
-        install_herdr_component "Herdr integration for OpenCode" herdr integration install opencode
     fi
 fi
 
@@ -365,13 +342,6 @@ if (settings.statusLine && typeof settings.statusLine.command === "string") {
     else
         register_mcp_server claude metabase Metabase --transport http metabase "$METABASE_MCP_URL" -s user || true
     fi
-
-    # `Herdr`'s own installer merges a `SessionStart` hook into `settings.json` so its
-    # sidebar can show this agent's live status, run last so it lands after the `cp`
-    # above overwrote the file with the tracked baseline, not before.
-    if brewfile_declares herdr; then
-        install_herdr_component "Herdr integration for Claude Code" herdr integration install claude
-    fi
 fi
 
 if brewfile_declares codex; then
@@ -427,11 +397,6 @@ if brewfile_declares codex; then
             run_with_timeout 30 codex mcp add sentry --url "https://mcp.sentry.dev/mcp?skills=inspect" </dev/null || log_warning "Sentry MCP registration failed, register manually later."
             log_warning "Uncheck everything except 'Inspect Issues & Events' on the consent screen."
         fi
-    fi
-
-    # `Herdr`'s own installer merges a `SessionStart` hook into `hooks.json`.
-    if brewfile_declares herdr; then
-        install_herdr_component "Herdr integration for Codex" herdr integration install codex
     fi
 fi
 
@@ -503,60 +468,22 @@ EOF
             log_warning "Uncheck everything except 'Inspect Issues & Events' on the consent screen."
         fi
     fi
+fi
 
-    # `Herdr`'s own installer merges a `SessionStart` hook into `hooks/agentic.json`, run
-    # last so it lands after the `cat >"$COPILOT_DIRECTORY/hooks/agentic.json"` above
-    # overwrote the file with the tracked baseline, not before.
-    if brewfile_declares herdr; then
-        install_herdr_component "Herdr integration for Copilot CLI" herdr integration install copilot
+# The protected worktree list lived with the former multiplexer plugin, the app's
+# `worktree-cleanup` mod reads it from its own folder now. Copied once, never over a
+# list already there, the former file stays for a multiplexer that still runs.
+FORMER_PROTECTED_FILE="$HOME/.config/herdr-worktree-cleanup/protected"
+PROTECTED_FILE="$HOME/.config/herdr-app/worktree-cleanup-protected"
+if [ -f "$FORMER_PROTECTED_FILE" ]; then
+    if [ ! -e "$PROTECTED_FILE" ]; then
+        log_info "Copying the protected worktree list to '$PROTECTED_FILE'..."
+        mkdir -p "$(dirname "$PROTECTED_FILE")"
+        cp "$FORMER_PROTECTED_FILE" "$PROTECTED_FILE" || log_warning "Could not copy '$FORMER_PROTECTED_FILE', copy it to '$PROTECTED_FILE' by hand."
+    elif ! cmp -s "$FORMER_PROTECTED_FILE" "$PROTECTED_FILE"; then
+        log_warning "'$FORMER_PROTECTED_FILE' differs from '$PROTECTED_FILE', merge any entry only in the former one, the mod reads the latter."
     fi
 fi
 
-if brewfile_declares herdr; then
-    # `herdr` itself has no auto-naming, new tabs just show a bare number, so
-    # `.config/herdr/config.toml` pairs with this plugin (152 stars, MIT,
-    # reviewed for network calls before adding here) instead of reinventing it.
-    # Pinned to the tag reviewed above, `herdr plugin install` is idempotent so
-    # re-running this is safe, but floating on the branch would silently pull
-    # whatever the next upstream push contains straight into every shell.
-    install_herdr_component "herdr-automatic-rename plugin" herdr plugin install qu8n/herdr-automatic-rename --ref v0.11.1 --yes
-
-    # Diff/file review pane, reviewed before adding: read-only against the
-    # worktree, only network call is reading (never posting to) the PR via
-    # `gh`/`glab`/`az`, per its own `README.md`. Pinned to the tag reviewed above,
-    # same reasoning as the plugin install right before this one.
-    install_herdr_component "herdr-reviewr plugin" herdr plugin install persiyanov/herdr-reviewr --ref v0.38.0 --yes
-
-    # Refresh the local plugins in `~/.config` like the agentic copy above, so a
-    # rerun after a merge picks up a new or renamed plugin without `install.sh`.
-    for plugin in herdr-repository-sync herdr-worktree-cleanup; do
-        mkdir -p "$HOME/.config/$plugin"
-        cp -R "$AGENTIC_SCRIPT_DIRECTORY/../.config/$plugin/." "$HOME/.config/$plugin/"
-    done
-
-    # Local plugin from this repository, runs the `gfrb` fetch and rebase in every
-    # herdr pane checked out on `main` or `master`. A link points herdr at the copy
-    # above in place, so later edits need no re-link.
-    # Previous name of the plugin, a leftover link would run every sync twice.
-    if herdr plugin list 2>/dev/null | grep -q '^- herdr-repo-sync '; then
-        log_info "Unlinking the 'herdr-repo-sync' plugin, renamed to 'herdr-repository-sync'..."
-        if run_with_timeout 30 herdr plugin unlink herdr-repo-sync </dev/null; then
-            rm -rf "$HOME/.config/herdr-repo-sync" "${XDG_CACHE_HOME:-$HOME/.cache}/herdr-repo-sync"
-        else
-            log_warning "Could not unlink 'herdr-repo-sync', run 'herdr plugin unlink herdr-repo-sync' by hand."
-        fi
-    fi
-    if ! herdr plugin list 2>/dev/null | grep -q '^- herdr-repository-sync '; then
-        install_herdr_component "herdr-repository-sync plugin" herdr plugin link "$HOME/.config/herdr-repository-sync" --enabled
-    fi
-
-    # Local plugin from this repository, removes a clean worktree under
-    # `~/Developer/worktrees` once its herdr workspace is closed, same link
-    # reasoning as `herdr-repository-sync` above.
-    if ! herdr plugin list 2>/dev/null | grep -q '^- herdr-worktree-cleanup '; then
-        install_herdr_component "herdr-worktree-cleanup plugin" herdr plugin link "$HOME/.config/herdr-worktree-cleanup" --enabled
-    fi
-fi
-
-# The `Herdr` desktop app has no `Homebrew` cask, its own script installs it with its mods.
+# The `Herdr` app is the `herdr-app` cask in the Brewfile, this script sets up its mods and layout.
 bash "$AGENTIC_SCRIPT_DIRECTORY/../settings/herdr.sh" || log_warning "'Herdr' app setup failed, run 'settings/herdr.sh' later."

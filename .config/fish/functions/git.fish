@@ -1084,68 +1084,25 @@ end
 # once. Worktrees are kept in a centralized folder per repo.
 # Usage:
 #   git_worktree_add <branch> [base_branch]
-# Opens a new worktree's pane through `herdr worktree open` so its space
-# carries worktree provenance and nests under the repo's parent space in the
-# sidebar. This lives outside `git_worktree_add` because it is a `herdr`
-# sidebar/UX concern, independent of creating the git worktree itself.
-# A plain `cd` never attaches that provenance, only `herdr worktree
-# create`/`open` do (confirmed against `herdr` 0.9.1 and
-# https://github.com/herdrdev/herdr/issues/3620).
-# `--focus` switches to the new grouped pane instead of `cd`-ing the current
-# shell, so the pane the caller ran `gwta` from is left untouched. An optional
-# fifth argument, `no-focus`, opens it in the background instead, which the
-# `herdr-worktree-open.fish` hook uses. Returns success only when the pane was
-# actually opened and grouped.
-# `herdr` has been observed returning a `source_workspace_id` for a given
-# `--cwd` that belongs to a different repo's workspace, which silently groups
-# the new worktree's pane (and its on-disk content) under the wrong repo. The
-# `repo_root` the same JSON payload reports for that `--cwd` is checked
-# against `$repo_root` before trusting the grouping, since it costs no extra
-# `herdr` call.
+# Opens a new worktree as its own space in the `Herdr` desktop app, which nests
+# it under its repository. This lives outside `git_worktree_add` because it is
+# a sidebar/UX concern, independent of creating the git worktree itself.
+# Returns success only when the space was actually opened, so the caller falls
+# back to a plain `cd` outside the app.
 function _herdr_open_worktree_pane
-    set repo_root "$argv[1]"
-    set worktree_path "$argv[2]"
-    set branch_slug "$argv[3]"
-    set repo_name "$argv[4]"
-    set focus_flag --focus
-    if test "$argv[5]" = no-focus
-        set focus_flag --no-focus
-    end
+    set worktree_path "$argv[1]"
+    set branch_slug "$argv[2]"
 
-    # Inside the `Herdr` app a worktree gets its own space, the app nests it under
-    # its repository.
-    if test -n "$HC_TERMINAL_ID"; and not test "$HERDR_ENV" = 1; and command -v herdr-app >/dev/null 2>&1
-        if herdr-app do space.new --name "$branch_slug" --folder "$worktree_path" >/dev/null 2>&1
-            log_success "Opened as a space in the `Herdr` app."
-            return 0
-        end
-        log_warning "Herdr app space failed, falling back to a plain cd."
+    if not test -n "$HC_TERMINAL_ID"; or not command -v herdr-app >/dev/null 2>&1
         return 1
     end
 
-    if not test -n "$HERDR_SOCKET_PATH"; or not command -v herdr >/dev/null 2>&1; or not command -v jq >/dev/null 2>&1
-        return 1
+    if herdr-app do space.new --name "$branch_slug" --folder "$worktree_path" >/dev/null 2>&1
+        log_success "Opened as a space in the `Herdr` app."
+        return 0
     end
-
-    set source_json (herdr worktree list --cwd "$repo_root" 2>/dev/null)
-    set parent_workspace (echo "$source_json" | jq -re '.result.source.source_workspace_id // empty')
-    set source_repo_root (echo "$source_json" | jq -re '.result.source.repo_root // empty')
-    if test -z "$parent_workspace"
-        log_warning "herdr worktree grouping failed, falling back to a plain cd."
-        return 1
-    end
-    if test "$source_repo_root" != "$repo_root"
-        log_warning "herdr returned a workspace for a different repo, falling back to a plain cd."
-        return 1
-    end
-
-    if not herdr worktree open --workspace "$parent_workspace" --path "$worktree_path" --label "$branch_slug" $focus_flag --trust-repository >/dev/null 2>&1
-        log_warning "herdr worktree grouping failed, falling back to a plain cd."
-        return 1
-    end
-
-    log_success "Opened as a grouped `herdr` pane under `$repo_name`."
-    return 0
+    log_warning "Herdr app space failed, falling back to a plain cd."
+    return 1
 end
 
 function git_worktree_add
@@ -1210,9 +1167,9 @@ function git_worktree_add
         end
     end
 
-    # Opening the worktree as a grouped `herdr` pane is a UX convenience, not
+    # Opening the worktree as a `Herdr` app space is a UX convenience, not
     # a prerequisite for the worktree itself, so fall back to a plain `cd`.
-    if _herdr_open_worktree_pane "$repo_root" "$worktree_path" "$branch_slug" "$repo_name"
+    if _herdr_open_worktree_pane "$worktree_path" "$branch_slug"
         return 0
     end
 
@@ -1318,7 +1275,7 @@ function git_checkout
     set -l repo_root (git rev-parse --show-toplevel 2>/dev/null)
     set -l branch_slug (string replace -a "/" "-" "$argv[-1]")
     log_info "Branch already checked out in another worktree, switching to `$worktree_path`."
-    if test -n "$repo_root"; and _herdr_open_worktree_pane "$repo_root" "$worktree_path" "$branch_slug" (basename "$repo_root")
+    if test -n "$repo_root"; and _herdr_open_worktree_pane "$worktree_path" "$branch_slug"
         return 0
     end
 

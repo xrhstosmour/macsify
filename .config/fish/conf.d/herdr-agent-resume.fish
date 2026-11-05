@@ -8,7 +8,6 @@
 # would lose it.
 status is-interactive; or return
 set -q HC_TERMINAL_ID; or return
-set -q HERDR_ENV; and return
 command -q jq; or return
 test -f ~/.config/agentic/hooks/herdr-application-resume.sh; or return
 

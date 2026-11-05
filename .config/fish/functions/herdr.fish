@@ -1,89 +1,14 @@
-# Functions for opening `herdr`, coloring the current tab, and moving it between workspaces (`herdr`'s
-# own sidebar-grouped concept, not a macOS Space or an `AeroSpace` workspace,
-# `herdr`'s socket API has no way to reach either of those). Guarded on
-# `$HERDR_ENV`/`$HERDR_PANE_ID` since those only exist inside a live `herdr`
-# pane, moving a pane that doesn't exist would just error out.
+# Function for coloring the current tab of the `Herdr` desktop app. Guarded on
+# `$HC_TERMINAL_ID`, which only exists in the app's terminals.
 
-# Color emojis `herdr_tab_color` prefixes onto a tab's label. Keep this list
+# Color emojis `herdr_tab_color` prefixes onto a tab's name. Keep this list
 # in sync with the `hasr`/`hasy`/`hasg` abbreviations in `abbr.fish`, which
 # each hardcode one of these colors.
 set -g HERDR_TAB_COLORS 🔴 🟡 🟢
 
-# Prints a field of the calling pane, read live from `herdr`. The inherited
-# `$HERDR_TAB_ID`/`$HERDR_WORKSPACE_ID` go stale once the pane is moved to
-# another workspace or tab, a move hands out new IDs and the old tab ID stops
-# resolving (`tab_not_found`).
-# Usage:
-#   _herdr_current_pane_field <tab_id|workspace_id>
-function _herdr_current_pane_field
-    herdr pane current --current | jq -re ".result.pane.$argv[1] // empty"
-end
-
-# Function to open herdr, maximizing the WezTerm window first. The `herdr_maximize`
-# user var is caught by `window.lua`, the same one the `hamx` abbreviation sets.
-# It is sent before herdr takes over the terminal, so it reaches WezTerm directly
-# instead of depending on herdr passing the escape through. The value changes on
-# every call so WezTerm always sees a change and fires `user-var-changed`.
-# Usage:
-#   herdr_open [herdr arguments]
-function herdr_open
-    if test "$TERM_PROGRAM" = WezTerm; and not test "$HERDR_ENV" = 1
-        printf '\033]1337;SetUserVar=%s=%s\007' herdr_maximize (date +%s | base64)
-    end
-    herdr $argv
-end
-
-# Function to move the current tab into a brand-new herdr workspace.
-# Usage:
-#   herdr_move_to_new_workspace [label]
-function herdr_move_to_new_workspace
-    if not test "$HERDR_ENV" = 1; or not test -n "$HERDR_PANE_ID"
-        log_error "Not inside a herdr pane!"
-        return 1
-    end
-
-    set -l label "$argv[1]"
-    if test -n "$label"
-        herdr pane move "$HERDR_PANE_ID" --new-workspace --label "$label" --focus
-    else
-        herdr pane move "$HERDR_PANE_ID" --new-workspace --focus
-    end
-end
-
-# Function to fzf-pick an existing herdr workspace and move the current tab into it.
-# Usage:
-#   herdr_move_to_workspace
-function herdr_move_to_workspace
-    if not test "$HERDR_ENV" = 1; or not test -n "$HERDR_PANE_ID"
-        log_error "Not inside a herdr pane!"
-        return 1
-    end
-
-    set -l current_workspace_id (_herdr_current_pane_field workspace_id)
-    if test -z "$current_workspace_id"
-        log_error "Could not resolve the current workspace! (see any herdr error above)"
-        return 1
-    end
-    set -l workspace_data (herdr workspace list | jq -re --arg current "$current_workspace_id" '.result.workspaces[] | select(.workspace_id != $current) | "\(.workspace_id)|\(.label)"')
-    if test -z "$workspace_data"
-        log_error "No other herdr workspaces found! (see any herdr error above)"
-        return 1
-    end
-
-    set -l selected (printf '%s\n' $workspace_data | env SHELL=/bin/bash fzf --ansi --layout=reverse -d'|' --with-nth=2)
-    if test -z "$selected"
-        return 0
-    end
-
-    set -l workspace_id (echo "$selected" | cut -d'|' -f1)
-    herdr pane move "$HERDR_PANE_ID" --new-tab --workspace "$workspace_id" --focus
-end
-
-# Function to prefix the current herdr tab's label with a color emoji.
+# Function to prefix the current tab's name with a color emoji.
 # Strips a color emoji this function previously added so colors don't stack.
-# Renaming a tab opts it out of herdr-automatic-rename's live naming from then
-# on, an accepted tradeoff since herdr has no other way to color a tab. The app's
-# `tab-names` mod keeps the color instead.
+# The app's `tab-names` mod keeps the color across its automatic renames.
 # Usage:
 #   herdr_tab_color <emoji>
 function herdr_tab_color
@@ -91,28 +16,14 @@ function herdr_tab_color
         log_error "Usage: herdr_tab_color <emoji>"
         return 1
     end
-    # The `Herdr` app sets `$HC_TERMINAL_ID` in its terminals, the multiplexer
-    # `$HERDR_ENV`. The app's `tab-names` mod keeps the color across its renames.
-    set -l in_app false
-    if test -n "$HC_TERMINAL_ID"; and not test "$HERDR_ENV" = 1
-        set in_app true
-    else if not test "$HERDR_ENV" = 1; or not test -n "$HERDR_PANE_ID"
-        log_error "Not inside a herdr pane!"
+    if test -z "$HC_TERMINAL_ID"
+        log_error "Not inside a Herdr app terminal!"
         return 1
     end
 
-    set -l tab_id
-    set -l current_label
-    if test $in_app = true
-        set -l app_tab (herdr-app ls | jq -r --arg terminal "$HC_TERMINAL_ID" '.spaces[].tabs[] | select(any(.terminals[]; .terminal == $terminal)) | "\(.id)\t\(.name)"' | string split \t)
-        set tab_id $app_tab[1]
-        set current_label $app_tab[2]
-    else
-        set tab_id (_herdr_current_pane_field tab_id)
-        if test -n "$tab_id"
-            set current_label (herdr tab get "$tab_id" | jq -re '.result.tab.label // empty')
-        end
-    end
+    set -l app_tab (herdr-app ls | jq -r --arg terminal "$HC_TERMINAL_ID" '.spaces[].tabs[] | select(any(.terminals[]; .terminal == $terminal)) | "\(.id)\t\(.name)"' | string split \t)
+    set -l tab_id $app_tab[1]
+    set -l current_label $app_tab[2]
     if test -z "$tab_id"
         log_error "Could not resolve the current tab! (see any herdr error above)"
         return 1
@@ -120,7 +31,7 @@ function herdr_tab_color
 
     set -l emoji "$argv[1]"
     if test -z "$current_label"
-        log_error "Could not read the current tab's label! (see any herdr error above)"
+        log_error "Could not read the current tab's name! (see any herdr error above)"
         return 1
     end
 
@@ -132,9 +43,5 @@ function herdr_tab_color
         end
     end
 
-    if test $in_app = true
-        herdr-app do tab.rename --id "$tab_id" --name "$emoji $current_label" >/dev/null
-    else
-        herdr tab rename "$tab_id" "$emoji $current_label"
-    end
+    herdr-app do tab.rename --id "$tab_id" --name "$emoji $current_label" >/dev/null
 end

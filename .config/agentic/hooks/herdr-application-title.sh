@@ -12,7 +12,6 @@
 # Reads the `Stop` hook payload on standard input.
 
 [ -n "${HC_TERMINAL_ID:-}" ] || exit 0
-[ "${HERDR_ENV:-}" != "1" ] || exit 0
 
 MAX_LENGTH=28
 COLORS=("🔴" "🟡" "🟢")
