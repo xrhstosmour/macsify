@@ -1,7 +1,9 @@
 // Vendored copy of the shipped `tabs` mod (cloned, the app replaces the shipped
-// one on every start), under another name so it is never replaced. The only
-// change is the + button sitting right after the last tab instead of at the far
-// right, where it is a long reach on a wide window. Its icons still come from
+// one on every start), under another name so it is never replaced. The changes
+// are the + button sitting right after the last tab instead of at the far
+// right, where it is a long reach on a wide window, and the + opening a
+// terminal like `cmd-t` instead of the new menu, agents keep their own keys.
+// Its icons still come from
 // the shipped `tabs` mod. Cloned from `Herdr` app 0.1.13, the version is also in
 // `mod.json`. Recheck against the shipped mod after an app update.
 
@@ -101,7 +103,7 @@ export default class Tabs extends View {
       .on_scroll_wheel(e => { if (Math.abs(e.delta.y) >= 1) run(e.delta.y > 0 ? "tab.prev" : "tab.next"); })
       // The + is the last item of the scrolling tab row, a scrollbar row fills the bar, so a + after it would stay at the far right.
       .child(h_flex().id("tab-scroll").flex_1().min_w(0).h_full().items_center().gap(3).overflow_x_scrollbar().children(shown.map(item))
-        .child(button("tab-new", "+", () => openOverlay({ mod: "new-menu", kind: "popup", width: 250, height: 512 }))))
+        .child(button("tab-new", "+", () => run("tab.new", { space: space?.id }))))
       .when(enabled.includes("files"), el => el.child(panelButton("files", "Files", "mods/files/file.svg")))
       .when(enabled.includes("changes"), el => el.child(panelButton("changes", "Changes", "mods/changes/changes.svg")))
       .when(w?.buttons, el => el.child(button("minimize", w.platform === "windows" ? svg("mods/tabs/win-min.svg").size(16) : "−", () => run("window.minimize")))
