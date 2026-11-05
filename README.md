@@ -18,7 +18,7 @@ Opinionated `macOS` setup via shell scripts, plus a shared configuration for `AI
 | Keyboard | Remapping with persistence (`kbcs` for cheat sheet) |
 | Utilities | `Stege` (menu bar), `Maccy` (clipboard), `Flameshot` (screenshots), `Amphetamine` (keep awake), `Obsidian` (notes) |
 | Network | `NordVPN`, `Tailscale` |
-| Version Control | `Gitify`, custom `Git` abbreviations |
+| Version Control | Custom `Git` abbreviations |
 | Appearance | Dark mode + dark icons + custom wallpapers |
 | Security | `1Password` + Firewall + stealth mode + `TouchID` for `sudo` |
 | Cleanup | `Mole` + Bloatware removal |
