@@ -21,7 +21,6 @@ brew 'fdupes'
 brew 'ffmpeg'
 brew 'fish'
 brew 'fzf'
-brew 'gemini-cli'
 brew 'getsentry/tools/sentry-cli', trusted: true
 brew 'gh'
 brew 'git-delta'
