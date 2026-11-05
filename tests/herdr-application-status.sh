@@ -3,7 +3,7 @@
 # Checks `.config/agentic/hooks/herdr-application-status.sh`: outside an app terminal it
 # writes nothing, inside one each state becomes the right `OSC 7501` escape, a
 # permission or question notification is `blocked` and any other notification
-# or an unknown state writes nothing, and so does a multiplexer pane. The terminal is a temporary file.
+# or an unknown state writes nothing. The terminal is a temporary file.
 
 TESTS_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 HOOK="$TESTS_SCRIPT_DIRECTORY/../.config/agentic/hooks/herdr-application-status.sh"
@@ -33,9 +33,6 @@ export HC_TERMINAL_ID="t1"
 for state in working "done" idle clear; do
   [ "$(written "$state" '{}')" = "$(printf '\033]7501;state=%s:app=claude-code\033\\' "$state")" ] || fail "wrong escape for '$state'"
 done
-
-# The multiplexer's own hook reports there, this one stays silent.
-[ -z "$(HERDR_ENV=1 written working '{}')" ] || fail "wrote inside a multiplexer pane"
 
 [ "$(written notification '{"notification_type":"permission_prompt"}')" = "$(printf '\033]7501;state=blocked:app=claude-code:kind=permission\033\\')" ] || fail "a permission prompt was not blocked"
 [ "$(written notification '{"notification_type":"elicitation_dialog"}')" = "$(printf '\033]7501;state=blocked:app=claude-code:kind=question\033\\')" ] || fail "a question was not blocked"

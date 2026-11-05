@@ -163,7 +163,7 @@ alt-m = 'exec-and-forget open -a /Applications/Spotify.app'
 
 alt-k = 'exec-and-forget open -a /Applications/Obsidian.app'
 
-alt-h = 'exec-and-forget open -a "$HOME/Applications/Herdr.app"'
+alt-h = 'exec-and-forget open -a /Applications/Herdr.app'
 
 alt-quote = 'exec-and-forget open -a "/System/Applications/System Settings.app"'
 

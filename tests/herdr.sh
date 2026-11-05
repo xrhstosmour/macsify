@@ -1,12 +1,10 @@
 #!/bin/bash
 
-# Checks `settings/herdr.sh`: an installer whose checksum does not match
-# the pinned one is never run, an installed app is not installed again, every
-# pinned mod is copied from a checkout at its pinned commit, also before the app
-# is installed, an installed mod folder is never overwritten, and a mod that
-# fails `herdr-app check` is reported. Runs with a temporary home and fake
-# `curl`, `git` and `herdr-app`, so nothing touches the network or the real
-# configuration.
+# Checks `settings/herdr.sh`: every pinned mod is copied from a checkout at its
+# pinned commit, also before the app is installed, an installed mod folder is
+# never overwritten, and a mod that fails `herdr-app check` is reported. Runs
+# with a temporary home and fake `git` and `herdr-app`, so nothing touches the
+# network or the real configuration.
 
 TESTS_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 HERDR_APPLICATION_SCRIPT="$TESTS_SCRIPT_DIRECTORY/../settings/herdr.sh"
@@ -19,8 +17,10 @@ unset HERDR_APPLICATION_HOME
 MODS_DIRECTORY="$HOME/.config/herdr-app/mods"
 FAKE_BINARIES="$TEST_DIRECTORY/bin"
 CALLS="$TEST_DIRECTORY/calls"
-INSTALLER_RAN="$TEST_DIRECTORY/installer_ran"
-mkdir -p "$HOME/.local/bin" "$FAKE_BINARIES"
+# Not installed until a case creates it, the script only sees the system folders
+# and this one, so no run depends on a `herdr-app` of the host's `PATH`.
+FAKE_APPLICATION="$FAKE_BINARIES/herdr-app"
+mkdir -p "$FAKE_BINARIES"
 failures=0
 
 fail() {
@@ -43,27 +43,21 @@ elif [ "$1" = "-C" ] && [ "$3" = "checkout" ]; then
 fi
 FAKE
 
-# Serves an installer that is not the reviewed one, it only leaves a mark if run.
-cat >"$FAKE_BINARIES/curl" <<'FAKE'
-#!/bin/bash
-echo "curl" >>"$CALLS"
-printf 'touch "%s"\n' "$INSTALLER_RAN" >"${!#}"
-FAKE
-
 # The app counts as closed unless a case says otherwise, so no run depends on the host's processes.
 printf '#!/bin/bash\nexit 1\n' >"$FAKE_BINARIES/pgrep"
 
 chmod +x "$FAKE_BINARIES"/*
-export CALLS INSTALLER_RAN
+# The one real tool outside the system folders the script needs, linked after the `chmod` above.
+ln -s "$(command -v jq)" "$FAKE_BINARIES/jq"
+export CALLS
 
 run_script() {
-  PATH="$FAKE_BINARIES:$PATH" bash "$HERDR_APPLICATION_SCRIPT" 2>&1
+  PATH="$FAKE_BINARIES:/usr/bin:/bin" bash "$HERDR_APPLICATION_SCRIPT" 2>&1
 }
 
-# A changed installer is refused, and every mod still goes in at its pinned commit, unchecked.
+# Without the app every mod still goes in at its pinned commit, unchecked.
 output=$(run_script)
-[ -e "$INSTALLER_RAN" ] && fail "an installer with a different checksum was run"
-grep -q "installer changed since it was reviewed" <<<"$output" || fail "a changed installer was not reported"
+grep -q "Mod checks skipped" <<<"$output" || fail "a missing app was not reported"
 for folder in reviewer git-graph roundup roundup-dry open-vscode; do
   [ -f "$MODS_DIRECTORY/$folder/mod.json" ] || fail "the '$folder' mod was not copied"
 done
@@ -78,17 +72,16 @@ done
 # Worktrees of the `worktree` mod land in `~/Developer/worktrees` through a link.
 [ "$(readlink "$HOME/.herdr/worktrees")" = "$HOME/Developer/worktrees" ] || fail "the worktrees folder of 'herdr' was not linked"
 
-# The app is installed now, a second run neither downloads it nor touches the installed mods.
-cat >"$HOME/.local/bin/herdr-app" <<'FAKE'
+# The app is installed now, a second run does not touch the installed mods.
+cat >"$FAKE_APPLICATION" <<'FAKE'
 #!/bin/bash
 echo "$1 $2" >>"$CALLS"
 [ -z "$FAIL_CHECK" ] || [ "$(basename "$2")" != "$FAIL_CHECK" ]
 FAKE
-chmod +x "$HOME/.local/bin/herdr-app"
+chmod +x "$FAKE_APPLICATION"
 echo "mine" >"$MODS_DIRECTORY/reviewer/edited"
 : >"$CALLS"
 run_script >/dev/null
-grep -q '^curl' "$CALLS" && fail "an installed app was downloaded again"
 [ -f "$MODS_DIRECTORY/reviewer/edited" ] || fail "an installed mod folder was overwritten"
 grep -q '^checkout' "$CALLS" && fail "an installed mod was fetched again"
 

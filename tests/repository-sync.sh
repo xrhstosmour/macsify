@@ -10,7 +10,7 @@ set -e
 
 TESTS_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # Overridable so the test can be pointed at an older copy of the script.
-REPOSITORY_SYNC_SCRIPT="${REPOSITORY_SYNC_SCRIPT:-$TESTS_SCRIPT_DIRECTORY/../.config/herdr-repository-sync/repository-sync.sh}"
+REPOSITORY_SYNC_SCRIPT="${REPOSITORY_SYNC_SCRIPT:-$TESTS_SCRIPT_DIRECTORY/../.config/herdr-app/mods/repository-sync/repository-sync.sh}"
 
 TEST_HOME=$(mktemp -d)
 trap 'rm -rf "$TEST_HOME"' EXIT

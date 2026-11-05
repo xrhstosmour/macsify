@@ -249,7 +249,7 @@ Body:
 ...
 ```
 
-Get explicit approval before proceeding. If the user wants changes, iterate on Phase 4.
+State in the preview that after the PR is created it is prepared for review (rebase onto `<base>`, autosquash, push with lease, trigger CI), so the one approval covers create and prepare, see step 11. Get explicit approval before proceeding. If the user wants changes, iterate on Phase 4.
 
 ### 7. Push
 
@@ -323,18 +323,11 @@ Commits: <N>
 Labels: <applied label, or "none fit">
 ```
 
-### 11. Trigger CI
+### 11. Prepare for review and check CI
 
-After creating the PR, check if the project has CI/CD workflows that do not start automatically on PR creation. Look for:
+Required for every PR you create, run it right after step 10, in the same turn, the approval in step 6 already covers it. Invoke the `prepare-github-pr-for-review` skill for the new PR, it rebases, autosquashes, pushes with a lease and triggers the CI that does not start on its own. Skip re-requesting reviews unless the user asked.
 
-- `.github/workflows/` files with `on: push: branches: ["tests/**"]` or `workflow_dispatch` triggers.
-- Project docs, README, `copilot/dev-tools.md`, or equivalent, that mention manual CI trigger steps.
-
-If manual triggers exist, show the user the exact command and let them decide whether to run it. Do not trigger CI automatically here, except from the `prepare-github-pr-for-review` skill, which runs it itself. Example for projects using a `tests/` branch convention:
-
-```bash
-git push origin HEAD:tests/<branch-name>
-```
+That skill reads the CI result once with `gh pr checks`, never in a polling loop, do not read it a second time here. Report its passing, pending and failing checks. A failing check is reported with its job name and run link, and the PR is not called ready. When the project has a test pipeline and no test check appears, say it did not start and which manual trigger the project documents (`workflow_dispatch`, a `tests/**` branch push), do not claim it passes.
 
 ### 12. Sync the task
 
@@ -349,4 +342,5 @@ If the PR links a task in a tracker, or the user mentioned one, offer in the sam
 - Only apply labels that already exist in the repo. Never create new labels.
 - Labels is a required step for every PR you create, run it right after `gh pr create`, in the same turn, don't stop at the returned URL and report done first.
 - `PR` is always created ready for review, not draft.
+- Preparing for review and checking CI (step 11) is a required step for every PR you create, don't stop at the labels and report done first.
 - Never add a session link, agent name, or other agent-attribution line to a `PR` body or title, from any tool or agent, see "5. PR Body Generation" for the only sections that belong there.

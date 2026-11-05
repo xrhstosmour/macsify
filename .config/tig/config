@@ -1,0 +1,31 @@
+# Columns, graph v2 replaces the old v1 renderer set in `.gitconfig`.
+set main-view = id:yes,width=8 date:relative-compact author:abbreviated commit-title:yes,graph=v2,refs=yes,overflow=no
+set blame-view = date:relative-compact file-name:auto author:abbreviated id:yes,color line-number:yes,interval=1 text
+set refs-view = line-number:no id:no date:relative-compact author:abbreviated ref commit-title
+
+# Layout, the log on top and the diff below at 70 percent of the height.
+set vertical-split = no
+set split-view-height = 70%
+set line-graphics = utf-8
+
+# Behaviour.
+set ignore-case = smart-case
+set diff-context = 5
+set diff-highlight = true
+set show-untracked = yes
+set refresh-mode = auto
+set commit-order = topo
+set mouse = yes
+set mouse-scroll = 3
+
+# Copy the short or full commit hash to the clipboard.
+bind generic 1 !@sh -c "printf '%.8s' %(commit) | pbcopy"
+bind generic y !@sh -c "printf '%s' %(commit) | pbcopy"
+
+# Fixup the selected commit, and autosquash-rebase onto its parent, mirroring `gfx` and `grb`.
+# `R` stays tig's refresh, the rebase sits behind Escape so a habitual refresh never starts it.
+bind main F !git commit --fixup=%(commit)
+bind main <Esc>r !git rebase -i --autosquash %(commit)^
+
+# Create a branch from the selected commit, confirmed before it runs.
+bind main B ?git switch -c "%(prompt Enter new branch name: )" %(commit)

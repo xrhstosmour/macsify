@@ -2,10 +2,9 @@ import { View, div } from "gpui-kit";
 import { home, machines, panes, run, setShared, shared, spaces } from "herdr";
 import { autoName, nextName, withoutColor } from "./logic.js";
 
-// The app's counterpart of the `herdr-automatic-rename` plugin: a tab nobody
-// named gets `folder · program`, the program left out when the tab shows its icon,
-// and follows its terminal around, and a tab the
-// person renamed is left alone for good. `LAST_KEY` remembers the name set per
+// A tab nobody named gets `folder · program`, the program left out when the tab
+// shows its icon, and follows its terminal around, and a tab the person renamed
+// is left alone for good. `LAST_KEY` remembers the name set per
 // tab so a restart or a reload of this mod does not mistake it for the person's
 // own rename. Coloring a tab, a leading 🔴 🟡 🟢 added by `herdr_tab_color`
 // in `.config/fish/functions/herdr.fish`, is kept across renames.

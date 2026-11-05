@@ -1,8 +1,7 @@
 // The naming rules of the `tab-names` mod, free of the `herdr` module so
-// `tests/tab-names.sh` can run them in Node. Mirrors `herdr-automatic-rename`
-// as configured in `.config/herdr-automatic-rename/config.sh`: `folder · program`,
-// no branch, no index, names cut at 40 characters, except that a program with an
-// icon is left out of the name, which the plugin does not do.
+// `tests/tab-names.sh` can run them in Node: `folder · program`, no branch, no
+// index, names cut at 40 characters, and a program with an icon is left out of
+// the name.
 
 export const COLORS = ["🔴", "🟡", "🟢"];
 export const MAX_NAME_LENGTH = 40;

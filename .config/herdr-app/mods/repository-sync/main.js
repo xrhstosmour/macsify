@@ -1,14 +1,13 @@
 import { View, div } from "gpui-kit";
 import { exec, home, machines, panes } from "herdr";
 
-// The app's counterpart of the `herdr-repository-sync` plugin. The sync itself
-// is that plugin's `repository-sync.sh`, reused as is: it fetches `origin` and
-// rebases onto the default branch only a clean checkout on `main` or `master`,
-// throttled per checkout, and aborts on a conflict. The app has no tab or
-// workspace events, so this hands it every folder a terminal sits in the first
-// time that folder shows up, and once when the mod loads.
+// The sync itself is the `repository-sync.sh` next to this file: it fetches
+// `origin` and rebases onto the default branch only a clean checkout on `main`
+// or `master`, throttled per checkout, and aborts on a conflict. The app has no
+// tab or workspace events, so this hands it every folder a terminal sits in the
+// first time that folder shows up, and once when the mod loads.
 
-const SCRIPT = `${home()}/.config/herdr-repository-sync/repository-sync.sh`;
+const SCRIPT = `${home()}/.config/herdr-app/mods/repository-sync/repository-sync.sh`;
 const TICK_MS = 5000;
 
 export default class RepositorySync extends View {
@@ -27,7 +26,7 @@ export default class RepositorySync extends View {
     if (fresh.length === 0) return;
     fresh.forEach((folder) => this.seen.add(folder));
 
-    // The script detaches at once and logs to `~/.cache/herdr-repository-sync/sync.log`.
+    // The script detaches at once and logs to `~/.cache/herdr-app/repository-sync/sync.log`.
     exec("bash", [SCRIPT, "app", ...fresh]).catch(() => {});
   }
 

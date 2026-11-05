@@ -1,29 +1,29 @@
 #!/usr/bin/env bash
 
 # Runs what the `gfrb` fish abbreviation (`git_fetch_and_rebase`) does, in every
-# herdr pane whose checkout is on `main` or `master`: fetch `origin`, then
+# given folder whose checkout is on `main` or `master`: fetch `origin`, then
 # rebase onto the origin default branch with `--autosquash --autostash`. Only
 # `origin` is fetched, unlike `gfrb`, the rebase reads nothing else and every
-# extra remote would lengthen the pass that holds the lock. Run by
-# herdr on startup and on workspace, worktree and tab events (see
-# `herdr-plugin.toml`), by the `Herdr` app's `repository-sync` mod (see
-# `.config/herdr-app/mods/repository-sync/`), or by hand with explicit paths. Checkouts on any other
-# branch, with uncommitted changes, mid rebase, merge or cherry-pick, or whose
-# own configuration or hooks would run code are left alone. A rebase that stops on a conflict is aborted, restoring the checkout, and
-# logged. Each checkout is synced at most once per throttle window.
+# extra remote would lengthen the pass that holds the lock. Run by the `Herdr`
+# app's `repository-sync` mod next to this file, which passes every terminal
+# folder, or by hand. Checkouts on any other branch, with uncommitted changes,
+# mid rebase, merge or cherry-pick, or whose own configuration or hooks would
+# run code are left alone. A rebase that stops on a conflict is aborted,
+# restoring the checkout, and logged. Each checkout is synced at most once per
+# throttle window.
 # Usage:
-#   repository-sync.sh [event name] [--force] [path...]
+#   repository-sync.sh [event name] [--force] path...
 
 set -u
 
 REPOSITORY_SYNC_SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
-STATE_DIRECTORY="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-repository-sync"
+STATE_DIRECTORY="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-app/repository-sync"
 LOG_FILE="$STATE_DIRECTORY/sync.log"
 LOCK_DIRECTORY="$STATE_DIRECTORY/lock"
 THROTTLE_SECONDS=600
 LOG_MAX_BYTES=200000
 
-# Never block on a credential or host-key prompt, herdr has no terminal to answer it.
+# Never block on a credential or host-key prompt, the app has no terminal to answer it.
 export GIT_TERMINAL_PROMPT=0
 # Abort a stalled transfer instead of hanging, over SSH and HTTPS alike.
 export GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=10 -o ServerAliveInterval=15 -o ServerAliveCountMax=2"
@@ -48,7 +48,7 @@ for argument in "$@"; do
   esac
 done
 
-# Return to herdr right away, fetching every repository can take a while.
+# Return to the app right away, fetching every repository can take a while.
 if [ "$detached" = false ]; then
   nohup bash "$REPOSITORY_SYNC_SCRIPT_PATH" "$@" --detached >/dev/null 2>&1 &
   exit 0
@@ -100,16 +100,6 @@ trap release_lock EXIT
 
 if [ -f "$LOG_FILE" ] && [ "$(stat -f %z "$LOG_FILE")" -gt "$LOG_MAX_BYTES" ]; then
   tail -n 500 "$LOG_FILE" >"$LOG_FILE.tmp" && mv "$LOG_FILE.tmp" "$LOG_FILE"
-fi
-
-if [ ${#paths[@]} -eq 0 ]; then
-  if ! pane_directories=$(herdr pane list 2>>"$LOG_FILE" | jq -r '.result.panes[].cwd // empty'); then
-    log "could not list herdr panes"
-    exit 1
-  fi
-  while IFS= read -r path; do
-    [ -n "$path" ] && paths+=("$path")
-  done < <(printf '%s\n' "$pane_directories" | sort -u)
 fi
 
 # A checkout's own configuration and hooks run code during `status`, `fetch` and

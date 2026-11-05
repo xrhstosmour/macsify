@@ -138,6 +138,7 @@ Skills are loaded by agents and triggered via commands. The `Command` column bel
 | `prepare-github-pr-for-review` | `/prepare-github-pr-for-review` | Rebase onto the default branch, autosquash fixups, push with a lease, trigger CI, re-request reviews when asked |
 | `resolve-github-pr-comments` | `/resolve-github-pr-comments` | Review `PR` comments, assess validity, make fixup commits, push, reply with `SHA` links, then prepare the `PR` for review |
 | `review-github-pr` | `/review-github-pr` | Multi-agent `PR` review, spawns agents in parallel, can post inline comments |
+| `review-github-pr-watcher` | `/review-github-pr-watcher` | Started once in a terminal, watches for pull requests that request your review in one organization or your personal account through `.config/scripts/review/watch-review-requests.sh` and `Monitor`, reviews each with `review-github-pr`, posts only the inline comments review through `post-pr-review.sh`, read only on the repository |
 
 ### Diagnostic Skills
 
