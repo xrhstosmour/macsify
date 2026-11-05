@@ -54,7 +54,12 @@ source utilities/development.sh
 # provides in the step above.
 log_divider
 log_info "Setting up agentic configuration..."
-bash setup/agentic.sh
+# `mise` installed the tools but this shell never activated it, `mise exec` puts them on `PATH`.
+if command -v mise &>/dev/null; then
+  mise exec -- bash setup/agentic.sh
+else
+  bash setup/agentic.sh
+fi
 
 # Set up the mobile development toolchain. Asked with a no-op command and run
 # afterwards, so the command substitution the answer needs does not swallow the

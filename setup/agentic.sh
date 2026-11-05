@@ -197,8 +197,8 @@ if brewfile_declares "anomalyco/tap/opencode"; then
 
     # `opencode-status-hud`'s own local-install default is `~/.config/opencode/plugins`, which
     # OpenCode does not auto-load. Force it into the same directory as `agentic-guards.js` above.
-    # `mise`-installed `node`/`npm` come from `configure.sh`, which runs after this script, so
-    # this no-ops on the first run, `configure.sh` reruns this script once `node` is installed.
+    # `mise`-installed `node`/`npm` come from `configure.sh`, which runs this script through
+    # `mise exec` after installing them, run by hand without `mise`, this skips the plugin.
     if command -v npm &>/dev/null; then
         if ! command -v opencode-status-hud &>/dev/null; then
             log_info "Installing opencode-status-hud plugin..."
@@ -268,10 +268,12 @@ effort: ${effort}" "$HOME/.claude/agents/${agent}.md"
     # through a `mise`-shimmed shell. The committed value stays a bare command name so the file
     # carries no machine or user specific path, and so an unsubstituted checkout still works
     # wherever `bun` is on `PATH` instead of pointing at some other machine's home directory.
-    # Same `mise`-installed `node`/`bun` gap as `opencode-status-hud` above, not available yet
-    # on a first-time install, re-run `install.sh` after `configure.sh` completes to pick it up.
+    # Only `bun`, the entry point is TypeScript, which `node` cannot run. `configure.sh` runs this
+    # script through `mise exec`, so the `mise`-installed `node`/`bun` are on `PATH`, run it again
+    # by hand if they were not. That path names the installed version of `bun`, run this script
+    # again after a `bun` upgrade or the status line points at a removed version.
     log_info "Re-detecting claude-hud runtime path..."
-    hud_runtime_path=$(command -v bun || command -v node || true)
+    hud_runtime_path=$(command -v bun || true)
     if [ -n "$hud_runtime_path" ]; then
         node -e '
 const fs = require("fs");
@@ -287,7 +289,7 @@ if (settings.statusLine && typeof settings.statusLine.command === "string") {
 }
 ' "$HOME/.claude/settings.json" "$hud_runtime_path"
     else
-        log_warning "No 'bun' or 'node' found, leaving 'claude-hud' statusLine command as committed, it falls back to whatever 'bun' resolves to on PATH."
+        log_warning "No 'bun' found, leaving 'claude-hud' statusLine command as committed, it falls back to whatever 'bun' resolves to on PATH."
     fi
 
     mkdir -p "$HOME/.claude/plugins/claude-hud"
