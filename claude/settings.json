@@ -13,7 +13,7 @@
   "spinnerTipsEnabled": false,
   "awaySummaryEnabled": false,
   "autoUpdatesChannel": "stable",
-  "autoCompactWindow": 400000,
+  "autoCompactWindow": 200000,
   "idleCompaction": true,
   "subagentPromptCacheTtl": "1h",
   "env": {
