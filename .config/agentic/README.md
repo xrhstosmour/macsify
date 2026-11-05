@@ -124,7 +124,7 @@ Everything listed at session start costs tokens on every turn, so `claude/settin
 
 ## Advisor
 
-`/advisor <model>` (or the `advisorModel` setting) lets the main model consult a stronger one at decision points. Each call is billed at the advisor's rates on the full transcript, uncached. It is not a replacement for the `reviewer` agent, Claude decides when to call it. Off by default, try it on the `implementor` before making it a default.
+`/advisor <model>` (or the `advisorModel` setting) lets the main model consult a stronger one at decision points. Each call is billed at the advisor's rates on the full transcript, uncached. It is not a replacement for the `reviewer` agent, Claude decides when to call it, no setting forces or caps calls. `claude/settings.json` sets `advisorModel` to `opus` as a trial, subagents inherit it when the pairing is valid, so the Sonnet `architect` can consult Opus without running on it. `claude --advisor <model>` also works for one session but is hidden from `--help`, and there is no `--subagents` flag, the post that suggests one is wrong. It needs a feature flag fetched from Anthropic, so `DISABLE_TELEMETRY` keeps it off. Verified against the official docs on 2026-11-05, remove the key if `/scope` plans do not improve for the cost.
 
 ## Skills
 
