@@ -84,7 +84,8 @@ nohup bash -c '
   session_id="$2"
   transcript_path="$3"
 
-  title=$(claude -p --model haiku --no-session-persistence \
+  # Without the terminal ID the status, title and resume hooks of the nested session exit at their first guard instead of acting on the parent terminal.
+  title=$(env -u HC_TERMINAL_ID claude -p --model haiku --no-session-persistence \
     "Summarize this coding-session request as a 3-5 word kebab-case slug: lowercase, hyphen-separated, no punctuation, no quotes, output nothing but the slug itself. Request: $first_message" \
     2>/dev/null | tr -d "\"" | tr -c "a-z0-9-" "-" | sed -E "s/-+/-/g; s/^-//; s/-$//" | cut -c1-60)
 
