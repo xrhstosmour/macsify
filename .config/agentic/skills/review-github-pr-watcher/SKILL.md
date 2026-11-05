@@ -56,4 +56,4 @@ Use the `Monitor` tool on the detector, it streams one line per pull request int
 - A command failure shows the error and skips that pull request, it never retries with another method or stops the watcher. The detector already recorded it as seen, delete its line in the seen file to review it again before the next push.
 - Never post a second review for the same head sha, the poster refuses one the viewer already left at that commit.
 - This skill relies on `review-github-pr` for the pinned `HEAD_SHA`, the "Option 1: Post inline comments" event mapping and its review output, recheck both when that skill changes.
-- The poster needs an allow rule in `claude/settings.json` by hand, `Bash(~/.config/scripts/review/post-pr-review.sh *)`, plus one for the detector, otherwise each call waits for a prompt. The scripts come from `install.sh` and `setup/agentic.sh`.
+- The poster and the detector are allowed by path in `claude/settings.json`, which `setup/agentic.sh` copies, without those rules each call waits for a prompt. The scripts come from `install.sh` and `setup/agentic.sh`.

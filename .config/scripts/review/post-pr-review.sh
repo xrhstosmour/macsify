@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The only write the `review-github-pr-watcher` skill is allowed unattended: one review with inline comments on one open pull request.
-# Meant to be allowed in claude/settings.json by its path, that rule is not shipped and is added by hand, so the script validates every input itself and calls one fixed endpoint, never a caller supplied one.
+# Allowed in claude/settings.json by its path, so the script validates every input itself and calls one fixed endpoint, never a caller supplied one.
 #
 # Usage: post-pr-review.sh <owner/repo> <pull request number> <head sha> <APPROVE|REQUEST_CHANGES|COMMENT> <body file> <comments file>
 #   comments file: a JSON array of {"path": string, "line": number, "body": string}, can be empty
