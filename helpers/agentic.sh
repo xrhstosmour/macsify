@@ -74,22 +74,25 @@ inject_opencode_agent_models() {
 
 # Prints the keys of an installed `Claude Code` settings file that belong to the
 # machine, as a `JSON` object, `{}` when there are none or the file is missing
-# or not `JSON`. `autoMode` holds this machine's trusted repositories and
-# `skipDangerousModePermissionPrompt` is a per-machine acknowledgement, neither
-# belongs in the committed file, so they are carried across its copy.
+# or not `JSON`. `autoMode` holds this machine's trusted repositories,
+# `skipDangerousModePermissionPrompt` is a per-machine acknowledgement and
+# `model` is the person's last `/model` choice, which a rerun must not reset,
+# so they are carried across the copy of the committed file. The committed
+# `model` only seeds a new machine, changing it never reaches an installed one.
 # Usage:
 #   preserved_claude_settings <installed settings file>
 preserved_claude_settings() {
   local file="$1" preserved=""
   if [ -f "$file" ] && command -v jq >/dev/null 2>&1; then
-    preserved=$(jq -c '{autoMode, skipDangerousModePermissionPrompt} | with_entries(select(.value != null))' "$file" 2>/dev/null || true)
+    preserved=$(jq -c '{autoMode, skipDangerousModePermissionPrompt, model} | with_entries(select(.value != null))' "$file" 2>/dev/null || true)
   fi
   [ -n "$preserved" ] || preserved="{}"
   printf '%s\n' "$preserved"
 }
 
 # Adds the preserved keys back to the settings file just copied over the
-# installed one. The repository's own keys stay, the preserved ones are added.
+# installed one. A preserved key replaces the repository's value of the same
+# key, the other repository keys stay.
 # Usage:
 #   restore_claude_settings <installed settings file> <preserved JSON>
 restore_claude_settings() {
@@ -100,6 +103,6 @@ restore_claude_settings() {
     mv "$merged" "$file"
   else
     rm -f "$merged"
-    log_warning "Could not restore autoMode in ${file}, add it back by hand."
+    log_warning "Could not restore ${preserved} in ${file}, add it back by hand."
   fi
 }

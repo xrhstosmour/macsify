@@ -241,7 +241,7 @@ effort: ${effort}" "$HOME/.claude/agents/${agent}.md"
         fi
     done
 
-    # Machine specific keys (`autoMode`, `skipDangerousModePermissionPrompt`) are carried across
+    # Machine specific keys (`autoMode`, `skipDangerousModePermissionPrompt`, `model`) are carried across
     # the overwrite below, see `helpers/agentic.sh`.
     preserved_settings=$(preserved_claude_settings "$HOME/.claude/settings.json")
 
