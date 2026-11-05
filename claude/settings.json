@@ -94,6 +94,8 @@
       "Bash(gh repo view*)",
       "Bash(~/.config/scripts/review/watch-review-requests.sh *)",
       "Bash(~/.config/scripts/review/post-pr-review.sh *)",
+      "Bash(~/.config/scripts/review/review-worktree.sh *)",
+      "Read(~/Developer/worktrees/*/reviews/**)",
       "Bash(brew list*)",
       "Bash(brew info *)",
       "Bash(brew --prefix*)",
