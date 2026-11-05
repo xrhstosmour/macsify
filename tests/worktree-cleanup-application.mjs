@@ -1,16 +1,13 @@
 // Runs `sweepWorktree` from the `Herdr` app's `worktree-cleanup` mod against real
 // temporary `git` repositories. Started by `tests/worktree-cleanup-application.sh`.
-// `tests/worktree-cleanup.sh` runs the same cases against the multiplexer plugin,
-// a case added here belongs there too, the two must decide alike, except the
-// pushed branch cases below, which only the app's mod keeps.
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const logicUrl = new URL("../.config/herdr-app/mods/worktree-cleanup/logic.js", import.meta.url);
-const { sweepWorktree, parseProtected, isProtected, isOccupiedBy, linkedWorktreeRoot, PROTECTED_NAMES } = await import(fileURLToPath(logicUrl));
+const { sweepWorktree, parseProtected, isProtected, isOccupiedBy, linkedWorktreeRoot } = await import(fileURLToPath(logicUrl));
 
 const base = realpathSync(mkdtempSync(join(tmpdir(), "worktree-cleanup-")));
 let failures = 0;
@@ -92,8 +89,7 @@ await check("not merged", unmerged, "kept", false);
 if (!branchExists("unmerged")) fail("an unmerged branch was deleted");
 
 // Not merged but pushed in full: the remote holds every commit, so the worktree and branch go.
-// A commit made after the push is only here, so it stays. This is the app's own rule, the plugin
-// keeps an unmerged branch.
+// A commit made after the push is only here, so it stays.
 const pushed = worktree("pushed", { commit: true });
 git(pushed, "push", "--quiet", "origin", "feature/pushed");
 await check("pushed in full", pushed, "removed", true);
@@ -166,10 +162,6 @@ for (const name of ["review", "reviews", "playground", "trivial", "trivials"]) {
 const listed = worktree("listed", { commit: true, merge: true });
 await check("listed in the protected file", listed, "untrack", false, { protectedEntries: parseProtected("# kept\nlisted\n") });
 if (isProtected("/a/b/other", parseProtected("listed"))) fail("an unlisted name counted as protected");
-
-// The multiplexer plugin keeps its own copy of the protected names, they must not drift.
-const scriptNames = readFileSync(new URL("../.config/herdr-worktree-cleanup/worktree-cleanup.sh", import.meta.url), "utf8").match(/^PROTECTED_NAMES="(.*)"$/m)?.[1].split(" ");
-if (JSON.stringify(scriptNames) !== JSON.stringify(PROTECTED_NAMES)) fail(`protected names differ: plugin ${scriptNames}, mod ${PROTECTED_NAMES}`);
 
 // A path that is not a git worktree any more is dropped from the watch list.
 await check("gone", join(base, "does-not-exist"), "untrack", true);

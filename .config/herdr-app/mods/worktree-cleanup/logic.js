@@ -1,12 +1,11 @@
 // The decisions of the `worktree-cleanup` mod, kept free of the `herdr` module
 // so `tests/worktree-cleanup-application.sh` can run them against real `git` in Node.
-// Mirrors `.config/herdr-worktree-cleanup/worktree-cleanup.sh`, the multiplexer
-// plugin, with two differences: a worktree whose work is neither merged nor
-// pushed is kept whole, not only its branch, and a clean one whose branch is
-// pushed in full is removed too, the remote still holds every commit.
+// A worktree whose work is neither merged nor pushed is kept whole, not only its
+// branch, and a clean one whose branch is pushed in full is removed too, the
+// remote still holds every commit.
 
-// Worktrees kept on purpose, whatever their state. The same names the plugin
-// skips, plus the scratch ones. More go in the shared `protected` file.
+// Worktrees kept on purpose, whatever their state. More go in the
+// `worktree-cleanup-protected` file under `~/.config/herdr-app`.
 export const PROTECTED_NAMES = ["review", "reviews", "playground", "trivial", "trivials"];
 
 // Git's own markers of an unfinished operation.
@@ -31,7 +30,7 @@ export function isUnderAny(path, roots) {
   return roots.some((root) => path.startsWith(`${root}/`));
 }
 
-// The same limits as `.config/herdr-repository-sync/repository-sync.sh`, so a
+// The same limits as `.config/herdr-app/mods/repository-sync/repository-sync.sh`, so a
 // fetch cannot hang on a prompt or a stalled transfer. `exec` takes no
 // environment, so `env` sets it. `exec` also cuts a call off after 30 seconds,
 // and every caller below treats a failed or cut off call as not merged, the
@@ -59,7 +58,7 @@ async function git(exec, cwd, args) {
 
 // The top folder of the linked worktree a folder is in, or null for a main
 // checkout or no repository. `git` resolves symlinks, so the root is physical
-// whichever path led to it, the way the plugin compares with `pwd -P`.
+// whichever path led to it, the same as comparing with `pwd -P`.
 export async function linkedWorktreeRoot(exec, folder) {
   const top = await git(exec, folder, ["rev-parse", "--path-format=absolute", "--show-toplevel"]);
   const gitDirectory = await git(exec, folder, ["rev-parse", "--path-format=absolute", "--git-dir"]);

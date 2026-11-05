@@ -2,8 +2,7 @@ import { View, div } from "gpui-kit";
 import { exec, home, machines, notify, panes, readTextFile, setShared, shared } from "herdr";
 import { isOccupiedBy, isUnderAny, linkedWorktreeRoot, parseProtected, sweepWorktree } from "./logic.js";
 
-// Removes a linked worktree once the last terminal in it is gone, the app's
-// counterpart of the multiplexer's `herdr-worktree-cleanup` plugin. The app has
+// Removes a linked worktree once the last terminal in it is gone. The app has
 // no workspace-closed event, so this watches `panes()` and sweeps a tracked
 // worktree after nothing has sat in it for `SETTLE_MS`. Quitting the app does
 // not count, `herdr-core` keeps the terminals running. The rules, and the reason
@@ -16,9 +15,10 @@ const SETTLE_MS = 10000;
 // look can cost a `git fetch` and a `gh` call.
 const RETRY_MS = 10 * 60000;
 const WORKTREE_ROOTS = [`${home()}/Developer/worktrees`, `${home()}/.herdr/worktrees`];
-// Shared with the multiplexer plugin, one list for both.
-const PROTECTED_FILE = `${home()}/.config/herdr-worktree-cleanup/protected`;
-const LOG_DIRECTORY = `${home()}/.cache/herdr-worktree-cleanup`;
+// A person's list of worktree folder names or absolute paths to never touch, one
+// per line, `setup/agentic.sh` copies it here from its former place.
+const PROTECTED_FILE = `${home()}/.config/herdr-app/worktree-cleanup-protected`;
+const LOG_DIRECTORY = `${home()}/.cache/herdr-app/worktree-cleanup`;
 const LOG_MAX_BYTES = 200000;
 
 export default class WorktreeCleanup extends View {
