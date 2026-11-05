@@ -41,19 +41,26 @@ valid_folder() {
   [ -d "$1" ]
 }
 
+# The one allowlist of flags, used when a session is saved and again when it is
+# replayed, so the two cannot drift. A flag with a value is kept only when the
+# value follows as its own word, and `--permission-mode` only with a mode that
+# asks or plans, `bypassPermissions` is never brought back by a reboot.
+FLAG_FILTER='
+def allowed_flags($words; $from):
+  (["--permission-mode", "--model", "-m", "--agent", "--add-dir"]) as $values
+  | (["default", "acceptEdits", "plan", "auto"]) as $modes
+  | [range($from; ($words | length)) as $i
+      | $words[$i] as $word
+      | $words[$i + 1] as $value
+      | if ($values | index($word)) and ($value | type == "string") and ($value | test("^[^-\\t\\n][^\\t\\n]*$")) and ($word != "--permission-mode" or ($modes | index($value)))
+        then $word, $value
+        else empty end];
+'
+
 # Keeps the allowlisted flags of the terminal's foreground command, as a `JSON`
-# array. A flag with a value keeps it only when it follows as its own word.
+# array.
 kept_flags() {
-  hc get "$HC_TERMINAL_ID" --json 2>/dev/null | jq -c '
-    (.foreground.argv // []) as $argv
-    | (["--permission-mode", "--model", "-m", "--agent", "--add-dir"]) as $values
-    | (["--dangerously-skip-permissions"]) as $booleans
-    | [range(1; ($argv | length)) as $i
-        | $argv[$i] as $word
-        | if ($booleans | index($word)) then $word
-          elif ($values | index($word)) and ($argv[$i + 1] | type == "string") and ($argv[$i + 1] | test("^[^-\\t\\n][^\\t\\n]*$"))
-          then $word, $argv[$i + 1]
-          else empty end]' 2>/dev/null || echo '[]'
+  hc get "$HC_TERMINAL_ID" --json 2>/dev/null | jq -c "$FLAG_FILTER"'allowed_flags(.foreground.argv // []; 1)' 2>/dev/null || echo '[]'
 }
 
 case "${1:-}" in
@@ -96,13 +103,13 @@ case "${1:-}" in
     # `jq` pass reads the label, checks every field and prints the line, the
     # first prompt of every terminal shell runs this.
     [ -n "${2:-}" ] || exit 0
-    line=$(hc get "$HC_TERMINAL_ID" --json 2>/dev/null | jq -r --arg label "$LABEL" --arg shell "$2" '
+    line=$(hc get "$HC_TERMINAL_ID" --json 2>/dev/null | jq -r --arg label "$LABEL" --arg shell "$2" "$FLAG_FILTER"'
       select((.pid | tostring) == $shell)
       | (.labels[$label] // empty | fromjson? | objects) as $record
       | select(($record.agent == "claude") or ($record.agent == "opencode"))
       | select(($record.session | type == "string") and ($record.session | test("^[A-Za-z0-9][A-Za-z0-9_-]*$")))
       | select(($record.folder | type == "string") and ($record.folder | test("[\\t\\n]") | not))
-      | (($record.flags // []) | map(select(type == "string" and test("^[^\\t\\n]+$")))) as $flags
+      | allowed_flags(($record.flags // []) | map(select(type == "string")); 0) as $flags
       | ([$record.agent, $record.session, $record.folder] + $flags) | join("\t")' 2>/dev/null)
     [ -n "$line" ] || exit 0
     folder=$(printf '%s' "$line" | cut -f3)

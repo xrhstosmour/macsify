@@ -57,10 +57,10 @@ printf '{"session_id":"abc-123","cwd":"%s"}' "$TEST_DIRECTORY/work" | bash "$HOO
 bash "$HOOK" save opencode ses_abc123 "$TEST_DIRECTORY/work"
 [ "$(bash "$HOOK" show 4242)" = "$(printf 'opencode\tses_abc123\t%s' "$TEST_DIRECTORY/work")" ] || fail "opencode session did not replace the claude one"
 
-# Allowlisted flags come back, secrets, the first prompt and resume flags do not.
+# Allowlisted flags come back, secrets, the first prompt, resume flags and the permission bypass do not.
 HC_STUB_ARGV='["claude","--permission-mode","plan","--model","opus","--dangerously-skip-permissions","--api-key","secret","--resume","old","write code"]' \
   bash "$HOOK" save opencode ses_flags "$TEST_DIRECTORY/work"
-[ "$(bash "$HOOK" show 4242)" = "$(printf 'opencode\tses_flags\t%s\t--permission-mode\tplan\t--model\topus\t--dangerously-skip-permissions' "$TEST_DIRECTORY/work")" ] || fail "flags were not kept as listed"
+[ "$(bash "$HOOK" show 4242)" = "$(printf 'opencode\tses_flags\t%s\t--permission-mode\tplan\t--model\topus' "$TEST_DIRECTORY/work")" ] || fail "flags were not kept as listed"
 HC_STUB_ARGV='["claude","--model","--resume"]' bash "$HOOK" save opencode ses_value "$TEST_DIRECTORY/work"
 [ "$(bash "$HOOK" show 4242)" = "$(printf 'opencode\tses_value\t%s' "$TEST_DIRECTORY/work")" ] || fail "a flag followed by another flag kept a value"
 
@@ -112,6 +112,17 @@ for record in \
   printf '%s' "$record" >"$TEST_DIRECTORY/label"
   [ -z "$(bash "$HOOK" show 4242)" ] || fail "a bad record was shown: $record"
 done
+
+# Flags in a record written by something else go through the allowlist again.
+printf '{"agent":"claude","session":"ok","folder":"/tmp","flags":["--dangerously-skip-permissions","--api-key","x","--model","opus"]}' >"$TEST_DIRECTORY/label"
+[ "$(bash "$HOOK" show 4242)" = "$(printf 'claude\tok\t/tmp\t--model\topus')" ] || fail "a flag outside the allowlist was replayed"
+# A permission mode that bypasses the prompts is not replayed from a record, nor recorded.
+printf '{"agent":"claude","session":"ok","folder":"/tmp","flags":["--permission-mode","bypassPermissions","--model","opus"]}' >"$TEST_DIRECTORY/label"
+[ "$(bash "$HOOK" show 4242)" = "$(printf 'claude\tok\t/tmp\t--model\topus')" ] || fail "a bypass permission mode was replayed"
+printf '{"agent":"claude","session":"ok","folder":"/tmp","flags":["--permission-mode","plan"]}' >"$TEST_DIRECTORY/label"
+[ "$(bash "$HOOK" show 4242)" = "$(printf 'claude\tok\t/tmp\t--permission-mode\tplan')" ] || fail "the plan permission mode was not replayed"
+HC_STUB_ARGV='["claude","--permission-mode","bypassPermissions"]' bash "$HOOK" save opencode ses_bypass "$TEST_DIRECTORY/work"
+[ "$(bash "$HOOK" show 4242)" = "$(printf 'opencode\tses_bypass\t%s' "$TEST_DIRECTORY/work")" ] || fail "a bypass permission mode was recorded"
 
 [ "$failures" = "0" ] && echo "herdr-application-resume: all checks passed"
 exit "$failures"
