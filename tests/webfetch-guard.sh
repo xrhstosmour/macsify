@@ -57,7 +57,7 @@ check "https://blog.example.com/learn-grafana" allow
 check "https://github.com.example.com/owner" allow
 check "https://notgithub.com/owner" allow
 
-# The plugin also caps `bash` output like `bash-output-cap.sh` does. A cut inside a multi-byte character drops it whole, and a command that asks for the full output passes untouched.
+# The plugin also caps `bash` output like `bash-output-cap.sh` does. It keeps the first and last halves around an elision line, a cut inside a multi-byte character at either end drops it whole, and a command that asks for the full output passes untouched.
 capped=$(node --input-type=module -e "
   const { AgenticGuardsPlugin } = await import(process.argv[1]);
   const hooks = await AgenticGuardsPlugin();
@@ -66,19 +66,18 @@ capped=$(node --input-type=module -e "
     await hooks['tool.execute.after']({ tool: 'bash', args: { command } }, output);
     return output.output;
   };
-  const long = 'a'.repeat(25000);
+  const long = 'a'.repeat(24997) + 'END';
   const capped = await run('ls', long);
-  const multibyte = await run('ls', 'a'.repeat(19999) + 'é'.repeat(10));
+  const multibyte = await run('ls', 'a' + 'é'.repeat(15000) + 'a');
   const full = await run('git diff', long);
-  const encoder = new TextEncoder();
   console.log(JSON.stringify([
-    encoder.encode(capped).length < 20200 && capped.includes('bash-output-cap: truncated'),
+    capped === 'a'.repeat(10000) + '\n[5000 bytes elided]\n' + 'a'.repeat(9997) + 'END',
     !multibyte.includes('�'),
     full === long,
   ]));
 " "$temporary_directory/opencode-guards.mjs")
 if [ "$capped" != "[true,true,true]" ]; then
-  echo "FAIL: opencode output cap gave $capped, expected a capped plain command, no split character, and an untouched git diff"
+  echo "FAIL: opencode output cap gave $capped, expected a plain command capped to its first and last halves, no split character, and an untouched git diff"
   failures=$((failures + 1))
 fi
 

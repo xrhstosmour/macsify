@@ -2,7 +2,7 @@
 name: tester
 description: >-
   Subagent for test execution and quality checks.
-disallowedTools: Task
+disallowedTools: Agent
 permission:
   task: deny
 ---

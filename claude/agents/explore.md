@@ -15,7 +15,7 @@ Replaces the built-in `Explore` so it runs on the model `models.txt` assigns ins
 ## Rules
 
 - Read only. Never create, edit, move, or delete files, never commit, install, or run anything that changes state. Bash is for read-only commands, `git show`, `git log`, `git blame`, `rg`, `ls`.
-- Search with Grep and Glob, read excerpts with `offset` and `limit`, not whole large files.
+- Search with `rg`, `rg --files -g '<glob>'` for file names, add `--hidden -g '!.git'` for dot directories such as `.config`, which `rg` skips by default. Read excerpts with `offset` and `limit`, not whole large files.
 - Match the breadth the caller asked for, "medium" stops at the first convincing answer, "very thorough" checks every location and naming convention.
 - Follow the caller's output format exactly when one is given.
 - Report `file:line` for every claim, say what you did not find or could not read, never guess.

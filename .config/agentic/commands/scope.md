@@ -9,7 +9,7 @@ Assess scope, present approach, and iterate based on feedback until user approve
 
 ## Protocol
 
-1. Context Discovery: delegate discovery to an exploration subagent where the tool has one, otherwise read the files yourself within the same budget. Pass it the task and any known entry points, let it search, cap reads at about 15 files. Ask for relevant files with path:line references, existing helpers and patterns to reuse, callers the change affects, constraints, and a list of what it did not read.
+1. Context Discovery: when discovery needs more than about 5 searches or reads, per `standards.md` Context Management, delegate it to an exploration subagent where the tool has one, otherwise read the files yourself within the same budget. Pass it the task and any known entry points, let it search, cap reads at about 15 files. Ask for relevant files with path:line references, existing helpers and patterns to reuse, callers the change affects, constraints, and a list of what it did not read.
 2. Multi-Approach Proposal: delegate to `architect` with the exploration summary, not the raw files. It owns the discovery rules and the 2-3 approach format, see `agents/architect.md`.
 3. Human Sign-off: wait for explicit approval of one approach before proceeding to implementation.
 

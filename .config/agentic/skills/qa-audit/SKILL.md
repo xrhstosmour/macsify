@@ -21,7 +21,7 @@ Write at most 15 lines, the same for every persona: what the app does, the entry
 
 ## 3. Personas
 
-Spawn the four desktop personas in one message, in parallel, each a fresh general-purpose subagent with the brief, its persona, the rules, and a budget of about 40 tool calls. Run the mobile persona alone after they finish, tabs of one window share its size, so resizing it mid-run changes the viewport of every other persona. The lanes are exempt from the `leader` delegation cap. Without subagent support, run all five one after another with the same brief.
+Spawn the four desktop personas in one message, in parallel, each a fresh general-purpose subagent with the brief, its persona, the rules, and a budget of about 40 tool calls. Tell each persona not to call the advisor, each call bills its whole transcript at the advisor's rates, the main session weighs the findings. Run the mobile persona alone after they finish, tabs of one window share its size, so resizing it mid-run changes the viewport of every other persona. The lanes are exempt from the `leader` delegation cap. Without subagent support, run all five one after another with the same brief.
 
 1. Impatient: skims, clicks the first button that looks right, quits at the first error.
 2. Skeptic: reads pricing, terms, and privacy before signing up, leaves if any is missing, vague, or contradicts the page.

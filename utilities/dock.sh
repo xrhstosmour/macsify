@@ -127,7 +127,6 @@ apply_dock_configuration() {
         "/Applications/Viber.app"
         "/Applications/Visual Studio Code.app"
         "/Applications/Herdr.app"
-        "/Applications/DataGrip.app"
         "/Applications/Docker.app"
         "/Applications/Bruno.app"
         "/Applications/Spotify.app"

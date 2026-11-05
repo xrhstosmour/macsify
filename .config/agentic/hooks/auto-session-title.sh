@@ -83,20 +83,31 @@ nohup bash -c '
   first_message="$1"
   session_id="$2"
   transcript_path="$3"
+  lock="$4"
 
   # Without the terminal ID the status, title and resume hooks of the nested session exit at their first guard instead of acting on the parent terminal.
-  title=$(env -u HC_TERMINAL_ID claude -p --model haiku --no-session-persistence \
+  # `--strict-mcp-config` with no `--mcp-config` starts no MCP server, a slug needs none. `--bare` would skip more but reads only `ANTHROPIC_API_KEY`, never the OAuth login.
+  title=$(env -u HC_TERMINAL_ID claude -p --model haiku --no-session-persistence --strict-mcp-config \
     "Summarize this coding-session request as a 3-5 word kebab-case slug: lowercase, hyphen-separated, no punctuation, no quotes, output nothing but the slug itself. Request: $first_message" \
     2>/dev/null | tr -d "\"" | tr -c "a-z0-9-" "-" | sed -E "s/-+/-/g; s/^-//; s/-$//" | cut -c1-60)
 
-  [ -n "$title" ] || exit 0
+  # A failed or empty call releases the lock, the next prompt tries again instead of leaving the session untitled for good.
+  # The third failure keeps it, a logged out or offline `claude` must not cost a call on every prompt.
+  if [ -z "$title" ]; then
+    attempts=$(( $(cat "$lock.attempts" 2>/dev/null || echo 0) + 1 ))
+    if [ "$attempts" -lt 3 ]; then
+      echo "$attempts" > "$lock.attempts"
+      rmdir "$lock"
+    fi
+    exit 0
+  fi
 
   uuid=$(uuidgen | tr "A-Z" "a-z")
   timestamp=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
   jq -nc --arg sid "$session_id" --arg title "$title" --arg uuid "$uuid" --arg ts "$timestamp" \
     "{type: \"custom-title\", sessionId: \$sid, customTitle: \$title, uuid: \$uuid, timestamp: \$ts}" \
     >> "$transcript_path"
-' _ "$first_message" "$session_id" "$transcript_path" >/dev/null 2>&1 &
+' _ "$first_message" "$session_id" "$transcript_path" "$lock" >/dev/null 2>&1 &
 disown
 
 exit 0

@@ -2,7 +2,7 @@
 name: reviewer
 description: >-
   Subagent for code review: quality, security, and performance.
-disallowedTools: Task, Write, Edit
+disallowedTools: Agent, Write, Edit
 maxTurns: 40
 permission:
   task: deny

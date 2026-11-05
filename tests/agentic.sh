@@ -79,10 +79,10 @@ done
 installed="$TEST_DIRECTORY/installed-settings.json"
 printf '{"autoMode":{"trusted":["repo"]},"skipDangerousModePermissionPrompt":true,"model":"old","other":1}\n' >"$installed"
 preserved=$(preserved_claude_settings "$installed")
-[ "$(jq -cS . <<<"$preserved")" = '{"autoMode":{"trusted":["repo"]},"skipDangerousModePermissionPrompt":true}' ] || fail "preserved settings were $preserved"
+[ "$(jq -cS . <<<"$preserved")" = '{"autoMode":{"trusted":["repo"]},"model":"old","skipDangerousModePermissionPrompt":true}' ] || fail "preserved settings were $preserved"
 printf '{"model":"new","permissions":{}}\n' >"$installed"
 restore_claude_settings "$installed" "$preserved" 2>/dev/null
-[ "$(jq -cS . "$installed")" = '{"autoMode":{"trusted":["repo"]},"model":"new","permissions":{},"skipDangerousModePermissionPrompt":true}' ] || fail "restored settings were $(jq -c . "$installed")"
+[ "$(jq -cS . "$installed")" = '{"autoMode":{"trusted":["repo"]},"model":"old","permissions":{},"skipDangerousModePermissionPrompt":true}' ] || fail "restored settings were $(jq -c . "$installed")"
 [ "$(preserved_claude_settings "$TEST_DIRECTORY/missing.json")" = "{}" ] || fail "a missing settings file preserved something"
 printf 'not json' >"$installed"
 [ "$(preserved_claude_settings "$installed")" = "{}" ] || fail "a broken settings file preserved something"

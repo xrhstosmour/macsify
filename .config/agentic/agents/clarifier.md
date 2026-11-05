@@ -2,7 +2,7 @@
 name: clarifier
 description: >-
   Subagent for transforming vague requests into clear requirements.
-disallowedTools: Write, Edit, Bash, Task
+disallowedTools: Write, Edit, Bash, Agent
 permission:
   edit: deny
   bash: deny
