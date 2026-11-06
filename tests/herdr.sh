@@ -65,7 +65,7 @@ for commit in $(grep -oE '\b[0-9a-f]{40}\b' "$HERDR_APPLICATION_SCRIPT"); do
   grep -q "^checkout $commit$" "$CALLS" || fail "a mod was not checked out at its pinned commit $commit"
 done
 grep -q '^check ' "$CALLS" && fail "a mod was checked without 'herdr-app' installed"
-for folder in tmux-prefix space-folders agents-compact tabs-inline worktree-developer worktree-cleanup repository-sync tab-names; do
+for folder in tmux-prefix space-folders agents-compact tabs-inline worktree-developer worktree-cleanup repository-sync tab-names pull-request; do
   [ -f "$MODS_DIRECTORY/$folder/mod.json" ] || fail "the vendored '$folder' mod was not copied"
 done
 

@@ -83,7 +83,7 @@ done
 # The vendored mods in `.config/herdr-app/mods/` are copied again on every run,
 # so a rerun of `setup/agentic.sh` alone refreshes them after a merge.
 VENDORED_MODS_DIRECTORY="$HERDR_APPLICATION_SCRIPT_DIRECTORY/../.config/herdr-app/mods"
-for vendored_mod in tmux-prefix space-folders agents-compact tabs-inline worktree-developer worktree-cleanup repository-sync tab-names; do
+for vendored_mod in tmux-prefix space-folders agents-compact tabs-inline worktree-developer worktree-cleanup repository-sync tab-names pull-request; do
   checked_folders+=("$vendored_mod")
   mkdir -p "$HERDR_APPLICATION_MODS_DIRECTORY/$vendored_mod"
   cp -R "$VENDORED_MODS_DIRECTORY/$vendored_mod/." "$HERDR_APPLICATION_MODS_DIRECTORY/$vendored_mod/" || log_warning "Could not copy the '$vendored_mod' mod."
