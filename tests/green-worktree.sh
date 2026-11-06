@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Checks `resolve-worktree.sh` and `resolve-git.sh` against local repositories
+# Checks `green-worktree.sh` and `green-git.sh` against local repositories
 # and a stub `gh`, never the real GitHub. The worktree script puts one detached
 # `resolves` worktree at the head of a pull request of the viewer, throws away a
 # leftover of an earlier run, and refuses a pull request of someone else, a
@@ -13,8 +13,8 @@
 # and refuses any folder that is not a `resolves` worktree.
 
 TESTS_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-WORKTREE_SCRIPT="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/review/resolve-worktree.sh"
-GIT_SCRIPT="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/review/resolve-git.sh"
+WORKTREE_SCRIPT="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/review/green-worktree.sh"
+GIT_SCRIPT="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/review/green-git.sh"
 
 TEST_DIRECTORY=$(mktemp -d)
 trap 'rm -rf "$TEST_DIRECTORY"' EXIT
@@ -278,4 +278,4 @@ prepare >/dev/null || fail "the worktree script refused the worktree once its .g
 if [ "$failures" -gt 0 ]; then
   exit 1
 fi
-echo "PASS: resolve worktree and git scripts"
+echo "PASS: green worktree and git scripts"

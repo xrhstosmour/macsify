@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Prints one line per open pull request of yours with comments to resolve, for the `resolve-github-prs-comments-watcher` skill and its Monitor.
+# Prints one line per open pull request of yours with comments to resolve, for the `green-github-prs-watcher` skill and its Monitor.
 # It runs from ~/.config without the macsify repository, so it carries its own loop, and it uses `set -u` without `set -e` to keep polling past one failed call.
 # Read only: it lists and reads pull requests, it never posts, edits, checks out or pushes.
 #
-# Usage: watch-pr-comments.sh <organization|me> [--once] [--dry-run] [--interval <seconds>]
-#        watch-pr-comments.sh --mark <key>
+# Usage: watch-green-prs.sh <organization|me> [--once] [--dry-run] [--interval <seconds>]
+#        watch-green-prs.sh --mark <key>
 #   organization  only pull requests of that organization or user, `me` for every repository
 #   --once        poll one time and exit, for a cron fallback
 #   --dry-run     print what would be reported and claim nothing
@@ -20,7 +20,7 @@
 
 set -u
 
-STATE_DIRECTORY="${XDG_CACHE_HOME:-$HOME/.cache}/resolve-github-prs-comments-watcher"
+STATE_DIRECTORY="${XDG_CACHE_HOME:-$HOME/.cache}/green-github-prs-watcher"
 SEEN_FILE="$STATE_DIRECTORY/seen"
 CLAIMED_FILE="$STATE_DIRECTORY/claimed"
 CLAIM_SECONDS=7200
@@ -30,7 +30,7 @@ CYCLE_SECONDS=86400
 # Both files hold `<epoch> <key>`, the epochs of the claimed file count the cycles of a day.
 if [ "${1:-}" = "--mark" ]; then
   if ! [[ ${2:-} =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9._-]{1,100}#[0-9]+(@[0-9a-f]{40}|\+[0-9]+)$ ]]; then
-    echo "usage: watch-pr-comments.sh --mark <owner/repo#number+epoch|owner/repo#number@head sha>" >&2
+    echo "usage: watch-green-prs.sh --mark <owner/repo#number+epoch|owner/repo#number@head sha>" >&2
     exit 2
   fi
   mkdir -p "$STATE_DIRECTORY"
@@ -40,7 +40,7 @@ fi
 
 scope="${1:-}"
 if [ -z "$scope" ]; then
-  echo "usage: watch-pr-comments.sh <organization|me> [--once] [--dry-run] [--interval <seconds>]" >&2
+  echo "usage: watch-green-prs.sh <organization|me> [--once] [--dry-run] [--interval <seconds>]" >&2
   exit 2
 fi
 shift

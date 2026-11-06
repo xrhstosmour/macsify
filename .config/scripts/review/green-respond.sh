@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# The GitHub writes of the `resolve-github-prs-comments-watcher` skill on a pull request of yours: a reaction, a thread reply, a pull request comment, resolving a thread, correcting the description and re-requesting reviews, plus the one read that needs GraphQL, the review threads.
+# The GitHub writes of the `green-github-prs-watcher` skill on a pull request of yours: a reaction, a thread reply, a pull request comment, resolving a thread, correcting the description and re-requesting reviews, plus the one read that needs GraphQL, the review threads.
 # Allowed in claude/settings.json by its path, so the script validates every input itself and calls one fixed endpoint per action, never a caller supplied one.
 # Only an open pull request you opened that is not a draft, and only a comment or a thread of that pull request, so a comment id read from somewhere else never lands on another one.
 #
-# Usage: respond-pr-comment.sh react <owner/repo> <number> review|issue <comment id> +1|eyes
-#        respond-pr-comment.sh reply <owner/repo> <number> <comment id> <body file>
-#        respond-pr-comment.sh comment <owner/repo> <number> <body file>
-#        respond-pr-comment.sh resolve <owner/repo> <number> <thread id>
-#        respond-pr-comment.sh body <owner/repo> <number> <body file>
-#        respond-pr-comment.sh threads <owner/repo> <number>
-#        respond-pr-comment.sh rerequest <owner/repo> <number>
+# Usage: green-respond.sh react <owner/repo> <number> review|issue <comment id> +1|eyes
+#        green-respond.sh reply <owner/repo> <number> <comment id> <body file>
+#        green-respond.sh comment <owner/repo> <number> <body file>
+#        green-respond.sh resolve <owner/repo> <number> <thread id>
+#        green-respond.sh body <owner/repo> <number> <body file>
+#        green-respond.sh threads <owner/repo> <number>
+#        green-respond.sh rerequest <owner/repo> <number>
 #   react    `review` for a comment in a review thread, `issue` for a comment on the pull request
 #   reply    answers in the thread of the comment, the replies endpoint takes the first comment of the thread, so that is where it is sent
 #   comment  a comment on the pull request, the answer to a comment outside a thread or to a review body
@@ -26,7 +26,7 @@ set -e
 . "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 usage() {
-  echo "usage: respond-pr-comment.sh react <owner/repo> <number> review|issue <comment id> +1|eyes | reply <owner/repo> <number> <comment id> <body file> | comment <owner/repo> <number> <body file> | resolve <owner/repo> <number> <thread id> | body <owner/repo> <number> <body file> | threads <owner/repo> <number> | rerequest <owner/repo> <number>" >&2
+  echo "usage: green-respond.sh react <owner/repo> <number> review|issue <comment id> +1|eyes | reply <owner/repo> <number> <comment id> <body file> | comment <owner/repo> <number> <body file> | resolve <owner/repo> <number> <thread id> | body <owner/repo> <number> <body file> | threads <owner/repo> <number> | rerequest <owner/repo> <number>" >&2
   exit 2
 }
 

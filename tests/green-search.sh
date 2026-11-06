@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Checks `resolve-search.sh`, the read-only searches of the resolve watcher. It
+# Checks `green-search.sh`, the read-only searches of the green watcher. It
 # searches only a `resolves` worktree and the `Claude Code` and `OpenCode`
 # sessions of that worktree's checkout, never those of another checkout, takes
 # a pattern and never an option, runs no command through a `rg` or `sqlite3`
 # configuration, and caps what it prints.
 
 TESTS_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-SEARCH_SCRIPT="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/review/resolve-search.sh"
+SEARCH_SCRIPT="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/review/green-search.sh"
 
 TEST_DIRECTORY=$(mktemp -d)
 trap 'rm -rf "$TEST_DIRECTORY"' EXIT
@@ -102,4 +102,4 @@ grep -q ses_lookalike "$TEST_DIRECTORY/underscore" && fail "the search script re
 if [ "$failures" -gt 0 ]; then
   exit 1
 fi
-echo "PASS: resolve search script"
+echo "PASS: green search script"

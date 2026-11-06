@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Checks the `resolve-github-prs-comments-watcher` GitHub scripts against a stub
+# Checks the `green-github-prs-watcher` GitHub scripts against a stub
 # `gh` on `PATH`, never the real GitHub. The detector reports a pull request of
 # the viewer once a member, a collaborator or a bot reviewer commented after the
 # viewer, once while its run goes and until it is marked done, never for an
@@ -17,8 +17,8 @@
 # viewer, and rejects a bad action, reaction, id or body.
 
 TESTS_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-WATCHER="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/review/watch-pr-comments.sh"
-RESPONDER="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/review/respond-pr-comment.sh"
+WATCHER="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/review/watch-green-prs.sh"
+RESPONDER="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/review/green-respond.sh"
 
 TEST_DIRECTORY=$(mktemp -d)
 trap 'rm -rf "$TEST_DIRECTORY"' EXIT
@@ -33,7 +33,7 @@ HEAD_SHA=0123456789012345678901234567890123456789
 mkdir -p "$TEST_DIRECTORY/bin"
 export XDG_CACHE_HOME="$TEST_DIRECTORY/cache"
 export STUB_POSTED="$TEST_DIRECTORY/posted"
-STATE="$XDG_CACHE_HOME/resolve-github-prs-comments-watcher"
+STATE="$XDG_CACHE_HOME/green-github-prs-watcher"
 
 # The stub answers the search with the nodes the test set, and applies the `--jq`
 # filter the way `gh` does. A query that does not leave the merge queue out also
@@ -186,11 +186,11 @@ respond reply owner/repo 5 2 "$TEST_DIRECTORY/body.txt" || fail "the responder r
 respond reply owner/repo 5 9 "$TEST_DIRECTORY/body.txt" && fail "the responder replied in a thread of another pull request"
 respond comment owner/repo 5 "$TEST_DIRECTORY/body.txt" || fail "the responder refused a comment on the pull request"
 [ "$(head -1 "$STUB_POSTED")" = "repos/owner/repo/issues/5/comments" ] || fail "the responder commented on another endpoint"
-respond comment owner/repo 5 "$TESTS_SCRIPT_DIRECTORY/resolve-scripts.sh" && fail "the responder posted a file outside a temporary directory"
+respond comment owner/repo 5 "$TESTS_SCRIPT_DIRECTORY/green-scripts.sh" && fail "the responder posted a file outside a temporary directory"
 respond body owner/repo 5 "$TEST_DIRECTORY/body.txt" || fail "the responder refused to correct the description of the pull request"
 [ "$(head -1 "$STUB_POSTED")" = "repos/owner/repo/pulls/5" ] || fail "the responder corrected the description on another endpoint"
 [ "$(tail -n +2 "$STUB_POSTED" | jq -r .body)" = "Fixed, thanks." ] || fail "the responder changed the description it was given"
-respond body owner/repo 5 "$TESTS_SCRIPT_DIRECTORY/resolve-scripts.sh" && fail "the responder took a description outside a temporary directory"
+respond body owner/repo 5 "$TESTS_SCRIPT_DIRECTORY/green-scripts.sh" && fail "the responder took a description outside a temporary directory"
 respond resolve owner/repo 5 PRRT_five || fail "the responder refused to resolve a thread of the pull request"
 grep -q 'id=PRRT_five' "$STUB_POSTED" || fail "the responder resolved another thread"
 respond resolve owner/repo 5 PRRT_six && fail "the responder resolved a thread of another pull request"
@@ -233,4 +233,4 @@ respond rerequest owner/repo 5 bob && fail "the responder accepted a reviewer na
 if [ "$failures" -gt 0 ]; then
   exit 1
 fi
-echo "PASS: resolve comments watcher scripts"
+echo "PASS: green watcher scripts"

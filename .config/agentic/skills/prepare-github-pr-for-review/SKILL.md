@@ -7,7 +7,7 @@ description: Use to prepare a GitHub pull request for human review or merge, fix
 
 Asking to prepare the PR authorizes every step below, except keeping a fix for a failing check, see step 2, or pushing a resolved rebase conflict, see step 4.
 
-A caller that already rebased, autosquashed and pushed from a detached worktree, such as `resolve-github-prs-comments-watcher`, runs only steps 5 to 7, and step 4 for a conflict its own script stopped on, with the overrides it gives.
+A caller that rebases, autosquashes and pushes through its own scripts in a detached worktree, such as `green-github-prs-watcher`, runs only step 2 for failed checks, step 4 for a conflict its script stopped on, and steps 6 and 7, with the overrides it gives, which replace the local runs and approvals.
 
 ## 1. Check the branch
 
