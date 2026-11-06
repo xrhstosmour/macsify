@@ -96,6 +96,7 @@
       "Bash(gh run view*)",
       "Bash(gh run list*)",
       "Bash(gh run watch*)",
+      "Bash(tail -n 200)",
       "Bash(gh repo view*)",
       "Bash(~/.config/scripts/review/watch-review-requests.sh *)",
       "Bash(~/.config/scripts/review/post-pr-review.sh *)",

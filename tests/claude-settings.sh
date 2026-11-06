@@ -37,6 +37,9 @@ expect_rule ask 'Bash(git push*refs/heads/main*)' present
 expect_rule deny 'Edit(~/Developer/worktrees/*/resolves/.git)' present
 # Nor a `.git` in a folder of it, which would turn that folder into a submodule with a configuration of the caller.
 expect_rule deny 'Edit(~/Developer/worktrees/*/resolves/**/.git)' present
+# The green watcher cuts a failed check log piped into `tail -n 200`, only that exact form is allowed, a file argument would read any file unprompted.
+expect_rule allow 'Bash(tail -n 200)' present
+expect_rule allow 'Bash(tail -n *)' absent
 # Port scanning is not something to allow unprompted.
 expect_rule allow 'Bash(nc -z *)' absent
 # The green watcher searches past sessions through `green-search.sh`, scoped to the checkout of the pull request, never a `Read` of every transcript.
