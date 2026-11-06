@@ -29,7 +29,6 @@ HERDR_APPLICATION_MODS_DIRECTORY="$HERDR_APPLICATION_HOME_DIRECTORY/mods"
 HERDR_APPLICATION_MODS=(
   "vytasgavelis/herdr-reviewer 424ca3e9cbe3e739df12e356a250c72612477fb5 reviewer"
   "rabeeh-ta/herdr-git-graph 2226f5733165667fb214aa3bdf78427fb29900c8 git-graph"
-  "NazzarenoGiannelli/herdr-roundup 1ee565326cb4ccde7ee872b451ef3fd468b62348 roundup roundup-dry"
   "CacaoRick/herdr-open-vscode 1dfa20974f6da63b195660b68dd120bed2412184 open-vscode"
 )
 
@@ -41,6 +40,11 @@ trap 'rm -rf "$WORK_DIRECTORY"' EXIT
 
 # The mods are plain files, only their checks wait for the app.
 mkdir -p "$HERDR_APPLICATION_MODS_DIRECTORY"
+
+# `pull-request` replaced the `roundup` mods, and the install loop below never deletes a mod.
+for former_mod in roundup roundup-dry; do
+  rm -rf "${HERDR_APPLICATION_MODS_DIRECTORY:?}/$former_mod"
+done
 
 # Mods that were just installed or already there, all of them are checked below.
 checked_folders=()
@@ -83,7 +87,7 @@ done
 # The vendored mods in `.config/herdr-app/mods/` are copied again on every run,
 # so a rerun of `setup/agentic.sh` alone refreshes them after a merge.
 VENDORED_MODS_DIRECTORY="$HERDR_APPLICATION_SCRIPT_DIRECTORY/../.config/herdr-app/mods"
-for vendored_mod in tmux-prefix space-folders agents-compact tabs-inline worktree-developer worktree-cleanup repository-sync tab-names; do
+for vendored_mod in tmux-prefix space-folders agents-compact tabs-inline worktree-developer worktree-cleanup repository-sync tab-names pull-request; do
   checked_folders+=("$vendored_mod")
   mkdir -p "$HERDR_APPLICATION_MODS_DIRECTORY/$vendored_mod"
   cp -R "$VENDORED_MODS_DIRECTORY/$vendored_mod/." "$HERDR_APPLICATION_MODS_DIRECTORY/$vendored_mod/" || log_warning "Could not copy the '$vendored_mod' mod."

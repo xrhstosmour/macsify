@@ -113,13 +113,13 @@
             {
               "children": [
                 {
-                  "active": "pull-requests",
+                  "active": "pull-request",
                   "children": [
                     {
-                      "id": "pull-requests",
+                      "id": "pull-request",
                       "type": "block",
                       "content": {
-                        "mod": "roundup"
+                        "mod": "pull-request"
                       }
                     },
                     {
@@ -201,6 +201,19 @@
           },
           "content": {
             "mod": "tab-names"
+          }
+        },
+        {
+          "id": "pull-request-watch",
+          "type": "block",
+          "size": {
+            "px": 0
+          },
+          "content": {
+            "mod": "pull-request",
+            "props": {
+              "watch": true
+            }
           }
         }
       ],

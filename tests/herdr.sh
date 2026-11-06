@@ -34,7 +34,7 @@ cat >"$FAKE_BINARIES/git" <<'FAKE'
 if [ "$1" = "clone" ] && [ -n "$FAIL_CLONE" ] && [[ "$2$3" == *"$FAIL_CLONE"* ]]; then
   exit 128
 elif [ "$1" = "clone" ]; then
-  for folder in reviewer git-graph roundup roundup-dry open-vscode; do
+  for folder in reviewer git-graph open-vscode; do
     mkdir -p "${!#}/mods/$folder"
     echo '{}' >"${!#}/mods/$folder/mod.json"
   done
@@ -58,14 +58,14 @@ run_script() {
 # Without the app every mod still goes in at its pinned commit, unchecked.
 output=$(run_script)
 grep -q "Mod checks skipped" <<<"$output" || fail "a missing app was not reported"
-for folder in reviewer git-graph roundup roundup-dry open-vscode; do
+for folder in reviewer git-graph open-vscode; do
   [ -f "$MODS_DIRECTORY/$folder/mod.json" ] || fail "the '$folder' mod was not copied"
 done
 for commit in $(grep -oE '\b[0-9a-f]{40}\b' "$HERDR_APPLICATION_SCRIPT"); do
   grep -q "^checkout $commit$" "$CALLS" || fail "a mod was not checked out at its pinned commit $commit"
 done
 grep -q '^check ' "$CALLS" && fail "a mod was checked without 'herdr-app' installed"
-for folder in tmux-prefix space-folders agents-compact tabs-inline worktree-developer worktree-cleanup repository-sync tab-names; do
+for folder in tmux-prefix space-folders agents-compact tabs-inline worktree-developer worktree-cleanup repository-sync tab-names pull-request; do
   [ -f "$MODS_DIRECTORY/$folder/mod.json" ] || fail "the vendored '$folder' mod was not copied"
 done
 
@@ -91,6 +91,12 @@ echo "stale" >"$MODS_DIRECTORY/tab-names/mod.json"
 run_script >/dev/null
 grep -q "^check .*/reviewer$" "$CALLS" || fail "an installed mod was not checked"
 cmp -s "$MODS_DIRECTORY/tab-names/mod.json" "$TESTS_SCRIPT_DIRECTORY/../.config/herdr-app/mods/tab-names/mod.json" || fail "a vendored mod was not refreshed"
+
+# The replaced `roundup` mods are removed from a machine that installed them.
+mkdir -p "$MODS_DIRECTORY/roundup" "$MODS_DIRECTORY/roundup-dry"
+run_script >/dev/null
+[ -d "$MODS_DIRECTORY/roundup" ] && fail "the replaced roundup mod was kept"
+[ -d "$MODS_DIRECTORY/roundup-dry" ] && fail "the replaced roundup-dry mod was kept"
 
 # The layout is switched only while the app runs, the fake `pgrep` stands in for it.
 : >"$CALLS"

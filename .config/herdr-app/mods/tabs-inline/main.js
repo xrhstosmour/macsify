@@ -2,7 +2,10 @@
 // one on every start), under another name so it is never replaced. The changes
 // are the + button sitting right after the last tab instead of at the far
 // right, where it is a long reach on a wide window, and the + opening a
-// terminal like `cmd-t` instead of the new menu, agents keep their own keys.
+// terminal like `cmd-t` instead of the new menu, agents keep their own keys,
+// and a GitHub button next to Files and Changes for the `pull-request` block,
+// shown only while the focused branch has an open pull request, and a Graph
+// button for the `git-graph` block.
 // Its icons still come from
 // the shipped `tabs` mod. Cloned from `Herdr` app 0.1.13, the version is also in
 // `mod.json`. Recheck against the shipped mod after an app update.
@@ -86,7 +89,15 @@ export default class Tabs extends View {
       ? Math.max(10, (root.traffic_lights[0] + 64) / settings().zoom - (sidebar?.hidden ? 0 : sidebar?.size?.px ?? 0))
       : 10;
     const panel = find(root, "panel"), body = find(root, "panel-body");
-    const enabled = shared("workspace.panels") ?? ["files", "changes"];
+    // The welcome only offers Files and Changes, so the GitHub panel of the `workbench` layout joins them while the
+    // `pull-request` watcher finds an open pull request for the focused branch, or `gh` failed, which the panel
+    // explains, and while it is the open panel, so it never strands open without its button.
+    const pull = shared("pull-request.state")?.status;
+    const pullShown = Boolean(panel && !panel.hidden && body?.active === "pull-request");
+    const withPull = find(root, "pull-request") && (pull === "open" || pull === "error" || pullShown);
+    // `git-graph` has no welcome entry either, so it joins whenever the layout holds its block.
+    const withGraph = Boolean(find(root, "git-graph"));
+    const enabled = [...(shared("workspace.panels") ?? ["files", "changes"]), ...(withGraph ? ["git-graph"] : []), ...(withPull ? ["pull-request"] : [])];
     this.syncPanel(space, panel, body, enabled);
     const panelButton = (id, label, icon) => {
       const on = panel && !panel.hidden && body?.active === id;
@@ -106,6 +117,8 @@ export default class Tabs extends View {
         .child(button("tab-new", "+", () => run("tab.new", { space: space?.id }))))
       .when(enabled.includes("files"), el => el.child(panelButton("files", "Files", "mods/files/file.svg")))
       .when(enabled.includes("changes"), el => el.child(panelButton("changes", "Changes", "mods/changes/changes.svg")))
+      .when(enabled.includes("git-graph"), el => el.child(panelButton("git-graph", "Graph", "mods/git-graph/icons/graph.svg")))
+      .when(enabled.includes("pull-request"), el => el.child(panelButton("pull-request", pull === "error" ? "GitHub error" : "GitHub", "icons/gh.svg")))
       .when(w?.buttons, el => el.child(button("minimize", w.platform === "windows" ? svg("mods/tabs/win-min.svg").size(16) : "−", () => run("window.minimize")))
         .child(button("maximize", w.platform === "windows" ? svg(`mods/tabs/${w.maximized ? "win-restore" : "win-max"}.svg`).size(16) : "□", () => run("window.maximize")))
         .child(button("close-window", w.platform === "windows" ? svg("mods/tabs/win-close.svg").size(16) : svg("mods/pane/close.svg").size(13), () => run("window.close"))));

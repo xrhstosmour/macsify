@@ -15,3 +15,7 @@ Thumbs.db
 .tmp/
 .temp/
 *.local.fish
+
+# Written by `herdr-app check` into each mod folder it checks.
+.config/herdr-app/mods/*/gpui-kit.d.ts
+.config/herdr-app/mods/*/jsconfig.json
