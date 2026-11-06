@@ -11,8 +11,10 @@ Started once in a terminal. It detects a pull request that needs you, reviews it
 
 Ask once with `AskUserQuestion`, unless the prompt names it or says `scheduled run`:
 
-- An organization, asked by name, only that organization's pull requests.
+- An organization, only that organization's pull requests.
 - The personal account, every repository the account can see, passed to the detector as `me`.
+
+List the organizations first with `gh api --paginate user/orgs --jq '.[].login'`, the authenticated endpoint also returns private memberships, `users/<login>/orgs` hides them. Offer up to three of them and the personal account as options, Other takes any further organization by name. If the call fails or returns none, ask for the organization by name.
 
 ## Detect
 
