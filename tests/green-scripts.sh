@@ -76,11 +76,14 @@ export PATH="$TEST_DIRECTORY/bin:$PATH"
 
 # A comment is [login, time, type, association], the last two default to a person who is a member.
 # One search node: threads is a JSON array of [resolved, [comments]], comments and reviews are arrays
-# of comments, a review comment takes its body as a fifth field.
+# of comments, a review comment takes its body as a fifth field. `COMMITS` is a JSON array of
+# commit subjects, `MERGEABLE` the conflict state and `ROLLUP` the checks of the head.
 node() {
-  jq -nc --argjson threads "${1:-[]}" --argjson comments "${2:-[]}" --argjson reviews "${3:-[]}" --argjson fork "${4:-false}" --arg sha "$HEAD_SHA" '
+  jq -nc --argjson threads "${1:-[]}" --argjson comments "${2:-[]}" --argjson reviews "${3:-[]}" --argjson fork "${4:-false}" --arg sha "$HEAD_SHA" \
+    --argjson commits "${COMMITS:-[\"Add the thing\"]}" --arg mergeable "${MERGEABLE:-MERGEABLE}" --argjson rollup "${ROLLUP:-null}" '
     def actor: {author: (if .[0] == null then null else {__typename: (.[2] // "User"), login: .[0]} end), authorAssociation: (.[3] // "MEMBER")};
     {number: 5, url: "https://github.com/owner/repo/pull/5", headRefOid: $sha, headRefName: "fix/thing", isCrossRepository: $fork, repository: {nameWithOwner: "owner/repo"},
+     mergeable: $mergeable, commits: {nodes: [$commits[] | {commit: {messageHeadline: .}}]}, latest: {nodes: [{commit: {statusCheckRollup: $rollup}}]},
      reviewThreads: {nodes: [$threads[] | {isResolved: .[0], comments: {nodes: [.[1][] | actor + {createdAt: .[1]}]}}]},
      comments: {nodes: [$comments[] | actor + {createdAt: .[1]}]},
      reviews: {nodes: [$reviews[] | actor + {submittedAt: .[1], body: (.[4] // "a note")}]}}'
@@ -157,6 +160,50 @@ echo "$(($(date +%s) - 90000)) owner/repo#5+1" >"$STATE/claimed"
 echo "$(date +%s) owner/repo#5+1" >>"$STATE/claimed"
 echo "$(date +%s) owner/repo#5+2" >>"$STATE/claimed"
 [ -z "$(detect)" ] || fail "the detector capped a third cycle that is still going"
+
+# Without comments, a leftover fixup or a conflict is reported to prepare, keyed on the head, once.
+PREPARE="owner/repo#5~$HEAD_SHA $HEAD_SHA https://github.com/owner/repo/pull/5 fix/thing prepare"
+nodes "$(COMMITS='["Add the thing","fixup! Add the thing"]' node)"
+[ "$(detect)" = "$PREPARE" ] || fail "the detector did not report a leftover fixup commit"
+"$WATCHER" --mark "owner/repo#5~$HEAD_SHA" || fail "the detector refused to mark a prepare key done"
+[ -z "$(detect)" ] || fail "the detector reported a prepared head again"
+nodes "$(MERGEABLE=CONFLICTING node)"
+[ "$(detect)" = "$PREPARE" ] || fail "the detector did not report a conflict with the base"
+nodes "$(MERGEABLE=UNKNOWN node)"
+[ -z "$(detect)" ] || fail "the detector reported a pull request whose conflict state is still unknown"
+
+# A failed check counts once every check of the head finished, a failure on the next head starts the next cycle.
+FAILED='{"state":"FAILURE","contexts":{"nodes":[{"status":"COMPLETED"},{"state":"FAILURE"}]}}'
+CHECKS="owner/repo#5=$HEAD_SHA $HEAD_SHA https://github.com/owner/repo/pull/5 fix/thing checks"
+nodes "$(ROLLUP="$FAILED" node)"
+[ "$(detect)" = "$CHECKS" ] || fail "the detector did not report a failed check"
+"$WATCHER" --mark "owner/repo#5=$HEAD_SHA"
+STUB_NODES="[$(HEAD_SHA=1111111111111111111111111111111111111111 ROLLUP="$FAILED" node)]"
+[ "$(detect)" = "owner/repo#5=1111111111111111111111111111111111111111 1111111111111111111111111111111111111111 https://github.com/owner/repo/pull/5 fix/thing checks" ] || fail "the detector did not report a failed check on the pushed head"
+# A conflict after the failed checks of the same head were handled is still prepared.
+nodes "$(ROLLUP="$FAILED" node)"
+[ "$(detect)" = "$CHECKS" ] || fail "the detector did not report a failed check"
+"$WATCHER" --mark "owner/repo#5=$HEAD_SHA"
+STUB_NODES="[$(MERGEABLE=CONFLICTING ROLLUP="$FAILED" node)]"
+[ "$(detect)" = "$PREPARE" ] || fail "the detector hid a conflict behind the handled checks of the same head"
+nodes "$(ROLLUP='{"state":"FAILURE","contexts":{"pageInfo":{"hasNextPage":true},"nodes":[{"state":"FAILURE"}]}}' node)"
+[ -z "$(detect)" ] || fail "the detector reported failed checks with a page of checks unread"
+nodes "$(ROLLUP='{"state":"FAILURE","contexts":{"nodes":[{"state":"FAILURE"},{"status":"IN_PROGRESS"}]}}' node)"
+[ -z "$(detect)" ] || fail "the detector reported a failed check while another still runs"
+nodes "$(ROLLUP='{"state":"FAILURE","contexts":{"nodes":[{"state":"FAILURE"},{"state":"PENDING"}]}}' node)"
+[ -z "$(detect)" ] || fail "the detector reported a failed check while a status is pending"
+nodes "$(ROLLUP='{"state":"SUCCESS","contexts":{"nodes":[{"status":"COMPLETED"}]}}' node)"
+[ -z "$(detect)" ] || fail "the detector reported a green pull request"
+
+# Comments come first, the run handles the rest, and the cap counts every reason.
+nodes "$(COMMITS='["fixup! Add the thing"]' ROLLUP="$FAILED" node '[[false, [["author","2026-11-05T11:00:00Z"]]]]')"
+[ "$(detect)" = "$LINE" ] || fail "the detector did not report comments before the rest"
+nodes "$(ROLLUP="$FAILED" node)"
+mkdir -p "$STATE"
+echo "$(date +%s) owner/repo#5+1" >>"$STATE/claimed"
+echo "$(date +%s) owner/repo#5=2222222222222222222222222222222222222222" >>"$STATE/claimed"
+echo "$(date +%s) owner/repo#5~3333333333333333333333333333333333333333" >>"$STATE/claimed"
+[ "$(detect)" = "owner/repo#5@$HEAD_SHA $HEAD_SHA https://github.com/owner/repo/pull/5 fix/thing capped" ] || fail "the detector did not count prepare and checks cycles for the cap"
 unset STUB_NODES
 
 "$WATCHER" --mark 'owner/repo#5@abc' >/dev/null 2>&1 && fail "the detector marked a malformed key"

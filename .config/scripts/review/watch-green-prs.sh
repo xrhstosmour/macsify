@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prints one line per open pull request of yours with comments to resolve, for the `green-github-prs-watcher` skill and its Monitor.
+# Prints one line per open pull request of yours that is not green yet, with comments to resolve, a fixup or conflict to prepare, or a failed check, for the `green-github-prs-watcher` skill and its Monitor.
 # It runs from ~/.config without the macsify repository, so it carries its own loop, and it uses `set -u` without `set -e` to keep polling past one failed call.
 # Read only: it lists and reads pull requests, it never posts, edits, checks out or pushes.
 #
@@ -13,10 +13,12 @@
 # Output line: <key> <head sha> <url> <branch> <reason>
 # Reasons:
 #   comments  a person of the organization, a collaborator or a bot commented after you, in an unresolved thread, on the pull request or in a review body, the key is `<owner>/<repo>#<number>+<epoch>` of the newest one, without the head, so the push of its own run does not start the cycle again
-#   capped    the pull request already started `CYCLE_LIMIT` cycles in a day, a failed one included, it is reported once per head, keyed `<owner>/<repo>#<number>@<head sha>`, and not resolved again until the day passes, so a bot that reviews every push or a run that keeps failing cannot loop
+#   prepare   no comments, but a `fixup!`, `squash!` or `amend!` commit is left or the pull request conflicts with its base, keyed `<owner>/<repo>#<number>~<head sha>`, once per head
+#   checks    no comments and nothing to prepare, but a check failed on the head and none still runs, so one run sees every failure, keyed `<owner>/<repo>#<number>=<head sha>`, apart from `prepare` so a conflict after a handled failure at the same head still counts, the push of its own run is a new head, so a failure after it starts the next cycle
+#   capped    the pull request already started `CYCLE_LIMIT` cycles in a day, of any reason, a failed one included, it is reported once per head, keyed `<owner>/<repo>#<number>@<head sha>`, and not resolved again until the day passes, so a bot that reviews every push or a run that keeps failing cannot loop
 # Outsiders never start an unattended change. Drafts, merged, closed, merge queue and cross repository pull requests are skipped, the push goes to `origin`.
 # A key is claimed at detection for two hours, so a run still going is not started twice, and recorded as done by `--mark`. Same as `watch-review-requests.sh`.
-# The newest 50 threads, 30 comments each, 50 comments and 50 reviews are read, a pull request with more is judged on those.
+# The newest 50 threads, 30 comments each, 50 comments and 50 reviews, 100 commits and 100 checks are read, a pull request with more is judged on those.
 
 set -u
 
@@ -29,8 +31,8 @@ CYCLE_SECONDS=86400
 
 # Both files hold `<epoch> <key>`, the epochs of the claimed file count the cycles of a day.
 if [ "${1:-}" = "--mark" ]; then
-  if ! [[ ${2:-} =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9._-]{1,100}#[0-9]+(@[0-9a-f]{40}|\+[0-9]+)$ ]]; then
-    echo "usage: watch-green-prs.sh --mark <owner/repo#number+epoch|owner/repo#number@head sha>" >&2
+  if ! [[ ${2:-} =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9._-]{1,100}#[0-9]+([@=~][0-9a-f]{40}|\+[0-9]+)$ ]]; then
+    echo "usage: watch-green-prs.sh --mark <owner/repo#number+epoch|owner/repo#number=head sha|owner/repo#number~head sha|owner/repo#number@head sha>" >&2
     exit 2
   fi
   mkdir -p "$STATE_DIRECTORY"
@@ -96,7 +98,10 @@ fragment Author on Actor { __typename login }
 query($search: String!) {
   viewer { login }
   search(query: $search, type: ISSUE, first: 50) { nodes { ... on PullRequest {
-    number url headRefOid headRefName isCrossRepository repository { nameWithOwner }
+    number url headRefOid headRefName isCrossRepository repository { nameWithOwner } mergeable
+    commits(last: 100) { nodes { commit { messageHeadline } } }
+    latest: commits(last: 1) { nodes { commit { statusCheckRollup { state
+      contexts(first: 100) { pageInfo { hasNextPage } nodes { ... on CheckRun { status } ... on StatusContext { state } } } } } } }
     reviewThreads(last: 50) { nodes { isResolved comments(last: 30) { nodes { author { ...Author } authorAssociation createdAt } } } }
     comments(last: 50) { nodes { author { ...Author } authorAssociation createdAt } }
     reviews(last: 50) { nodes { author { ...Author } authorAssociation body submittedAt } }
@@ -105,6 +110,8 @@ query($search: String!) {
 
 # A comment counts when a bot or a person of the organization or a collaborator wrote it, never you, never a deleted author.
 # In an unresolved thread it counts after your last comment there, on the pull request and in a review body after your last comment on the pull request. A review with an empty body is the wrapper of inline comments, the threads carry those.
+# One reason per pull request, comments before prepare before checks, the skill handles the other two in the same run. A `mergeable` still `UNKNOWN` while GitHub computes it is left for the next poll.
+# A head with more than 100 checks is left alone, a pending one could hide past the page.
 # shellcheck disable=SC2016
 JQ_FILTER='
 .data.viewer.login as $me
@@ -120,8 +127,13 @@ JQ_FILTER='
       ([.comments.nodes[] | . + {time: .createdAt}] + [.reviews.nodes[] | select(.body != "") | . + {time: .submittedAt}]
         | map(select(.author.__typename == "User")) | after($mine))
     ] | map(select(. != null)) | max) as $newest
-  | select($newest != null)
-  | "\(.repository.nameWithOwner) \(.number) \(.headRefOid) \($newest | fromdateiso8601) \(.url) \(.headRefName)"'
+  | .latest.nodes[0].commit.statusCheckRollup as $rollup
+  | (if $newest != null then "comments \($newest | fromdateiso8601)"
+     elif any(.commits.nodes[]; .commit.messageHeadline | test("^(fixup|squash|amend)! ")) or .mergeable == "CONFLICTING" then "prepare 0"
+     elif ($rollup.state // "" | IN("FAILURE", "ERROR")) and ($rollup.contexts.pageInfo.hasNextPage // false | not)
+       and all($rollup.contexts.nodes[]; (.status // "COMPLETED") == "COMPLETED" and (.state // "" | IN("PENDING", "EXPECTED") | not)) then "checks 0"
+     else empty end) as $reason
+  | "\(.repository.nameWithOwner) \(.number) \(.headRefOid) \($reason) \(.url) \(.headRefName)"'
 
 # Whether a key is done or claimed by a run that started less than two hours ago.
 claimed() {
@@ -129,9 +141,9 @@ claimed() {
   awk -v key="$1" -v now="$(date +%s)" -v limit="$CLAIM_SECONDS" '$2 == key && now - $1 < limit { found = 1 } END { exit !found }' "$CLAIMED_FILE"
 }
 
-# How many comment cycles of the pull request started in the last day. Every claim counts, so a run that fails and is claimed again counts each time.
+# How many cycles of the pull request started in the last day, of any reason but `capped`. Every claim counts, so a run that fails and is claimed again counts each time.
 cycles() {
-  awk -v prefix="$1+" -v now="$(date +%s)" -v limit="$CYCLE_SECONDS" 'index($2, prefix) == 1 && now - $1 < limit { count++ } END { print count + 0 }' "$CLAIMED_FILE"
+  awk -v pull_request="$1" -v now="$(date +%s)" -v limit="$CYCLE_SECONDS" 'index($2, pull_request) == 1 && index("+=~", substr($2, length(pull_request) + 1, 1)) > 0 && now - $1 < limit { count++ } END { print count + 0 }' "$CLAIMED_FILE"
 }
 
 poll() {
@@ -144,12 +156,15 @@ poll() {
   done
 
   gh api graphql -f query="$GRAPHQL_QUERY" -f "search=$search" --jq "$JQ_FILTER" |
-    while read -r repository number head epoch url branch; do
+    while read -r repository number head reason epoch url branch; do
       [ -n "$repository" ] || continue
 
       pull_request="$repository#$number"
-      key="$pull_request+$epoch"
-      reason=comments
+      case "$reason" in
+        comments) key="$pull_request+$epoch" ;;
+        prepare) key="$pull_request~$head" ;;
+        *) key="$pull_request=$head" ;;
+      esac
       # A cycle still going is skipped before the cap, its own claim would count it as capped otherwise.
       if claimed "$key"; then
         continue
