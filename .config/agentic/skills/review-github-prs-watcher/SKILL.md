@@ -1,6 +1,6 @@
 ---
-name: review-github-pr-watcher
-description: Watch for GitHub pull requests that request your review, review each with the `review-github-pr` skill and post the review with inline comments, unattended. Use for "/review-github-pr-watcher", "watch my review requests", "auto review the PRs requested from me". Asks once for an organization or the personal account.
+name: review-github-prs-watcher
+description: Watch for GitHub pull requests that request your review, review each with the `review-github-pr` skill and post the review with inline comments, unattended. Use for "/review-github-prs-watcher", "watch my review requests", "auto review the PRs requested from me". Asks once for an organization or the personal account.
 ---
 
 # Review Requested Watcher
@@ -27,7 +27,7 @@ Use the `Monitor` tool on the detector, it streams one line per pull request int
   - `pushed`: you reviewed it without approving and the author pushed since, a re-review.
   - `reply`: you reviewed it without approving and someone other than a bot answered in a thread you took part in.
 - A pull request you approved never comes back unless your review is requested again. Drafts, your own pull requests, merged, closed and merge queue ones are skipped.
-- The detector claims a key for two hours when it reports it, so a review still running is not started twice, and skips a key marked done in `~/.cache/review-github-pr-watcher/seen`. It never marks anything done itself, the last step does. A review that failed is reported again once the claim expires. To review one again right away, delete its lines in `seen` and `claimed` in that folder.
+- The detector claims a key for two hours when it reports it, so a review still running is not started twice, and skips a key marked done in `~/.cache/review-github-prs-watcher/seen`. It never marks anything done itself, the last step does. A review that failed is reported again once the claim expires. To review one again right away, delete its lines in `seen` and `claimed` in that folder.
 - It polls every 60 seconds. `Monitor` ends after its deadline, restart it with the same command when its notice arrives, the claims keep it from repeating. Without `Monitor`, use `CronCreate` every 5 minutes running the detector with `--once`.
 - `--once` polls one time and exits. `--dry-run` claims nothing, use it to check a scope first.
 

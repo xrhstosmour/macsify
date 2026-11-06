@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The second write the `review-github-pr-watcher` skill is allowed unattended: one reply in a review thread you took part in, for a `reply` line of the detector.
+# The second write the `review-github-prs-watcher` skill is allowed unattended: one reply in a review thread you took part in, for a `reply` line of the detector.
 # Allowed in claude/settings.json by its path, so the script validates every input itself and calls one fixed endpoint, never a caller supplied one.
 #
 # Usage: post-thread-reply.sh <owner/repo> <pull request number> <comment id> <body file>

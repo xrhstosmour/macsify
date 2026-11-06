@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prepares the detached `reviews` worktree at the head of one pull request for the `review-github-pr-watcher` skill and prints its path.
+# Prepares the detached `reviews` worktree at the head of one pull request for the `review-github-prs-watcher` skill and prints its path.
 # Allowed in claude/settings.json by its path, so it validates every input itself and runs only the fixed git commands below. A broad `git -C` allow rule would let `-c` options or `--output` through with no prompt while the model reads untrusted pull request content.
 # Hooks are switched off for every git command, the worktree holds the pull request's own files and a `post-checkout` hook must never run from them. Symlinks of the pull request are written as plain files, so the allowed `Read` of the worktree never follows one out of it, and `git-lfs` filters are skipped, they would contact a server the pull request picks.
 # One run at a time per repository, a lock in its git directory, because all its pull requests share one worktree and `FETCH_HEAD`. The caller reviews one pull request at a time, the lock only covers the fetch and the move.

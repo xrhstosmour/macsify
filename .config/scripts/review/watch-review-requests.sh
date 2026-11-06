@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prints one line per open pull request that needs you again, for the `review-github-pr-watcher` skill and its Monitor.
+# Prints one line per open pull request that needs you again, for the `review-github-prs-watcher` skill and its Monitor.
 # It runs from ~/.config without the macsify repository, so it has no shared helpers, and it uses `set -u` without `set -e` to keep polling past one failed call.
 # Read only: it lists and reads pull requests, it never posts, edits, checks out or pushes.
 #
@@ -20,7 +20,7 @@
 
 set -u
 
-STATE_DIRECTORY="${XDG_CACHE_HOME:-$HOME/.cache}/review-github-pr-watcher"
+STATE_DIRECTORY="${XDG_CACHE_HOME:-$HOME/.cache}/review-github-prs-watcher"
 SEEN_FILE="$STATE_DIRECTORY/seen"
 CLAIMED_FILE="$STATE_DIRECTORY/claimed"
 CLAIM_SECONDS=7200

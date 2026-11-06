@@ -126,7 +126,7 @@ log_info "Copying agentic configuration to ${AGENTIC_DIRECTORY}..."
 mkdir -p "$AGENTIC_DIRECTORY"
 cp -R "$AGENTIC_SCRIPT_DIRECTORY/../.config/agentic/." "$AGENTIC_DIRECTORY/"
 
-# The `review-github-pr-watcher` skill runs the scripts next to this copy, refreshed
+# The `review-github-prs-watcher` skill runs the scripts next to this copy, refreshed
 # here too so a rerun after a merge never leaves the skill ahead of its scripts.
 mkdir -p "$HOME/.config/scripts/review"
 cp -R "$AGENTIC_SCRIPT_DIRECTORY/../.config/scripts/review/." "$HOME/.config/scripts/review/"
