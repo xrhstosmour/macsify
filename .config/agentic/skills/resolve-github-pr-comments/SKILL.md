@@ -259,7 +259,7 @@ jq -Rs '{body: .}' < <body_file> | gh api "repos/<owner>/<repo>/issues/comments/
 
 ## 9. Finish
 
-1. Prepare for review, always, once every comment from Steps 7 and 8 has been answered: invoke the `prepare-github-pr-for-review` skill with the `SHA` verified in Step 6, it rebases, autosquashes, pushes, triggers CI, and re-requests reviews when the user asked for that. Asking to resolve the PR comments authorizes it, no separate approval. Skip it only when no comment was valid and nothing was pushed.
+1. Prepare for review, always, once every comment from Steps 7 and 8 has been answered: invoke the `prepare-github-pr-for-review` skill with the `SHA` verified in Step 6, it rebases, autosquashes, pushes, triggers CI, and re-requests reviews when the user asked for that. Asking to resolve the PR comments authorizes it, no separate approval, except a check fix or a conflict resolution, which the prepare skill asks about itself. Skip it only when no comment was valid and nothing was pushed.
 
 2. Summary: `PR` link, resolved `SHA`s, not-valid reasons, skipped NO RESPONSE items
 
