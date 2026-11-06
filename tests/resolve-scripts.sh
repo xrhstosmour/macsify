@@ -12,6 +12,7 @@
 # on an open pull request of the viewer that is not a draft, only to a comment
 # or a thread of that pull request, a reply to the first comment of its thread,
 # reads the threads of that pull request without an outsider's comment,
+# corrects its description through the pull request endpoint,
 # re-requests reviews only of reviewers not approving, never of a bot or the
 # viewer, and rejects a bad action, reaction, id or body.
 
@@ -44,6 +45,7 @@ cat >"$TEST_DIRECTORY/bin/gh" <<'STUB'
 #!/bin/bash
 case "$*" in
   *"--method POST"*) { echo "$2"; cat; } >"$STUB_POSTED"; echo "https://github.com/owner/repo/pull/5#posted" ;;
+  *"--method PATCH"*) { echo "$2"; cat; } >"$STUB_POSTED"; echo "https://github.com/owner/repo/pull/5" ;;
   *resolveReviewThread*) echo "mutation $*" >"$STUB_POSTED"; echo "${*: -3:1}" | cut -d= -f2 ;;
   *"reviewThreads(first"*) echo "$*" >"$STUB_POSTED.read"; [ -z "$STUB_READ_FAILS" ] || exit 1; echo '[{"id":"PRRT_five","comments":{"nodes":[{"body":"member","author":{"__typename":"User","login":"author"},"authorAssociation":"MEMBER"},{"body":"outsider","author":{"__typename":"User","login":"stranger"},"authorAssociation":"CONTRIBUTOR"},{"body":"bot","author":{"__typename":"Bot","login":"copilot"},"authorAssociation":"NONE"},{"body":"mine","author":{"__typename":"User","login":"me"},"authorAssociation":"NONE"},{"body":"deleted","author":null,"authorAssociation":"MEMBER"}]}}]' ;;
   *"node(id"*) case "$*" in *id=PRRT_five*) echo "owner/repo 5" ;; *) echo "owner/repo 6" ;; esac ;;
@@ -185,6 +187,10 @@ respond reply owner/repo 5 9 "$TEST_DIRECTORY/body.txt" && fail "the responder r
 respond comment owner/repo 5 "$TEST_DIRECTORY/body.txt" || fail "the responder refused a comment on the pull request"
 [ "$(head -1 "$STUB_POSTED")" = "repos/owner/repo/issues/5/comments" ] || fail "the responder commented on another endpoint"
 respond comment owner/repo 5 "$TESTS_SCRIPT_DIRECTORY/resolve-scripts.sh" && fail "the responder posted a file outside a temporary directory"
+respond body owner/repo 5 "$TEST_DIRECTORY/body.txt" || fail "the responder refused to correct the description of the pull request"
+[ "$(head -1 "$STUB_POSTED")" = "repos/owner/repo/pulls/5" ] || fail "the responder corrected the description on another endpoint"
+[ "$(tail -n +2 "$STUB_POSTED" | jq -r .body)" = "Fixed, thanks." ] || fail "the responder changed the description it was given"
+respond body owner/repo 5 "$TESTS_SCRIPT_DIRECTORY/resolve-scripts.sh" && fail "the responder took a description outside a temporary directory"
 respond resolve owner/repo 5 PRRT_five || fail "the responder refused to resolve a thread of the pull request"
 grep -q 'id=PRRT_five' "$STUB_POSTED" || fail "the responder resolved another thread"
 respond resolve owner/repo 5 PRRT_six && fail "the responder resolved a thread of another pull request"
@@ -192,6 +198,7 @@ respond resolve owner/repo 5 'PRRT_five extra' && fail "the responder accepted a
 respond resolve owner/repo 5 MDQ6VXNlcjE= && fail "the responder accepted an id that is not a review thread"
 for state in "open true me" "closed false me" "open false someone"; do
   STUB_STATE="$state" respond comment owner/repo 5 "$TEST_DIRECTORY/body.txt" && fail "the responder posted on a pull request that is $state"
+  STUB_STATE="$state" respond body owner/repo 5 "$TEST_DIRECTORY/body.txt" && fail "the responder corrected the description of a pull request that is $state"
 done
 [ ! -e "$STUB_POSTED" ] || fail "the responder wrote something it refused"
 respond comment 'owner/repo extra' 5 "$TEST_DIRECTORY/body.txt" && fail "the responder accepted a repository with a space"
