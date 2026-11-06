@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
-# The only git writes of the `resolve-github-prs-comments-watcher` skill: a fixup commit, a push, and the autosquash rebase with its conflict resolution, all inside a `resolves` worktree made by `resolve-worktree.sh`.
+# The only git writes of the `resolve-github-prs-comments-watcher` skill: a fixup commit, a reword, a push, and the autosquash rebase with its conflict resolution, all inside a `resolves` worktree made by `resolve-worktree.sh`.
 # Allowed in claude/settings.json by its path, so it validates every input itself and runs only the fixed git commands below. The comments it acts on are untrusted, so the caller never picks the base of a rebase or the branch of a push, both come from the files `resolve-worktree.sh` wrote.
 # Hooks are off for every git command as in `resolve-worktree.sh`, and `--no-update-refs` keeps a `rebase.updateRefs` setting of yours from moving a branch of yours with the rebase.
 # A push is always a lease on the head the caller last saw, so a commit pushed by someone else in the meantime is never overwritten.
 #
 # Usage: resolve-git.sh fixup <worktree> <target sha> <file>...
+#        resolve-git.sh reword <worktree> <target sha> <message file>
 #        resolve-git.sh push <worktree> <lease sha>
 #        resolve-git.sh autosquash <worktree> <lease sha>
 #        resolve-git.sh continue <worktree> <lease sha> <file>...
 #        resolve-git.sh abort <worktree>
 #   fixup       stages the files, which must be changed and inside the worktree, and commits them as `fixup!` of the target, a commit of the pull request that is not a fixup itself, nothing else may be staged
+#   reword      commits an empty `amend!` of the target whose message is the one line of the message file, so the autosquash replaces the target's message
 #   push        pushes the worktree head to the pull request branch
 #   autosquash  rebases onto the base with `--autosquash`, refuses a `fixup!`, `squash!` or `amend!` subject left over, then pushes like `push`
 #   continue    after a conflict, stages the resolved files, exactly the conflicted ones and with no conflict marker left, continues the rebase, then checks and pushes like `autosquash`
@@ -24,7 +26,7 @@ set -e
 . "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 usage() {
-  echo "usage: resolve-git.sh fixup <worktree> <target sha> <file>... | push <worktree> <lease sha> | autosquash <worktree> <lease sha> | continue <worktree> <lease sha> <file>... | abort <worktree>" >&2
+  echo "usage: resolve-git.sh fixup <worktree> <target sha> <file>... | reword <worktree> <target sha> <message file> | push <worktree> <lease sha> | autosquash <worktree> <lease sha> | continue <worktree> <lease sha> <file>... | abort <worktree>" >&2
   exit 2
 }
 
@@ -35,6 +37,7 @@ shift 2
 sha=""
 case "$command" in
   fixup | continue) [ $# -ge 2 ] || usage ;;
+  reword) [ $# -eq 2 ] || usage ;;
   push | autosquash) [ $# -eq 1 ] || usage ;;
   abort) [ $# -eq 0 ] || usage ;;
   *) usage ;;
@@ -89,7 +92,7 @@ on_pull_request() {
   git -C "$worktree" merge-base --is-ancestor "$1" HEAD && ! git -C "$worktree" merge-base --is-ancestor "$1" "refs/remotes/origin/$base"
 }
 
-# Fails unless the target is a commit of the pull request that is not a fixup itself, so a fixup folds into an original commit.
+# Fails unless the target is a commit of the pull request that is not a fixup itself, so a fixup or reword folds into an original commit.
 require_target() {
   if ! git -C "$worktree" cat-file -e "$sha^{commit}" 2>/dev/null || ! on_pull_request "$sha"; then
     echo "$sha is not a commit of the pull request" >&2
@@ -158,7 +161,7 @@ finish_rebase() {
 
 # A stopped rebase is left for `continue` or `abort`, a commit or push in the middle of it would land on the partly rebased history and drop the commits after it.
 case "$command" in
-  fixup | push | autosquash)
+  fixup | reword | push | autosquash)
     if rebase_in_progress; then
       echo "a rebase is in progress in $worktree, continue or abort it" >&2
       exit 1
@@ -178,6 +181,19 @@ case "$command" in
     done
     GIT_LITERAL_PATHSPECS=1 git_without_hooks add -- "$@"
     git_without_hooks commit --quiet --fixup "$sha" >&2
+    ;;
+  reword)
+    require_target
+    require_temporary_file "message file" "$1"
+    message="$(cat -- "$1")"
+    # One line, the commit message rules of `versioning.md`, and short enough to stay a subject.
+    if [ -z "$message" ] || [[ $message == *$'\n'* ]] || [ "${#message}" -gt 200 ]; then
+      echo "the message must be one line of at most 200 characters" >&2
+      exit 2
+    fi
+    # The subject `git commit --fixup=reword:` writes, the autosquash replaces the target's message with the body after it.
+    subject="$(git -C "$worktree" log -1 --format=%s "$sha")"
+    printf 'amend! %s\n\n%s\n' "$subject" "$message" | git_without_hooks commit --quiet --allow-empty --cleanup=verbatim -F - >&2
     ;;
   push)
     push
