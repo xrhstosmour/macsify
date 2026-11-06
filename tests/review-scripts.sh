@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Checks the `review-github-pr-watcher` scripts against a stub `gh` on `PATH`,
+# Checks the `review-github-prs-watcher` scripts against a stub `gh` on `PATH`,
 # never the real GitHub. The detector reports a requested review, and a pull
 # request reviewed without approving after a push or an answer in a thread of the
 # viewer, never an approved one, once while its review runs and until it is
@@ -89,13 +89,13 @@ set_nodes STUB_REQUESTED "$(node 5 "$HEAD_SHA")"
 
 # A review request is reported, claimed, not recorded as done, and reported again only when the claim expires.
 [ "$(detect)" = "$KEY https://github.com/owner/repo/pull/5 requested" ] || fail "the detector did not report a review request"
-[ ! -s "$XDG_CACHE_HOME/review-github-pr-watcher/seen" ] || fail "the detector recorded a pull request before its review was done"
+[ ! -s "$XDG_CACHE_HOME/review-github-prs-watcher/seen" ] || fail "the detector recorded a pull request before its review was done"
 [ -z "$(detect)" ] || fail "the detector started a review that is still running twice"
-echo "$(($(date +%s) - 7300)) $KEY" >"$XDG_CACHE_HOME/review-github-pr-watcher/claimed"
+echo "$(($(date +%s) - 7300)) $KEY" >"$XDG_CACHE_HOME/review-github-prs-watcher/claimed"
 [ -n "$(detect)" ] || fail "the detector dropped a pull request whose claim expired"
-echo "$(date +%s) $KEY" >"$XDG_CACHE_HOME/review-github-pr-watcher/claimed"
+echo "$(date +%s) $KEY" >"$XDG_CACHE_HOME/review-github-prs-watcher/claimed"
 "$WATCHER" --mark "$KEY" || fail "the detector refused to mark a pull request done"
-echo "0 $KEY" >"$XDG_CACHE_HOME/review-github-pr-watcher/claimed"
+echo "0 $KEY" >"$XDG_CACHE_HOME/review-github-prs-watcher/claimed"
 [ -z "$(detect)" ] || fail "the detector reported a marked head commit again"
 set_nodes STUB_REQUESTED "$(node 5 "$OLD_SHA")"
 [ -n "$(detect)" ] || fail "the detector missed a push to a requested pull request"
@@ -125,7 +125,7 @@ set_nodes STUB_REVIEWED "$(node 6 "$HEAD_SHA" COMMENTED "$HEAD_SHA" '[[["me","20
 EPOCH="$(date -j -u -f '%Y-%m-%dT%H:%M:%SZ' 2026-11-05T11:00:00Z +%s 2>/dev/null || date -u -d 2026-11-05T11:00:00Z +%s)"
 [ "$(detect)" = "owner/repo#6@$HEAD_SHA+$EPOCH https://github.com/owner/repo/pull/6 reply" ] || fail "the detector missed an answer in a thread of the viewer"
 "$WATCHER" --mark "owner/repo#6@$HEAD_SHA+$EPOCH" || fail "the detector refused to mark an answer done"
-echo "0 owner/repo#6@$HEAD_SHA+$EPOCH" >"$XDG_CACHE_HOME/review-github-pr-watcher/claimed"
+echo "0 owner/repo#6@$HEAD_SHA+$EPOCH" >"$XDG_CACHE_HOME/review-github-prs-watcher/claimed"
 [ -z "$(detect)" ] || fail "the detector reported an answer already handled"
 reset_state
 set_nodes STUB_REVIEWED "$(node 6 "$HEAD_SHA" COMMENTED "$HEAD_SHA" '[[["me","2026-11-05T10:00:00Z"],["github-actions","2026-11-05T11:00:00Z","Bot"]],[["author","2026-11-05T09:00:00Z"],["me","2026-11-05T10:00:00Z"]]]')"
@@ -158,16 +158,16 @@ post owner/repo x && fail "the poster accepted a non numeric pull request"
 post owner/repo 5 abc && fail "the poster accepted a short commit"
 post owner/repo 5 "$HEAD_SHA" DISMISS && fail "the poster accepted an unknown event"
 # An approval needs a fresh claim of the detector for this very pull request and commit.
-mkdir -p "$XDG_CACHE_HOME/review-github-pr-watcher"
-: >"$XDG_CACHE_HOME/review-github-pr-watcher/claimed"
+mkdir -p "$XDG_CACHE_HOME/review-github-prs-watcher"
+: >"$XDG_CACHE_HOME/review-github-prs-watcher/claimed"
 post owner/repo 5 "$HEAD_SHA" APPROVE && fail "the poster approved a pull request the watcher never claimed"
-echo "$(date +%s) owner/repo#6@$HEAD_SHA" >"$XDG_CACHE_HOME/review-github-pr-watcher/claimed"
+echo "$(date +%s) owner/repo#6@$HEAD_SHA" >"$XDG_CACHE_HOME/review-github-prs-watcher/claimed"
 post owner/repo 5 "$HEAD_SHA" APPROVE && fail "the poster approved with the claim of another pull request"
-echo "$(($(date +%s) - 7300)) owner/repo#5@$HEAD_SHA" >"$XDG_CACHE_HOME/review-github-pr-watcher/claimed"
+echo "$(($(date +%s) - 7300)) owner/repo#5@$HEAD_SHA" >"$XDG_CACHE_HOME/review-github-prs-watcher/claimed"
 post owner/repo 5 "$HEAD_SHA" APPROVE && fail "the poster approved with an expired claim"
-echo "$(date +%s) owner/repo#5@$HEAD_SHA" >"$XDG_CACHE_HOME/review-github-pr-watcher/claimed"
+echo "$(date +%s) owner/repo#5@$HEAD_SHA" >"$XDG_CACHE_HOME/review-github-prs-watcher/claimed"
 post owner/repo 5 "$HEAD_SHA" APPROVE >/dev/null || fail "the poster refused an approval the watcher claimed"
-echo "$(date +%s) owner/repo#5@$HEAD_SHA+1700000000" >"$XDG_CACHE_HOME/review-github-pr-watcher/claimed"
+echo "$(date +%s) owner/repo#5@$HEAD_SHA+1700000000" >"$XDG_CACHE_HOME/review-github-prs-watcher/claimed"
 post owner/repo 5 "$HEAD_SHA" APPROVE >/dev/null || fail "the poster refused an approval claimed with a reply epoch"
 rm -f "$STUB_POSTED_FILE"
 post owner/repo 5 "$HEAD_SHA" COMMENT "$TEST_DIRECTORY/extra.json" && fail "the poster accepted an unexpected comment field"

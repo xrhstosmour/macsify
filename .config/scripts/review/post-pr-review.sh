@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The only write the `review-github-pr-watcher` skill is allowed unattended: one review with inline comments on one open pull request.
+# The only write the `review-github-prs-watcher` skill is allowed unattended: one review with inline comments on one open pull request.
 # Allowed in claude/settings.json by its path, so the script validates every input itself and calls one fixed endpoint, never a caller supplied one.
 #
 # Usage: post-pr-review.sh <owner/repo> <pull request number> <head sha> <APPROVE|REQUEST_CHANGES|COMMENT> <body file> <comments file>
@@ -44,7 +44,7 @@ case "$event" in
 esac
 # This runs unattended on text a pull request author wrote, so an approval from the user's account is posted only for a pull request the detector claimed at this commit in the last two hours, `watch-review-requests.sh` writes the claim. Text in a pull request cannot get one approved that is not in the current review queue. The two hours must equal `CLAIM_SECONDS` in `watch-review-requests.sh`, which writes the claim, this script runs from `~/.config` without the repository, so the value is not shared. The key may end in `+epoch` for a reply.
 if [ "$event" = APPROVE ]; then
-  claimed_file="${XDG_CACHE_HOME:-$HOME/.cache}/review-github-pr-watcher/claimed"
+  claimed_file="${XDG_CACHE_HOME:-$HOME/.cache}/review-github-prs-watcher/claimed"
   if ! awk -v key="$repository#$number@$head_sha" -v now="$(date +%s)" '($2 == key || index($2, key "+") == 1) && now - $1 < 7200 { found = 1 } END { exit !found }' "$claimed_file" 2>/dev/null; then
     echo "APPROVE only for a pull request the watcher claimed at $head_sha in the last two hours" >&2
     exit 1
