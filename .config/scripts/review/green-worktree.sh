@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Prepares the detached `resolves` worktree at the head of one pull request of yours for the `resolve-github-prs-comments-watcher` skill and prints its path.
+# Prepares the detached `resolves` worktree at the head of one pull request of yours for the `green-github-prs-watcher` skill and prints its path.
 # Allowed in claude/settings.json by its path, so it validates every input itself and runs only the fixed git commands below, same as `review-worktree.sh`.
 # Detached because the branch is usually checked out in a worktree of yours and git refuses a second checkout of it, and a working tree of yours is never touched. Hooks, symlinks and `git-lfs` filters are off as in `review-worktree.sh`.
 # Only an open pull request you opened, not a draft, from a branch of the same repository and not `main` or `master`, since the fixes are pushed to that branch on `origin`.
-# The base and the branch of the pull request are written to `resolve-base` and `resolve-branch` in the git directory of the worktree, `resolve-git.sh` reads them there, so the caller never picks where a rebase starts or a push goes.
+# The base and the branch of the pull request are written to `resolve-base` and `resolve-branch` in the git directory of the worktree, `green-git.sh` reads them there, so the caller never picks where a rebase starts or a push goes.
 # A leftover of an earlier run, an unfinished rebase or uncommitted edits, is thrown away, the worktree belongs to the watcher and every run starts at the pushed head.
 #
-# Usage: resolve-worktree.sh <owner/repo> <pull request number> <head sha> <branch>
+# Usage: green-worktree.sh <owner/repo> <pull request number> <head sha> <branch>
 # The developer directory is `~/Developer`, `REVIEW_DEVELOPER_DIRECTORY` replaces it for the tests, and `REVIEW_LOCK_ATTEMPTS` the 120 seconds the lock is waited for.
 
 set -e
@@ -15,7 +15,7 @@ set -e
 . "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 if [ $# -ne 4 ]; then
-  echo "usage: resolve-worktree.sh <owner/repo> <number> <head sha> <branch>" >&2
+  echo "usage: green-worktree.sh <owner/repo> <number> <head sha> <branch>" >&2
   exit 2
 fi
 
@@ -37,7 +37,7 @@ esac
 
 developer="${REVIEW_DEVELOPER_DIRECTORY:-$HOME/Developer}"
 
-# Submodules are never entered, as in `resolve-git.sh`.
+# Submodules are never entered, as in `green-git.sh`.
 git_without_hooks() {
   GIT_LFS_SKIP_SMUDGE=1 git -c core.hooksPath=/dev/null -c core.symlinks=false -c core.fsmonitor=false -c submodule.recurse=false -c diff.ignoreSubmodules=all "$@"
 }

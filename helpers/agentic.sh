@@ -4,13 +4,13 @@
 # so `tests/agentic.sh` can run them against a temporary directory. Needs
 # `helpers/logs.sh` sourced first.
 
-# Removes the skills listed as personal only from the installed copy, together
+# Removes the skills listed, personal only or retired, from the installed copy, together
 # with the command of the same name that invokes each skill. A CRLF line ending
 # or stray spaces around a name are ignored. A line with a path separator or a
 # leading dot is skipped, it could name something outside `skills/`.
 # Usage:
-#   remove_personal_skills <agentic directory> <personal skills file>
-remove_personal_skills() {
+#   remove_listed_skills <agentic directory> <skills file>
+remove_listed_skills() {
   local agentic_directory="$1" skills_file="$2" skill
   while IFS= read -r skill || [ -n "$skill" ]; do
     skill="${skill%$'\r'}"
@@ -18,11 +18,37 @@ remove_personal_skills() {
     skill="${skill%"${skill##*[![:space:]]}"}"
     [[ -z "$skill" || "$skill" =~ ^# || "$skill" == */* || "$skill" == .* ]] && continue
     if [ -d "$agentic_directory/skills/$skill" ]; then
-      log_info "Removing personal only skill '${skill}'..."
+      log_info "Removing skill '${skill}'..."
       rm -rf "${agentic_directory:?}/skills/${skill:?}"
     fi
     rm -f "${agentic_directory:?}/commands/${skill:?}.md"
   done <"$skills_file"
+}
+
+# Removes an installed script the source no longer has, a renamed or removed one
+# would stay runnable without the checks of its successor.
+# Usage:
+#   remove_stale_scripts <source directory> <installed directory>
+remove_stale_scripts() {
+  local source_directory="$1" installed_directory="$2" installed_script
+  for installed_script in "$installed_directory/"*.sh; do
+    [ -e "$installed_script" ] || continue
+    if [ ! -e "$source_directory/$(basename "$installed_script")" ]; then
+      rm -f "$installed_script"
+    fi
+  done
+}
+
+# The green watcher was the resolve watcher, its cache holds the keys marked done
+# and the claims that count the cycles of the day, moved so neither starts over.
+# A cache of the new name already there wins, it is never overwritten.
+# Usage:
+#   move_green_watcher_cache <cache directory>
+move_green_watcher_cache() {
+  local cache_directory="$1"
+  if [ -d "$cache_directory/resolve-github-prs-comments-watcher" ] && [ ! -e "$cache_directory/green-github-prs-watcher" ]; then
+    mv "$cache_directory/resolve-github-prs-comments-watcher" "$cache_directory/green-github-prs-watcher"
+  fi
 }
 
 # Sets the `agent` block of an `opencode.json` from `models.txt`, one entry per

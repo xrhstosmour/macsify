@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# The only git writes of the `resolve-github-prs-comments-watcher` skill: a fixup commit, a reword, a push, and the autosquash rebase with its conflict resolution, all inside a `resolves` worktree made by `resolve-worktree.sh`.
-# Allowed in claude/settings.json by its path, so it validates every input itself and runs only the fixed git commands below. The comments it acts on are untrusted, so the caller never picks the base of a rebase or the branch of a push, both come from the files `resolve-worktree.sh` wrote.
-# Hooks are off for every git command as in `resolve-worktree.sh`, and `--no-update-refs` keeps a `rebase.updateRefs` setting of yours from moving a branch of yours with the rebase.
+# The only git writes of the `green-github-prs-watcher` skill: a fixup commit, a reword, a push, and the autosquash rebase with its conflict resolution, all inside a `resolves` worktree made by `green-worktree.sh`.
+# Allowed in claude/settings.json by its path, so it validates every input itself and runs only the fixed git commands below. The comments it acts on are untrusted, so the caller never picks the base of a rebase or the branch of a push, both come from the files `green-worktree.sh` wrote.
+# Hooks are off for every git command as in `green-worktree.sh`, and `--no-update-refs` keeps a `rebase.updateRefs` setting of yours from moving a branch of yours with the rebase.
 # A push is always a lease on the head the caller last saw, so a commit pushed by someone else in the meantime is never overwritten.
 #
-# Usage: resolve-git.sh fixup <worktree> <target sha> <file>...
-#        resolve-git.sh reword <worktree> <target sha> <message file>
-#        resolve-git.sh push <worktree> <lease sha>
-#        resolve-git.sh autosquash <worktree> <lease sha>
-#        resolve-git.sh continue <worktree> <lease sha> <file>...
-#        resolve-git.sh abort <worktree>
+# Usage: green-git.sh fixup <worktree> <target sha> <file>...
+#        green-git.sh reword <worktree> <target sha> <message file>
+#        green-git.sh push <worktree> <lease sha>
+#        green-git.sh autosquash <worktree> <lease sha>
+#        green-git.sh continue <worktree> <lease sha> <file>...
+#        green-git.sh abort <worktree>
 #   fixup       stages the files, which must be changed and inside the worktree, and commits them as `fixup!` of the target, a commit of the pull request that is not a fixup itself, nothing else may be staged
 #   reword      commits an empty `amend!` of the target whose message is the one line of the message file, so the autosquash replaces the target's message
 #   push        pushes the worktree head to the pull request branch
@@ -26,7 +26,7 @@ set -e
 . "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 usage() {
-  echo "usage: resolve-git.sh fixup <worktree> <target sha> <file>... | reword <worktree> <target sha> <message file> | push <worktree> <lease sha> | autosquash <worktree> <lease sha> | continue <worktree> <lease sha> <file>... | abort <worktree>" >&2
+  echo "usage: green-git.sh fixup <worktree> <target sha> <file>... | reword <worktree> <target sha> <message file> | push <worktree> <lease sha> | autosquash <worktree> <lease sha> | continue <worktree> <lease sha> <file>... | abort <worktree>" >&2
   exit 2
 }
 
@@ -73,7 +73,7 @@ if [ "$(git -C "$worktree" rev-parse --show-toplevel 2>/dev/null)" != "$worktree
 fi
 git_directory="$(git -C "$worktree" rev-parse --path-format=absolute --git-dir)"
 if [ ! -s "$git_directory/resolve-base" ] || [ ! -s "$git_directory/resolve-branch" ]; then
-  echo "$worktree was not prepared by resolve-worktree.sh" >&2
+  echo "$worktree was not prepared by green-worktree.sh" >&2
   exit 2
 fi
 base="$(cat "$git_directory/resolve-base")"

@@ -23,7 +23,7 @@ jobs:
           tar -xJf shellcheck.tar.xz
           sudo mv shellcheck-v0.11.0/shellcheck /usr/local/bin/shellcheck
 
-      # `tests/resolve-search.sh` needs `ripgrep`, `sqlite3` is already on the runner.
+      # `tests/green-search.sh` needs `ripgrep`, `sqlite3` is already on the runner.
       - name: Install fish and ripgrep
         run: sudo apt-get update && sudo apt-get install -y fish ripgrep
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared checks of the review and resolve watcher scripts, sourced by the scripts next to it.
+# Shared checks of the review and green watcher scripts, sourced by the scripts next to it.
 # They run from ~/.config without the macsify repository, so `helpers/` is not there for them.
 # Every check exits the calling script on a bad value, the scripts are allowed by path in claude/settings.json and must refuse anything they were not built for.
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# The read-only searches of the `resolve-github-prs-comments-watcher` investigation, scoped to the repository of one `resolves` worktree made by `resolve-worktree.sh`.
+# The read-only searches of the `green-github-prs-watcher` investigation, scoped to the repository of one `resolves` worktree made by `green-worktree.sh`.
 # Allowed in claude/settings.json by its path, in place of `rg`, which runs any command through `--pre`, and of a `Read` of every past session, which a comment could steer into another repository's transcripts.
 # The caller gives only a pattern, never an option or a path, so `rg` runs with `--no-config` and the fixed paths below, and `sqlite3` with `-init /dev/null` so a `~/.sqliterc` runs nothing.
 # Output is capped, a session line is a whole transcript record, so only the text around a match is printed.
 #
-# Usage: resolve-search.sh files <worktree>
-#        resolve-search.sh code <worktree> <pattern>
-#        resolve-search.sh sessions <worktree> <pattern>
+# Usage: green-search.sh files <worktree>
+#        green-search.sh code <worktree> <pattern>
+#        green-search.sh sessions <worktree> <pattern>
 #   files     lists the files of the worktree, ignored ones left out
 #   code      prints the matching lines of the worktree as `<file>:<line>:<text>`
 #   sessions  prints the text around each match in the `Claude Code` and `OpenCode` sessions of the checkout and its worktrees as `<session>:<text>`
@@ -16,7 +16,7 @@
 set -e
 
 usage() {
-  echo "usage: resolve-search.sh files <worktree> | code <worktree> <pattern> | sessions <worktree> <pattern>" >&2
+  echo "usage: green-search.sh files <worktree> | code <worktree> <pattern> | sessions <worktree> <pattern>" >&2
   exit 2
 }
 
