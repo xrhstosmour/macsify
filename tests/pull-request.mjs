@@ -1,8 +1,9 @@
 // Runs the rules of the `Herdr` app's `pull-request` mod. Started by `tests/pull-request.sh`.
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const logicUrl = new URL("../.config/herdr-app/mods/pull-request/logic.js", import.meta.url);
-const { classify, focusedFolder, isStale, keyOf, checkRows, checksSummary, reviewers, timeline, diffFiles, failedRuns, withoutImages, actionArgs, confirmed, isArmed, armId, isCurrent, needsLoad, REFRESH_MS, CONFIRM_MS, DOUBLE_CLICK_MS } = await import(fileURLToPath(logicUrl));
+const { classify, focusedFolder, isStale, keyOf, checkRows, checksSummary, reviewers, timeline, diffFiles, failedRuns, withoutImages, actionArgs, canMerge, confirmed, isArmed, armId, mergeOptions, mergeStatus, isCurrent, isShown, needsLoad, STATE_KEY, REFRESH_MS, CONFIRM_MS, DOUBLE_CLICK_MS } = await import(fileURLToPath(logicUrl));
 
 let failures = 0;
 function expect(label, actual, wanted) {
@@ -140,14 +141,45 @@ expect("an approval body is a raw field", actionArgs("approve", pr, { body: "@/e
 expect("an approval without a known commit is not sent", actionArgs("approve", { number: 7 }, {}), null);
 expect("a change request needs text", actionArgs("request-changes", pr, { body: "" }), null);
 expect("a reply is a raw field, never a file", actionArgs("reply", pr, { body: "@/etc/hosts", threadId: 1 }), ["api", "--method", "POST", "repos/{owner}/{repo}/pulls/7/comments/1/replies", "-f", "body=@/etc/hosts"]);
-expect("a merge is pinned to the commit on screen", actionArgs("merge", pr, { method: "squash" }), ["pr", "merge", "7", "--squash", `--match-head-commit=${"a".repeat(40)}`]);
-expect("a merge without a known commit is not sent", actionArgs("merge", { number: 7 }, { method: "squash" }), null);
-expect("an unknown merge method is not sent", actionArgs("merge", pr, { method: "admin" }), null);
 expect("a rerun takes a run number only", actionArgs("rerun", pr, { runId: "11 --x" }), null);
 expect("an unknown action is not sent", actionArgs("delete", pr, {}), null);
 expect("no pull request number, nothing is sent", actionArgs("close", { number: "7; rm" }, {}), null);
 
-// Merge and close act on the second click, for the same folder, pull request and commit, not a double-click, not much later.
+// The merge buttons make the calls GitHub's own buttons make, and nothing else.
+const head = `--match-head-commit=${"a".repeat(40)}`;
+expect("a merge is pinned to the commit on screen", actionArgs("merge", pr, { method: "rebase" }), ["pr", "merge", "7", "--rebase", head]);
+expect("a merge without a known commit is not sent", actionArgs("merge", { number: 7 }, { method: "rebase" }), null);
+expect("an unknown merge method is not sent", actionArgs("merge", pr, { method: "admin" }), null);
+expect("bypass is sent only when ticked", actionArgs("merge", pr, { method: "merge", bypass: "yes" }), ["pr", "merge", "7", "--merge", head]);
+expect("a ticked bypass merges as admin", actionArgs("merge", pr, { method: "merge", bypass: true }), ["pr", "merge", "7", "--merge", head, "--admin"]);
+const enqueue = actionArgs("enqueue", pr, { id: "PR_abc-1" });
+expect("merge when ready enqueues the commit on screen", [enqueue[0], enqueue[1], enqueue[3].startsWith("query=mutation($id:ID!,$oid:GitObjectID!){enqueuePullRequest("), enqueue.slice(4)], ["api", "graphql", true, ["-f", "id=PR_abc-1", "-f", `oid=${"a".repeat(40)}`]]);
+expect("an odd node ID is not sent", actionArgs("enqueue", pr, { id: "PR_1 x" }), null);
+expect("merge when ready without a known commit is not sent", actionArgs("enqueue", { number: 7 }, { id: "PR_1" }), null);
+expect("remove from queue takes a node ID", actionArgs("dequeue", pr, { id: "x" }), null);
+expect("remove from queue", actionArgs("dequeue", pr, { id: "PR_1" }).slice(-2), ["-f", "id=PR_1"]);
+
+// The merge box shows GitHub's merge box in its words, from `MERGE_QUERY`.
+const answer = (pullRequest) => ({ data: { repository: { mergeCommitAllowed: true, rebaseMergeAllowed: true, squashMergeAllowed: false, pullRequest: { isMergeQueueEnabled: false, isInMergeQueue: false, mergeQueueEntry: null, mergeStateStatus: "CLEAN", viewerCanMergeAsAdmin: false, ...pullRequest } } } });
+expect("only the allowed methods, rebase first", mergeOptions(answer({})).methods, ["rebase", "merge"]);
+expect("no answer, no options", mergeOptions({ errors: [{}] }), null);
+const ready = { isDraft: false, mergeable: "MERGEABLE", reviewDecision: "APPROVED", baseRefName: "main", commits: [{ messageHeadline: "Add a thing" }] };
+const passed = [{ state: "success" }];
+expect("a ready pull request", mergeStatus(ready, passed, mergeOptions(answer({}))).map((line) => line.text), ["Changes approved", "All checks have passed", "No conflicts with base branch"]);
+expect("a branch behind its base", mergeStatus(ready, passed, mergeOptions(answer({ mergeStateStatus: "BEHIND" }))).at(-1).text, "This branch is out-of-date with the base branch");
+expect("conflicts win over the branch being behind", mergeStatus({ ...ready, mergeable: "CONFLICTING" }, passed, mergeOptions(answer({ mergeStateStatus: "BEHIND" })))[2].text, "This branch has conflicts that must be resolved");
+expect("a merge queue", mergeStatus(ready, passed, mergeOptions(answer({ isMergeQueueEnabled: true }))).at(-1).text, "This repository uses the merge queue for all merges into the main branch.");
+expect("a queued pull request", mergeStatus(ready, passed, mergeOptions(answer({ isMergeQueueEnabled: true, isInMergeQueue: true, mergeQueueEntry: { position: 2 } }))).at(-1).text, "Queued to merge, position 2");
+const options = mergeOptions(answer({}));
+expect("a ready pull request can merge", canMerge(ready, options), true);
+expect("a draft cannot merge", canMerge({ ...ready, isDraft: true }, options), false);
+expect("conflicts cannot merge", canMerge({ ...ready, mergeable: "CONFLICTING" }, options), false);
+expect("fixup commits cannot merge, squashing them needs a force push", canMerge({ ...ready, commits: [{ messageHeadline: "squash! Add a thing" }] }, options), false);
+expect("no answer about the repository, no merge", canMerge(ready, null), false);
+expect("a queued pull request is not queued again", canMerge(ready, mergeOptions(answer({ isMergeQueueEnabled: true, isInMergeQueue: true }))), false);
+expect("fixup commits are called out", mergeStatus({ ...ready, commits: [{ messageHeadline: "fixup! Add a thing" }, { messageHeadline: "amend! Add a thing" }] }, passed, null).at(-1), { text: "2 fixup! commits are left, squash them before merging", tone: "bad" });
+
+// Merge, merge when ready and close act on the second click, for the same folder, pull request and commit, not a double-click, not much later.
 const id = armId(page);
 const arm = { action: "merge", id, at: 1000 };
 expect("a double-click does not merge", confirmed(arm, "merge", id, 1000 + DOUBLE_CLICK_MS - 1), false);
@@ -155,7 +187,26 @@ expect("a second click merges", confirmed(arm, "merge", id, 1000 + DOUBLE_CLICK_
 expect("a late click arms again", isArmed(arm, "merge", id, 1000 + CONFIRM_MS), false);
 expect("a new commit needs a new confirm", confirmed(arm, "merge", armId({ ...page, pr: { headRefOid: "b".repeat(40) } }), 2000), false);
 expect("the same number in another folder needs a new confirm", confirmed(arm, "merge", armId({ ...page, cwd: "/b" }), 2000), false);
-expect("another button needs its own confirm", confirmed(arm, "close", id, 2000), false);
+expect("another button needs its own confirm", confirmed(arm, "enqueue", id, 2000), false);
+
+// The panel calls `gh` only while it is on screen, timers keep running in a hidden block.
+const panel = (hidden, active) => ({ type: "row", children: [{ id: "panel", type: "column", hidden, children: [{ id: "panel-body", type: "stack", active, children: [{ id: "pull-request" }, { id: "files" }] }] }] });
+expect("an open panel showing the pull request", isShown(panel(false, "pull-request"), "pull-request"), true);
+expect("a closed panel", isShown(panel(true, "pull-request"), "pull-request"), false);
+expect("another child of the stack", isShown(panel(false, "files"), "pull-request"), false);
+expect("a stack naming no child shows its first", isShown(panel(false, undefined), "pull-request"), true);
+
+// `tabs-inline` cannot import the mod, so a renamed key or block would hide the GitHub button without an error.
+const tabs = readFileSync(new URL("../.config/herdr-app/mods/tabs-inline/main.js", import.meta.url), "utf8");
+expect("tabs-inline reads the watcher's key", tabs.includes(`shared("${STATE_KEY}")`), true);
+const blocks = [];
+(function walk(node) {
+  if (node && typeof node === "object") {
+    if (node.content?.mod === "pull-request") blocks.push({ id: node.id, watch: Boolean(node.content.props?.watch) });
+    Object.values(node).forEach(walk);
+  }
+})(JSON.parse(readFileSync(new URL("../.config/herdr-app/layouts/workbench.json", import.meta.url), "utf8")));
+expect("the layout holds the panel tabs-inline finds and the watcher", blocks, [{ id: "pull-request", watch: false }, { id: "pull-request-watch", watch: true }]);
 
 if (failures > 0) process.exit(1);
 console.log("PASS: pull-request");
