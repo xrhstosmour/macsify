@@ -58,6 +58,8 @@
       "gh api \"repos/*": "allow",
       "gh api --paginate \"repos/*": "allow",
       "gh api user*": "allow",
+      "gh api search/*": "allow",
+      "gh api \"search/*": "allow",
       "wc *": "allow",
       "which *": "allow",
       "git status": "allow",

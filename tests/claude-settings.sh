@@ -48,6 +48,10 @@ expect_rule allow 'Bash(qmd search *)' present
 expect_rule allow 'Bash(qmd query *)' present
 expect_rule allow 'Bash(qmd get *)' present
 expect_rule allow 'Bash(qmd *)' absent
+# Search endpoints are read-only, the ask rules on the write flags must keep winning over the `gh api` allows.
+expect_rule allow 'Bash(gh api search/*)' present
+expect_rule ask 'Bash(gh api *-X*)' present
+expect_rule ask 'Bash(gh api *-f*)' present
 # `rg --pre` runs any command, so `rg` stays prompted.
 expect_rule allow 'Bash(rg *)' absent
 

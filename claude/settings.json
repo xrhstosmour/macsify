@@ -82,6 +82,8 @@
       "Bash(gh api \"repos/*)",
       "Bash(gh api --paginate \"repos/*)",
       "Bash(gh api user*)",
+      "Bash(gh api search/*)",
+      "Bash(gh api \"search/*)",
       "Bash(gh issue view*)",
       "Bash(gh issue list*)",
       "Bash(gh issue status*)",
