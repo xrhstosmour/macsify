@@ -2,7 +2,9 @@
 
 # Checks the `setup/agentic.sh` steps in `helpers/agentic.sh`: personal skills
 # are removed with their command whatever the line ending, other skills and a
-# path outside `skills/` are kept, and the `opencode.json` template gets every
+# path outside `skills/` are kept, a review script gone from the repository is
+# removed from the installed copy, the old watcher cache is moved once and never
+# over the new one, and the `opencode.json` template gets every
 # agent model from `models.txt`, also when its formatting changes. Runs against a
 # temporary directory, never the installed configuration.
 
@@ -31,7 +33,7 @@ mkdir -p "$agentic/skills/plain" "$agentic/skills/spaced" "$agentic/skills/windo
 touch "$agentic/commands/plain.md" "$agentic/commands/kept.md"
 printf '# Comment line\nplain\n  spaced  \nwindows\r\n../outside\n' >"$TEST_DIRECTORY/personal.skills.txt"
 
-remove_personal_skills "$agentic" "$TEST_DIRECTORY/personal.skills.txt" 2>/dev/null
+remove_listed_skills "$agentic" "$TEST_DIRECTORY/personal.skills.txt" 2>/dev/null
 
 for skill in plain spaced windows; do
   [ ! -e "$agentic/skills/$skill" ] || fail "personal skill '$skill' was not removed"
@@ -40,6 +42,27 @@ done
 [ -d "$agentic/skills/kept" ] || fail "skill 'kept', not listed, was removed"
 [ -e "$agentic/commands/kept.md" ] || fail "command 'kept', not listed, was removed"
 [ -d "$TEST_DIRECTORY/outside" ] || fail "a '../' line removed a directory outside skills/"
+
+source_scripts="$TEST_DIRECTORY/source-scripts"
+installed_scripts="$TEST_DIRECTORY/installed-scripts"
+mkdir -p "$source_scripts" "$installed_scripts"
+touch "$source_scripts/kept.sh" "$installed_scripts/kept.sh" "$installed_scripts/renamed.sh" "$installed_scripts/notes.txt"
+remove_stale_scripts "$source_scripts" "$installed_scripts"
+[ -e "$installed_scripts/kept.sh" ] || fail "a script still in the source was removed"
+[ ! -e "$installed_scripts/renamed.sh" ] || fail "a script gone from the source was kept"
+[ -e "$installed_scripts/notes.txt" ] || fail "a file that is not a script was removed"
+remove_stale_scripts "$source_scripts" "$TEST_DIRECTORY/no-scripts" || fail "an empty installed directory failed"
+
+cache="$TEST_DIRECTORY/cache"
+mkdir -p "$cache/resolve-github-prs-comments-watcher"
+echo "1 owner/repo#5+1" >"$cache/resolve-github-prs-comments-watcher/claimed"
+move_green_watcher_cache "$cache"
+[ "$(cat "$cache/green-github-prs-watcher/claimed" 2>/dev/null)" = "1 owner/repo#5+1" ] || fail "the old watcher cache was not moved"
+[ ! -e "$cache/resolve-github-prs-comments-watcher" ] || fail "the old watcher cache was left behind"
+mkdir -p "$cache/resolve-github-prs-comments-watcher"
+echo "2 owner/repo#5+2" >"$cache/resolve-github-prs-comments-watcher/claimed"
+move_green_watcher_cache "$cache"
+[ "$(cat "$cache/green-github-prs-watcher/claimed")" = "1 owner/repo#5+1" ] || fail "the old watcher cache overwrote the new one"
 
 agents="$TEST_DIRECTORY/agents"
 mkdir -p "$agents"

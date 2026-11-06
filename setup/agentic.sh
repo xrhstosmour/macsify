@@ -131,12 +131,19 @@ cp -R "$AGENTIC_SCRIPT_DIRECTORY/../.config/agentic/." "$AGENTIC_DIRECTORY/"
 mkdir -p "$HOME/.config/scripts/review"
 cp -R "$AGENTIC_SCRIPT_DIRECTORY/../.config/scripts/review/." "$HOME/.config/scripts/review/"
 chmod +x "$HOME/.config/scripts/review/"*.sh
+remove_stale_scripts "$AGENTIC_SCRIPT_DIRECTORY/../.config/scripts/review" "$HOME/.config/scripts/review"
+move_green_watcher_cache "${XDG_CACHE_HOME:-$HOME/.cache}"
+
+RETIRED_SKILLS_FILE_PATH="$AGENTIC_SCRIPT_DIRECTORY/../packages/retired.skills.txt"
+if [ -f "$RETIRED_SKILLS_FILE_PATH" ]; then
+    remove_listed_skills "$AGENTIC_DIRECTORY" "$RETIRED_SKILLS_FILE_PATH"
+fi
 
 # Skills listed as personal only are removed from the installed copy on any other
 # profile, also when a machine switches profile after an earlier install.
 PERSONAL_SKILLS_FILE_PATH="$AGENTIC_SCRIPT_DIRECTORY/../packages/personal.skills.txt"
 if [ "$MACSIFY_PROFILE" != "personal" ] && [ -f "$PERSONAL_SKILLS_FILE_PATH" ]; then
-    remove_personal_skills "$AGENTIC_DIRECTORY" "$PERSONAL_SKILLS_FILE_PATH"
+    remove_listed_skills "$AGENTIC_DIRECTORY" "$PERSONAL_SKILLS_FILE_PATH"
 fi
 
 # Only set up the tools declared in the Brewfile. `install.sh` runs `brew bundle` before

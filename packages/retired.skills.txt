@@ -1,0 +1,4 @@
+# Agentic skills renamed or removed here, one skill directory name per line.
+# `setup/agentic.sh` removes them from the installed copy on every profile, since
+# its `cp -R` only adds and would keep the old name installed next to the new one.
+resolve-github-prs-comments-watcher
