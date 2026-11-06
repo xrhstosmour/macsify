@@ -4,7 +4,8 @@
 // right, where it is a long reach on a wide window, and the + opening a
 // terminal like `cmd-t` instead of the new menu, agents keep their own keys,
 // and a GitHub button next to Files and Changes for the `pull-request` block,
-// shown only while the focused branch has an open pull request.
+// shown only while the focused branch has an open pull request, and a Graph
+// button for the `git-graph` block.
 // Its icons still come from
 // the shipped `tabs` mod. Cloned from `Herdr` app 0.1.13, the version is also in
 // `mod.json`. Recheck against the shipped mod after an app update.
@@ -94,7 +95,9 @@ export default class Tabs extends View {
     const pull = shared("pull-request.state")?.status;
     const pullShown = Boolean(panel && !panel.hidden && body?.active === "pull-request");
     const withPull = find(root, "pull-request") && (pull === "open" || pull === "error" || pullShown);
-    const enabled = [...(shared("workspace.panels") ?? ["files", "changes"]), ...(withPull ? ["pull-request"] : [])];
+    // `git-graph` has no welcome entry either, so it joins whenever the layout holds its block.
+    const withGraph = Boolean(find(root, "git-graph"));
+    const enabled = [...(shared("workspace.panels") ?? ["files", "changes"]), ...(withGraph ? ["git-graph"] : []), ...(withPull ? ["pull-request"] : [])];
     this.syncPanel(space, panel, body, enabled);
     const panelButton = (id, label, icon) => {
       const on = panel && !panel.hidden && body?.active === id;
@@ -114,6 +117,7 @@ export default class Tabs extends View {
         .child(button("tab-new", "+", () => run("tab.new", { space: space?.id }))))
       .when(enabled.includes("files"), el => el.child(panelButton("files", "Files", "mods/files/file.svg")))
       .when(enabled.includes("changes"), el => el.child(panelButton("changes", "Changes", "mods/changes/changes.svg")))
+      .when(enabled.includes("git-graph"), el => el.child(panelButton("git-graph", "Graph", "mods/git-graph/icons/graph.svg")))
       .when(enabled.includes("pull-request"), el => el.child(panelButton("pull-request", pull === "error" ? "GitHub error" : "GitHub", "icons/gh.svg")))
       .when(w?.buttons, el => el.child(button("minimize", w.platform === "windows" ? svg("mods/tabs/win-min.svg").size(16) : "−", () => run("window.minimize")))
         .child(button("maximize", w.platform === "windows" ? svg(`mods/tabs/${w.maximized ? "win-restore" : "win-max"}.svg`).size(16) : "□", () => run("window.maximize")))
