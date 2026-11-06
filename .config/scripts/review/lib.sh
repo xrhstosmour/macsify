@@ -27,6 +27,14 @@ require_sha() {
   fi
 }
 
+# A branch name git accepts, checked as a full ref so `@{-1}` style shorthands are not expanded, and never starting with `-`, which git would read as an option.
+require_branch() {
+  if [[ $2 == -* ]] || ! git check-ref-format "refs/heads/$2"; then
+    echo "invalid $1: $2" >&2
+    exit 2
+  fi
+}
+
 # A script allowed by path reads this file for the caller, so a path the caller was talked into, such as a credential, must not be posted, the deny rules on `Read` never see it.
 # The roots are fixed, `TMPDIR` is the caller's and could point at the home folder. The file has one link, a hard link to a credential would pass the path check. The caller reads it once, right after, so a swap after the check posts nothing else.
 require_temporary_file() {
@@ -90,6 +98,28 @@ find_checkout() {
   fi
   gh repo clone "$repository" "$checkout" >&2
   echo "$checkout"
+}
+
+# Fails unless the `.git` of the worktree is a plain file pointing into the `worktrees` folder of the checkout's git directory.
+# A worktree the caller may edit could otherwise point git at a folder with a planted configuration, whose `core.fsmonitor` runs a command on the next `git status`, and whose remote takes the push.
+require_worktree_of() {
+  local worktree="$1" checkout="$2" pointer git_directory worktrees
+  if [ -L "$worktree/.git" ] || [ ! -f "$worktree/.git" ]; then
+    echo "$worktree is not a worktree of $checkout" >&2
+    exit 1
+  fi
+  pointer="$(cat "$worktree/.git")"
+  git_directory="${pointer#gitdir: }"
+  case "$git_directory" in
+    /*) ;;
+    *) git_directory="$worktree/$git_directory" ;;
+  esac
+  worktrees="$(cd "$checkout/.git/worktrees" 2>/dev/null && pwd -P)" || worktrees=""
+  if [ "$git_directory" = "$pointer" ] || [[ $pointer == *$'\n'* ]] || [ -z "$worktrees" ] || ! git_directory="$(cd "$git_directory" 2>/dev/null && pwd -P)" ||
+    [[ $git_directory != "$worktrees"/* ]] || [[ ${git_directory#"$worktrees"/} == */* ]]; then
+    echo "$worktree is not a worktree of $checkout" >&2
+    exit 1
+  fi
 }
 
 # Takes a lock named `<name>.lock` in the git directory of the checkout and frees it when the script exits, so two runs never fetch or move the same worktree at once.
