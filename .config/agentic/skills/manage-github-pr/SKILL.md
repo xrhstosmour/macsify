@@ -249,7 +249,7 @@ Body:
 ...
 ```
 
-State in the preview that after the PR is created it is prepared for review (rebase onto `<base>`, autosquash, push with lease, trigger CI), so the one approval covers create and prepare, see step 11. Get explicit approval before proceeding. If the user wants changes, iterate on Phase 4.
+State in the preview that after the PR is created it is prepared for review (fix failing checks, rebase onto `<base>`, autosquash, push with lease, trigger CI), so the one approval covers create and prepare, except a check fix or a conflict resolution, which the prepare skill asks about itself, see step 11. Get explicit approval before proceeding. If the user wants changes, iterate on Phase 4.
 
 ### 7. Push
 
