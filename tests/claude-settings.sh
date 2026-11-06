@@ -33,6 +33,10 @@ expect_rule ask 'Bash(git reset --hard *)' present
 # The force-with-lease allow only holds while these ask rules cover the other spellings of the default branch.
 expect_rule ask 'Bash(git push*+*main*)' present
 expect_rule ask 'Bash(git push*refs/heads/main*)' present
+# The resolves worktree is editable, its `.git` pointer must not be, `resolve-git.sh` checks it too.
+expect_rule deny 'Edit(~/Developer/worktrees/*/resolves/.git)' present
+# Nor a `.git` in a folder of it, which would turn that folder into a submodule with a configuration of the caller.
+expect_rule deny 'Edit(~/Developer/worktrees/*/resolves/**/.git)' present
 # Port scanning is not something to allow unprompted.
 expect_rule allow 'Bash(nc -z *)' absent
 

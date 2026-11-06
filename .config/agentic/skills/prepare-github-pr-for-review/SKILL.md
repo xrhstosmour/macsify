@@ -7,6 +7,8 @@ description: Use to prepare a GitHub pull request for human review or merge, fix
 
 Asking to prepare the PR authorizes every step below, except keeping a fix for a failing check, see step 2, or pushing a resolved rebase conflict, see step 4.
 
+A caller that already rebased, autosquashed and pushed from a detached worktree, such as `resolve-github-prs-comments-watcher`, runs only steps 5 to 7, with the overrides it gives.
+
 ## 1. Check the branch
 
 Take the PR from a URL, a branch name, or the current branch, never `main` or `master`. Then, each as its own plain command:

@@ -10,6 +10,9 @@
 
 set -e
 
+# shellcheck source=SCRIPTDIR/lib.sh
+. "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
 if [ $# -ne 3 ]; then
   echo "usage: review-worktree.sh <owner/repo> <number> <head sha>" >&2
   exit 2
@@ -19,69 +22,18 @@ repository="$1"
 number="$2"
 head_sha="$3"
 
-# Whole string matches, grep would check line by line and let a newline through.
-if ! [[ $repository =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9._-]{1,100}$ ]]; then
-  echo "invalid repository: $repository" >&2
-  exit 2
-fi
-case "$number" in
-  '' | *[!0-9]*)
-    echo "invalid pull request number: $number" >&2
-    exit 2
-    ;;
-esac
-if ! [[ $head_sha =~ ^[0-9a-f]{40}$ ]]; then
-  echo "invalid head sha: $head_sha" >&2
-  exit 2
-fi
+require_repository "$repository"
+require_number "pull request number" "$number"
+require_sha "head sha" "$head_sha"
 
 developer="${REVIEW_DEVELOPER_DIRECTORY:-$HOME/Developer}"
-owner="${repository%%/*}"
-name="${repository##*/}"
 
 git_without_hooks() {
   GIT_LFS_SKIP_SMUDGE=1 git -c core.hooksPath=/dev/null -c core.symlinks=false "$@"
 }
 
-# A checkout of this repository already on the machine, found by its `origin`, whatever its folder is called.
-checkout=""
-for candidate in "$developer"/*/; do
-  candidate="${candidate%/}"
-  [ -e "$candidate/.git" ] || continue
-  url="$(git -C "$candidate" config --get remote.origin.url)" || continue
-  case "${url%.git}" in
-    *"github.com:$repository" | *"github.com/$repository")
-      checkout="$candidate"
-      break
-      ;;
-  esac
-done
-
-# Never clone what is already here, and never into a folder that belongs to another repository with the same name.
-if [ -z "$checkout" ]; then
-  checkout="$developer/$name"
-  if [ -e "$checkout" ]; then
-    checkout="$developer/$owner-$name"
-  fi
-  gh repo clone "$repository" "$checkout" >&2
-fi
-
-# A lock older than ten minutes is left over from a run that died.
-lock="$(git -C "$checkout" rev-parse --path-format=absolute --git-common-dir)/review-worktree.lock"
-attempts=0
-until mkdir "$lock" 2>/dev/null; do
-  if [ -n "$(find "$lock" -maxdepth 0 -mmin +10)" ]; then
-    rmdir "$lock"
-    continue
-  fi
-  attempts=$((attempts + 1))
-  if [ "$attempts" -gt "${REVIEW_LOCK_ATTEMPTS:-120}" ]; then
-    echo "another review holds $lock" >&2
-    exit 1
-  fi
-  sleep 1
-done
-trap 'rmdir "$lock"' EXIT
+checkout="$(find_checkout "$developer" "$repository")"
+lock_checkout "$checkout" review-worktree
 
 git_without_hooks -C "$checkout" fetch --quiet origin "pull/$number/head" >&2
 if [ "$(git -C "$checkout" rev-parse FETCH_HEAD)" != "$head_sha" ]; then
