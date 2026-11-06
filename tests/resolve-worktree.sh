@@ -7,8 +7,9 @@
 # draft, one from a fork or another branch, one that moved, and `main`. The git
 # script commits a fixup only of a commit of the pull request and only of
 # changed files inside the worktree, pushes only with a matching lease,
-# autosquashes without moving a branch of the viewer, aborts a conflicting
-# rebase, and refuses any folder that is not a `resolves` worktree.
+# autosquashes without moving a branch of the viewer, leaves a conflicting rebase in progress and continues it only
+# with exactly the conflicted files and no marker left, aborts it on request,
+# and refuses any folder that is not a `resolves` worktree.
 
 TESTS_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 WORKTREE_SCRIPT="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/review/resolve-worktree.sh"
@@ -161,15 +162,70 @@ SQUASHED_SHA="$("$GIT_SCRIPT" autosquash "$WORKTREE" "$FIXUP_SHA" 2>/dev/null)" 
 [ "$(git -C "$UPSTREAM" show fix/thing:a.txt)" = three ] || fail "the autosquash lost the fix"
 [ "$(git -C "$REVIEW_DEVELOPER_DIRECTORY/service" rev-parse fix/thing)" = "$HEAD_SHA" ] || fail "the autosquash moved the viewer's own branch"
 
-# A rebase that conflicts is aborted and nothing is pushed.
+# A rebase that conflicts stays in progress, names the commit and the files, and pushes nothing.
 git -C "$SOURCE" checkout --quiet main
 printf 'conflict\n' >"$SOURCE/a.txt"
 git -C "$SOURCE" commit --quiet -am "conflict on main"
 git -C "$SOURCE" push --quiet "$UPSTREAM" main:refs/heads/main
-"$GIT_SCRIPT" autosquash "$WORKTREE" "$SQUASHED_SHA" >/dev/null 2>&1
+"$GIT_SCRIPT" autosquash "$WORKTREE" "$SQUASHED_SHA" >"$TEST_DIRECTORY/conflict" 2>/dev/null
 [ $? -eq 3 ] || fail "the git script did not exit 3 on a conflicting rebase"
-[ ! -d "$(git -C "$WORKTREE" rev-parse --path-format=absolute --git-path rebase-merge)" ] || fail "the git script left a rebase in progress"
+[ -d "$(git -C "$WORKTREE" rev-parse --path-format=absolute --git-path rebase-merge)" ] || fail "the git script did not leave the rebase in progress"
+[[ "$(head -1 "$TEST_DIRECTORY/conflict")" == *" change a" ]] || fail "the git script did not name the commit that conflicts"
+[ "$(tail -n +2 "$TEST_DIRECTORY/conflict")" = a.txt ] || fail "the git script did not name the conflicted file"
 [ "$(git -C "$UPSTREAM" rev-parse fix/thing)" = "$SQUASHED_SHA" ] || fail "the git script pushed after a conflict"
+
+# A continue needs every conflict resolved, no marker left, and nothing but the conflicted files.
+"$GIT_SCRIPT" continue "$WORKTREE" "$SQUASHED_SHA" a.txt >/dev/null 2>&1 && fail "the git script continued with conflict markers left"
+printf 'resolved\n' >"$WORKTREE/a.txt"
+printf 'extra\n' >"$WORKTREE/b.txt"
+"$GIT_SCRIPT" continue "$WORKTREE" "$SQUASHED_SHA" a.txt b.txt >/dev/null 2>&1 && fail "the git script continued with a file that did not conflict"
+rm "$WORKTREE/b.txt"
+"$GIT_SCRIPT" continue "$WORKTREE" "$SQUASHED_SHA" ../a.txt >/dev/null 2>&1 && fail "the git script continued with a file outside the worktree"
+"$GIT_SCRIPT" continue "$WORKTREE" "$CHANGE_SHA" a.txt >/dev/null 2>&1 && fail "the git script pushed a resolution with a stale lease"
+RESOLVED_SHA="$(git -C "$WORKTREE" rev-parse HEAD)"
+[ "$(git -C "$UPSTREAM" rev-parse fix/thing)" = "$SQUASHED_SHA" ] || fail "the git script pushed a resolution with a stale lease"
+"$GIT_SCRIPT" push "$WORKTREE" "$SQUASHED_SHA" >/dev/null 2>&1 || fail "the git script refused to push the resolved rebase"
+[ "$(git -C "$UPSTREAM" show fix/thing:a.txt)" = resolved ] || fail "the resolution did not reach the branch"
+[ "$(git -C "$UPSTREAM" rev-parse fix/thing)" = "$RESOLVED_SHA" ] || fail "the git script did not push the resolved head"
+[ ! -d "$(git -C "$WORKTREE" rev-parse --path-format=absolute --git-path rebase-merge)" ] || fail "the rebase is still in progress after the resolution"
+
+# A conflicted file with a non-ASCII name is named as it is, not quoted, so a continue with that name matches it.
+printf 'branch\n' >"$WORKTREE/β.txt"
+"$GIT_SCRIPT" fixup "$WORKTREE" "$(git -C "$WORKTREE" rev-parse HEAD~1)" β.txt >/dev/null 2>&1 || fail "the git script refused a fixup of a non-ASCII file"
+git -C "$SOURCE" checkout --quiet main
+printf 'main\n' >"$SOURCE/β.txt"
+git -C "$SOURCE" add β.txt
+git -C "$SOURCE" commit --quiet -m "add β on main"
+git -C "$SOURCE" push --quiet "$UPSTREAM" main:refs/heads/main
+"$GIT_SCRIPT" autosquash "$WORKTREE" "$RESOLVED_SHA" >"$TEST_DIRECTORY/conflict" 2>/dev/null
+[ $? -eq 3 ] || fail "the git script did not exit 3 on a conflicting non-ASCII file"
+[ "$(tail -n +2 "$TEST_DIRECTORY/conflict")" = β.txt ] || fail "the git script quoted the conflicted non-ASCII file"
+printf 'resolved\n' >"$WORKTREE/β.txt"
+RESOLVED_SHA="$("$GIT_SCRIPT" continue "$WORKTREE" "$RESOLVED_SHA" β.txt 2>/dev/null)" || fail "the git script refused to continue with the non-ASCII file"
+
+# A conflict in a later commit stops the continue again, and an abort gives the rebase up without a push.
+git -C "$SOURCE" checkout --quiet main
+printf 'again\n' >"$SOURCE/a.txt"
+printf 'main b\n' >"$SOURCE/b.txt"
+git -C "$SOURCE" add a.txt b.txt
+git -C "$SOURCE" commit --quiet -m "conflict on main again"
+git -C "$SOURCE" push --quiet "$UPSTREAM" main:refs/heads/main
+"$GIT_SCRIPT" autosquash "$WORKTREE" "$RESOLVED_SHA" >/dev/null 2>&1
+[ $? -eq 3 ] || fail "the git script did not exit 3 on the first conflict"
+for arguments in "fixup $CHANGE_SHA a.txt" "push $RESOLVED_SHA" "autosquash $RESOLVED_SHA"; do
+  # shellcheck disable=SC2086
+  "$GIT_SCRIPT" ${arguments%% *} "$WORKTREE" ${arguments#* } 2>&1 >/dev/null | grep -q 'a rebase is in progress' || fail "the git script ran ${arguments%% *} in the middle of a rebase"
+done
+[ "$(git -C "$UPSTREAM" rev-parse fix/thing)" = "$RESOLVED_SHA" ] || fail "the git script moved the branch in the middle of a rebase"
+printf 'resolved again\n' >"$WORKTREE/a.txt"
+"$GIT_SCRIPT" continue "$WORKTREE" "$RESOLVED_SHA" a.txt >"$TEST_DIRECTORY/conflict" 2>/dev/null
+[ $? -eq 3 ] || fail "the git script did not exit 3 on a conflict in a later commit"
+[ "$(tail -n +2 "$TEST_DIRECTORY/conflict")" = b.txt ] || fail "the git script did not name the file of the later conflict"
+"$GIT_SCRIPT" abort "$WORKTREE" >/dev/null 2>&1 || fail "the git script refused to abort"
+[ ! -d "$(git -C "$WORKTREE" rev-parse --path-format=absolute --git-path rebase-merge)" ] || fail "the abort left the rebase in progress"
+[ "$(git -C "$UPSTREAM" rev-parse fix/thing)" = "$RESOLVED_SHA" ] || fail "the git script pushed after an abort"
+"$GIT_SCRIPT" continue "$WORKTREE" "$RESOLVED_SHA" a.txt >/dev/null 2>&1 && fail "the git script continued with no rebase in progress"
+SQUASHED_SHA="$RESOLVED_SHA"
 
 # Only a resolves worktree under the developer directory.
 "$GIT_SCRIPT" push "$REVIEW_DEVELOPER_DIRECTORY/service" "$SQUASHED_SHA" >/dev/null 2>&1 && fail "the git script pushed from a checkout of the viewer"
