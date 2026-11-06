@@ -118,4 +118,4 @@ Nothing to answer: <repo>#<number>, <repo>#<number>.
 - Never touch a checkout or branch of yours, never merge, never push to `main` or `master`.
 - A command failure shows the error and skips the pull request without marking it, it comes back once its claim expires, never retry with another method or stop the watcher.
 - This skill relies on `resolve-github-pr-comments` Steps 1 to 8 and `prepare-github-pr-for-review` steps 4 to 7, recheck the overrides when either changes.
-- The scripts, `Read` and `Edit` in the `resolves` worktree are allowed in `claude/settings.json`, which `setup/agentic.sh` copies, with `Edit` of its `.git` denied. A read the investigation makes outside them, past sessions and notes included, waits for a prompt until a rule allows it.
+- The scripts, `Read` and `Edit` in the `resolves` worktree and the `qmd` reads, which serve only indexed notes, are allowed in `claude/settings.json`, which `setup/agentic.sh` copies, with `Edit` of its `.git` denied. Any other read waits for a prompt, `rg` included since `rg --pre` runs a command, so search through `resolve-search.sh`, which also keeps sessions to the checkout of the pull request.
