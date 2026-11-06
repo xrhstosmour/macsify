@@ -8,7 +8,8 @@
 	default = current
 	autoSetupRemote = true
 [core]
-	editor = code --wait
+	; `VS Code` only while it is already open, `hx` in the terminal otherwise, see the script.
+	editor = ~/.config/scripts/git/editor.sh
 	; Fall back when `delta` is missing, `brew bundle` is allowed to fail and this file
 	; is also copied to machines where it has not been installed yet. The branch is picked
 	; before anything runs, an `||` would also catch `delta` exiting non-zero and hand the
