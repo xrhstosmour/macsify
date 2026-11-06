@@ -40,12 +40,6 @@ if [ ! -f ~/.gitconfig ]; then
   } | cat - ~/.gitconfig > ~/.gitconfig.tmp && mv ~/.gitconfig.tmp ~/.gitconfig
 else
   log_warning "'Git' is already configured."
-  # The copy above never reaches a configured machine, so the former `VS Code` only
-  # editor moves to the script here, an editor the person chose is left alone.
-  if [ "$(git config --global core.editor)" = "code --wait" ]; then
-    log_info "Setting the 'Git' editor to '.config/scripts/git/editor.sh'..."
-    git config --global core.editor "$HOME/.config/scripts/git/editor.sh"
-  fi
 fi
 
 # Ensure `~/.ssh/config` contains the correct `1Password SSH IdentityAgent` directive.
