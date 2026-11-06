@@ -459,20 +459,5 @@ EOF
     fi
 fi
 
-# The protected worktree list lived with the former multiplexer plugin, the app's
-# `worktree-cleanup` mod reads it from its own folder now. Copied once, never over a
-# list already there, the former file stays for a multiplexer that still runs.
-FORMER_PROTECTED_FILE="$HOME/.config/herdr-worktree-cleanup/protected"
-PROTECTED_FILE="$HOME/.config/herdr-app/worktree-cleanup-protected"
-if [ -f "$FORMER_PROTECTED_FILE" ]; then
-    if [ ! -e "$PROTECTED_FILE" ]; then
-        log_info "Copying the protected worktree list to '$PROTECTED_FILE'..."
-        mkdir -p "$(dirname "$PROTECTED_FILE")"
-        cp "$FORMER_PROTECTED_FILE" "$PROTECTED_FILE" || log_warning "Could not copy '$FORMER_PROTECTED_FILE', copy it to '$PROTECTED_FILE' by hand."
-    elif ! cmp -s "$FORMER_PROTECTED_FILE" "$PROTECTED_FILE"; then
-        log_warning "'$FORMER_PROTECTED_FILE' differs from '$PROTECTED_FILE', merge any entry only in the former one, the mod reads the latter."
-    fi
-fi
-
 # The `Herdr` app is the `herdr-app` cask in the Brewfile, this script sets up its mods and layout.
 bash "$AGENTIC_SCRIPT_DIRECTORY/../settings/herdr.sh" || log_warning "'Herdr' app setup failed, run 'settings/herdr.sh' later."
