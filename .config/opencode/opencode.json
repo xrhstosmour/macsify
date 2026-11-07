@@ -17,6 +17,11 @@
       "url": "{env:PHABRICATOR_MCP_URL}",
       "enabled": true
     },
+    "browse": {
+      "type": "local",
+      "command": ["browse", "mcp"],
+      "enabled": true
+    },
     "sentry": {
       "type": "remote",
       "url": "https://mcp.sentry.dev/mcp?skills=inspect",
@@ -34,6 +39,7 @@
     }
   },
   "permission": {
+    "browse_*": "ask",
     "external_directory": {
       "~/.config/agentic/**": "allow",
       "~/.config/opencode/**": "allow",

@@ -112,3 +112,26 @@ function keep_best_file
         process_group $group
     end
 end
+
+# Function to send files with `Taildrop` to a device picked with `fzf`.
+# Usage:
+#   taildrop "file1" "file2"
+function taildrop
+    if not command -q tailscale
+        log_error "'tailscale' is not installed, it comes with the personal profile."
+        return 1
+    end
+    if test (count $argv) -eq 0
+        log_error "Usage: taildrop <file>..."
+        return 1
+    end
+
+    # `TaildropTarget` 1 is Tailscale's "available", it already leaves out
+    # offline peers and those that cannot receive files.
+    set device (tailscale status --json | jq -r '(.Peer // {})[] | select(.TaildropTarget == 1) | [.HostName, .TailscaleIPs[0]] | @tsv' | fzf --delimiter '\t' --with-nth 1 --prompt 'Send to: ' | cut -f2)
+    if test -z "$device"
+        return 1
+    end
+
+    tailscale file cp $argv "$device:"
+end

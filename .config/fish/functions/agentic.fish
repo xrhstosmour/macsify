@@ -283,3 +283,14 @@ function opencode_delete_conversations
 
     log_success "Deleted $count OpenCode session(s)."
 end
+
+# Function to run Claude Code unattended, skipping permissions and commit signing.
+# Signing goes through 1Password, whose approval prompt would stop the agent
+# mid-task, so its commits stay unsigned and `versioning.md` has it re-sign the
+# branch once, with the user's approval, before any push. The overrides reach
+# this process only, every other terminal keeps signing.
+# Usage:
+#   claude_unattended [claude arguments]
+function claude_unattended
+    AGENTIC_UNSIGNED_COMMITS=1 GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=commit.gpgsign GIT_CONFIG_VALUE_0=false claude --dangerously-skip-permissions $argv
+end

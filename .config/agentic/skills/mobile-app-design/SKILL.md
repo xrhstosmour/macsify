@@ -1,23 +1,26 @@
 ---
 name: mobile-app-design
 description: >
-  Platform-native UI craft for Flutter, SwiftUI/UIKit, and Jetpack Compose apps.
-  Use when designing, building, or reviewing mobile app UI where platform
-  convention (HIG/Material), native controls, navigation patterns, safe areas,
-  icon systems, or platform motion matter. Complements `web-app-design`
-  (web/product UI), do not use this for web dashboards or SaaS apps.
+  Platform-native UI craft and agent-testable architecture for SwiftUI/UIKit,
+  Jetpack Compose, Flutter, and React Native apps. Use when designing, building,
+  or reviewing mobile app UI where platform convention (HIG/Material), native
+  controls, navigation patterns, safe areas, icon systems, or platform motion
+  matter, or when structuring screens so their logic is tested and driven
+  without a simulator. Complements `web-app-design` (web/product UI), do not
+  use this for web dashboards or SaaS apps.
 ---
 
 # Mobile App Design
 
-Native mobile apps get judged against the platform they run on, not against websites. An iOS app that feels slightly off from Apple's own apps, or an Android app that ignores Material conventions, reads as amateur even if the code is clean. This skill is the platform-specific layer for Flutter, SwiftUI/UIKit, and Jetpack Compose work.
+Native mobile apps get judged against the platform they run on, not against websites. An iOS app that feels slightly off from Apple's own apps, or an Android app that ignores Material conventions, reads as amateur even if the code is clean. This skill is the platform-specific layer for native SwiftUI/UIKit and Jetpack Compose work, and for Flutter and React Native, plus an architecture that lets an agent verify a screen without a simulator.
 
 ## When to use
 
-- Designing, building, or reviewing UI for a Flutter, native iOS (SwiftUI/UIKit), or native Android (Jetpack Compose) app.
+- Designing, building, or reviewing UI for a native iOS (SwiftUI/UIKit), native Android (Jetpack Compose), Flutter, or React Native app.
 - User asks to design a screen, review a flow, or fix something that "feels off" in a mobile app.
+- Structuring a new app or screen so its logic is tested headlessly and an agent can drive it, see "8. Testable architecture an agent can drive".
 
-Not for web dashboards or SaaS admin panels, that's `web-app-design`. Not for Expo/React Native specifically, its own toolchain (expo-router, expo-image, Reanimated) is out of scope here.
+Not for web dashboards or SaaS admin panels, that's `web-app-design`.
 
 ## Shared foundation, don't re-derive it
 
@@ -62,9 +65,30 @@ SF Symbols on iOS/SwiftUI, Material Symbols on Android/Compose. In Flutter, pair
 
 iOS motion leans spring-heavy, most system transitions are physical springs, not eased curves. Material 3 has its own emphasis-curve system (`emphasized`, `standard`, `emphasized-decelerate`) with different duration bands than web UI conventions. Don't carry over `web-app-design`'s web cubic-bezier values (`cubic-bezier(0.23, 1, 0.32, 1)`, etc.) unexamined, use `SwiftUI`'s spring APIs, Compose's `Motion` scheme, or Flutter's platform-appropriate curve constants instead.
 
-## 7. Build discipline
+## 7. Per-stack specifics
 
-Test in a simulator/emulator or via hot-reload before reaching for custom native modules or platform channels. Drop to native code only when the framework genuinely can't do it, most "I need native code for this" moments are actually a missing platform widget or package, not a real gap. Avoid deprecated platform APIs, both iOS and Android issue clear replacement guidance when something is deprecated, and CI or app-store review can start flagging the old ones on a timeline.
+- **SwiftUI/UIKit:** SwiftUI first, UIKit through `UIViewRepresentable` only for what SwiftUI lacks. `@Observable` models over `ObservableObject`, `NavigationStack` with typed paths over the deprecated `NavigationView`. Every screen gets a `#Preview` per state, empty, loading, error, long content, large Dynamic Type, dark mode. `.accessibilityLabel` on icon-only buttons, `.sensoryFeedback` where the system gives haptics.
+- **Jetpack Compose:** Material 3 components and `MaterialTheme` tokens, never hard-coded colors or sizes. Hoist state out of composables, the screen takes state and emits events, the ViewModel exposes one `StateFlow`. Edge-to-edge with `WindowInsets`, predictive back with `PredictiveBackHandler`. `@Preview` per state and font scale, `contentDescription` on every icon that carries meaning, `null` on decorative ones.
+- **Flutter:** one `ThemeData` per platform, `Theme.of(context)` everywhere instead of literals. Adaptive constructors (`Switch.adaptive`, `CircularProgressIndicator.adaptive`) where a single widget should follow the platform. `Semantics` on custom widgets, `MediaQuery.textScalerOf` respected, golden tests for key screens.
+- **React Native:** the platform conventions above still apply, React Native renders native views, so a platform-looking control comes from the platform (`@react-native-community/datetimepicker`, native stack navigation through `react-navigation`'s native stack or `expo-router`) rather than a JS lookalike. `accessibilityLabel` and `accessibilityRole` on every touchable, `useWindowDimensions` and `react-native-safe-area-context` instead of fixed sizes, `Reanimated` for gesture-driven motion so it runs off the JS thread.
+- **All stacks:** localization and right-to-left layouts from the start, logical leading and trailing instead of left and right. Ask for a permission at the moment its feature is used, with a reason, never on first launch.
+
+## 8. Testable architecture an agent can drive
+
+Adapted from Shopify's Reflex (https://shopify.engineering/reflex), a pattern, not a library. An agent writes a screen in minutes, then verifying it through a simulator, a build and a tap script becomes the bottleneck. Make the logic verifiable without the UI:
+
+- **A UI-free core.** Business logic and every ViewModel live in a module that imports no UI framework and runs headlessly: a pure Swift package, a Kotlin JVM module, a pure Dart package, a plain TypeScript module. Platform capabilities (storage, network, clock, location) come in through constructors, no DI framework.
+- **Elm-style ViewModels.** Each screen has `State`, a public `Action`, an internal `Message`, and one `update` reducer. Views only read `state` and `send` actions, every `if` lives in the ViewModel, never the view.
+- **An introspection contract.** Each ViewModel exposes its name, its state as JSON, and the actions it accepts. A small CLI over the headless core lists screens, prints state and runs an action with a JSON payload, so an agent drives and checks a flow with no simulator. Plain output, no colors or spinners.
+- **Behavior tests against the contract.** Tests send actions and assert on the JSON state. Two native codebases share one behavior suite run against both, which keeps them in parity. Flutter and React Native get the same suite once, against their single core.
+- **No network in tests.** A guard fails any test that makes a real request, every external dependency has a fixture.
+- **Document the loop in the project.** A project skill or `AGENTS.md` section says how to run the CLI, add a fixture and run the suite, so the next agent uses it instead of the simulator.
+
+The simulator and device stay for what only they show: layout, motion, safe areas, gestures and platform integration.
+
+## 9. Build discipline
+
+Verify logic through the headless core first, then the UI in a simulator, emulator or hot-reload, before reaching for custom native modules or platform channels. Drop to native code only when the framework genuinely can't do it, most "I need native code for this" moments are actually a missing platform widget or package, not a real gap. Avoid deprecated platform APIs, both iOS and Android issue clear replacement guidance when something is deprecated, and CI or app-store review can start flagging the old ones on a timeline.
 
 ## Rules
 
@@ -72,3 +96,4 @@ Test in a simulator/emulator or via hot-reload before reaching for custom native
 - A custom-painted control duplicating one the platform already ships is wasted effort and usually loses accessibility behavior in the process.
 - Ignoring safe areas is not a minor polish item, it's a bug that only shows up on real hardware.
 - Reusing web easing curves and duration bands on mobile is a default, mobile platforms have their own motion language, use it.
+- Logic that can only be checked by tapping through a simulator is untestable by an agent, keep it in the headless core behind the state and action contract.

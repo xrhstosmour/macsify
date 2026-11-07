@@ -123,6 +123,18 @@ Separately, scan for the mandatory human-callout triggers, used later in "Synthe
 
 Collect which of these apply and to which files, you'll need this for the "Human Reviewer Callouts" section later. Not finding any is a normal, common outcome, don't force a match.
 
+Also rate the merge risk for the "Merge risk" section, adapted from Warp's `merge-risk` skill (`warpdotdev/common-skills`), each criterion rated 1 good, 2 middling, 3 bad:
+
+| Criterion (weight)      | Good, 1                                                    | Bad, 3                                                                                       |
+| ----------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Alignment (1)           | Matches the description and linked issue, drive-bys stated | Unstated behavior assumptions or drive-by edits                                               |
+| Impact (2)              | Contained, away from sensitive paths                       | Wide blast radius, or touches auth, permissions, payments, PII, secrets, migrations, dependencies, infrastructure |
+| Verification (2)        | Changed behavior and edge cases tested                     | UX change without screenshots or a recording, performance-sensitive change without profiling, untested edge cases |
+| Rollback cost (1.5)     | Two-way door, a revert undoes it                           | One-way door, destructive or data-changing                                                    |
+| Error detection (1)     | A failure would show in logs, metrics or alerts, or not applicable | Swallowed errors or fallbacks that hide breakage                                      |
+
+The weighted average gives `low` below 1.5, `medium` below 2.25, `high` from 2.25. Keep the numbers internal.
+
 ## Review rubric
 
 `agents/reviewer.md` is the single source for the severity calibration, the untrusted-input and security checks, and the finding format. Do not copy them into prompts, except the one-line finding format and the severity paragraph inlined in the `architect` prompt. Append this rubric to the `reviewer` sub-agent prompt, plus the project context from "Load project context once", labeled as project-specific and taking precedence over the rubric below where the two conflict. The `architect` gets only "Determining what to flag" and "Line references", the rest is outside its brief. The `reviewer` gets all sections.
@@ -276,6 +288,9 @@ One paragraph describing what the PR does and overall quality signal. In a re-re
 
 ### Verdict
 `correct`, no blocking issues, or `needs attention`, has blocking issues. Pre-existing findings never affect it.
+
+### Merge risk
+`low`, `medium` or `high` from the rating in "Classify the change", then one line per criterion, `Alignment: good`, `Impact: bad`, with the gaps behind any rating that is not good, and one next-step line. It informs the human reviewer and never changes the Verdict.
 
 ### Security
 Security findings with their own severity labels, never downranked or merged into the sections below.

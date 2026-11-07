@@ -50,6 +50,7 @@ abbr wrip "witr --port"
 abbr wpi "witr --pid"
 if test -x /usr/local/bin/tailscale
     abbr tss "tailscale status"
+    abbr td "taildrop"
 end
 
 # Terminal tools abbreviations.
@@ -75,7 +76,7 @@ abbr ccl "claude_session_list"
 abbr ocdc "opencode_delete_conversations"
 abbr ccdc "claude_delete_conversations"
 abbr cc "claude --permission-mode plan"
-abbr ccy "claude --dangerously-skip-permissions"
+abbr ccy "claude_unattended"
 abbr c "code"
 abbr hasr "herdr_tab_color 🔴"
 abbr hasy "herdr_tab_color 🟡"

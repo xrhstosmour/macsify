@@ -25,6 +25,11 @@ set -e
 # shellcheck source=SCRIPTDIR/lib.sh
 . "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
+# The watcher's commits are signed as your git configuration says, even when started from `ccy`, whose unsigned commits stay with its own session.
+if [ -n "${AGENTIC_UNSIGNED_COMMITS:-}" ]; then
+  unset AGENTIC_UNSIGNED_COMMITS GIT_CONFIG_COUNT
+fi
+
 usage() {
   echo "usage: green-git.sh fixup <worktree> <target sha> <file>... | reword <worktree> <target sha> <message file> | push <worktree> <lease sha> | autosquash <worktree> <lease sha> | continue <worktree> <lease sha> <file>... | abort <worktree>" >&2
   exit 2
