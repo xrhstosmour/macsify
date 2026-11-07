@@ -212,6 +212,16 @@ if brewfile_declares "anomalyco/tap/opencode"; then
             npm install -g opencode-status-hud@0.1.3 || log_warning "opencode-status-hud install failed, install manually later."
         fi
         opencode-status-hud install --mode local --plugin-dir "$HOME/.config/opencode/plugin" || log_warning "opencode-status-hud plugin registration failed, run manually later."
+
+        # The `browse` MCP server of `opencode.json`. It updates itself hourly by default,
+        # `notify` keeps it on the pinned version until a reviewed bump, which this check installs.
+        if ! npm ls -g @opencode/browse@0.0.14 --depth=0 &>/dev/null; then
+            log_info "Installing browse MCP server..."
+            npm install -g @opencode/browse@0.0.14 || log_warning "browse install failed, install manually later."
+        fi
+        if command -v browse &>/dev/null; then
+            browse settings set autoUpdate=notify || log_warning "browse auto update setting failed, run 'browse settings set autoUpdate=notify' manually later."
+        fi
     else
         log_warning "Skipping 'opencode-status-hud' plugin installation as 'npm' not found!"
     fi
