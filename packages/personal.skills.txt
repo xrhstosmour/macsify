@@ -5,4 +5,5 @@ audit-tailscale
 harden-accounts
 marketing
 promo-video
+purge-personal-data
 seo

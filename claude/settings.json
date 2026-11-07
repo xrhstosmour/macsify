@@ -370,6 +370,7 @@
     "marketing": "user-invocable-only",
     "mobile-app-design": "name-only",
     "promo-video": "user-invocable-only",
+    "purge-personal-data": "user-invocable-only",
     "run-skill-generator": "user-invocable-only",
     "seo": "user-invocable-only",
     "simplify": "user-invocable-only",
