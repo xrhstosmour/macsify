@@ -50,6 +50,7 @@ abbr wrip "witr --port"
 abbr wpi "witr --pid"
 if test -x /usr/local/bin/tailscale
     abbr tss "tailscale status"
+    abbr td "taildrop"
 end
 
 # Terminal tools abbreviations.

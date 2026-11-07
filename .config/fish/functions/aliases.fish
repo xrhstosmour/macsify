@@ -64,6 +64,7 @@ function aliases_cheat_sheet --description "Display all command abbreviations an
     echo "  - wpi <pid>        Show what's running with the specified process ID"
     if abbr -q tss
         echo "  - tss              Show Tailscale peers and their addresses"
+        echo "  - td <files>       Send files with Taildrop to a picked device"
     end
     echo ""
 
