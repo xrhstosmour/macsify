@@ -71,6 +71,21 @@ expect_rule deny 'Bash(*XDG_CACHE_HOME=*)' present
 # `rg --pre` runs any command, so `rg` stays prompted.
 expect_rule allow 'Bash(rg *)' absent
 
+# A skill hidden from the model in one tool must be hidden in all three, `Claude Code`, `OpenCode` and `Copilot CLI`, and `Codex`.
+for skill_file in "$TESTS_SCRIPT_DIRECTORY"/../.config/agentic/skills/*/SKILL.md; do
+  grep -q '^disable-model-invocation: true$' "$skill_file" || continue
+  skill_directory=$(dirname "$skill_file")
+  skill=$(basename "$skill_directory")
+  if ! jq -e --arg skill "$skill" '.skillOverrides[$skill] == "user-invocable-only"' "$SETTINGS_FILE" >/dev/null; then
+    echo "FAIL: '$skill' hides itself in its frontmatter but is not user-invocable-only in skillOverrides"
+    failures=$((failures + 1))
+  fi
+  if ! grep -q 'allow_implicit_invocation: false' "$skill_directory/agents/openai.yaml" 2>/dev/null; then
+    echo "FAIL: '$skill' hides itself in its frontmatter but its agents/openai.yaml allows implicit invocation"
+    failures=$((failures + 1))
+  fi
+done
+
 if [ "$failures" -gt 0 ]; then
   exit 1
 fi

@@ -1,7 +1,8 @@
 ---
 name: audit-tailscale
 description: >
-  Audit and lock down the user's own Tailscale network, replacing allow-all access with tags and per-port grants, rolled out one device at a time. Use for "/audit-tailscale", "audit my tailscale", "lock down my tailnet", "tailscale acl", "who can reach what on my tailnet".
+  Audit and lock down the user's own Tailscale network, replacing allow-all access with tags and per-port grants, rolled out one device at a time. Manual only, run with "/audit-tailscale".
+disable-model-invocation: true
 ---
 
 # Audit Tailscale

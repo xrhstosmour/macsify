@@ -354,6 +354,8 @@
     "anthropic-skills:pdf": "user-invocable-only",
     "anthropic-skills:pptx": "user-invocable-only",
     "anthropic-skills:xlsx": "user-invocable-only",
+    "audit-home-network": "user-invocable-only",
+    "audit-tailscale": "user-invocable-only",
     "batch": "user-invocable-only",
     "capture-knowledge": "user-invocable-only",
     "caveman": "user-invocable-only",

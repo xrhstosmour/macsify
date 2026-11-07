@@ -1,7 +1,8 @@
 ---
 name: audit-home-network
 description: >
-  Audit of the user's own home network, computer, IoT devices, and router, ranked into a fix list. Use for "/audit-home-network", "audit my home network", "scan my wifi", "harden my network", "is my router secure", or the periodic network recheck after a move or router change.
+  Audit of the user's own home network, computer, IoT devices, and router, ranked into a fix list. Manual only, run with "/audit-home-network", also as the periodic recheck after a move or router change.
+disable-model-invocation: true
 ---
 
 # Audit Home Network
