@@ -56,6 +56,8 @@ One command each, in parallel:
 - `scutil --dns` and `networksetup -getdnsservers <service>`, which resolver is used, and whether a VPN, `tailscale`, or encrypted DNS profile overrides the router's.
 - `networksetup -getairportnetwork <device>` and the saved Wi-Fi list from `networksetup -listpreferredwirelessnetworks <device>`, flag open networks and old networks from places the user no longer visits. Never print Wi-Fi keys.
 - `profiles list` needs root, so it is the user's to run, flag unknown configuration profiles. `tmutil destinationinfo`, backup exists and is encrypted.
+- Antivirus, when `setup/security.sh` installed it: `launchctl list` filtered to `com.local.antivirus`, the agents are loaded. Read the tail of `~/.local/share/antivirus/scan.log` for detections and `CHECK` entries from `startup-difference.sh`, a new startup item the user cannot name is a finding. `ls ~/.local/share/antivirus/quarantine` for quarantined files, report names and the note beside each, never open or restore one.
+- Syncthing, when installed: read only these elements of `~/Library/Application Support/Syncthing/config.xml` with `rg -o`, never the whole file, it holds the API key and the GUI password hash: the GUI `<address>`, `globalAnnounceEnabled`, `relaysEnabled`, `natEnabled`, and the counts of `<device ` and `<folder ` entries. The GUI address is loopback only, discovery, relays and NAT traversal match what the user wants, and the user confirms the device and folder counts, device names stay out of the chat.
 - Ask before reading anything under `~/.ssh`, `~/.aws`, `~/.kube`.
 
 ## 3. External exposure
@@ -118,11 +120,11 @@ Short questions, one answer each, the agent opens no account:
 
 - Router admin password is unique, not the label on the device, and not reused anywhere.
 - Wi-Fi key is a long passphrase, changed since it was shared with guests or contractors.
-- Password manager in use, two-factor on the email, Apple ID, and ISP account.
-- ISP account email and phone are the user's own, recovery contacts are current.
-- Backups: Time Machine or another encrypted backup, restore tested in the last year.
+- ISP account: its own strong password and second factor, email and phone are the user's own.
 - VPN or `tailscale` needed for remote access, never a router port forward.
 - Router configuration backed up after a change.
+
+Password manager, second factors, backups and the other account checks belong to `harden-accounts`, run it or `secure-me` for those instead of asking here.
 
 ## 8. Report
 
