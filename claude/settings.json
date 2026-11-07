@@ -372,6 +372,7 @@
     "promo-video": "user-invocable-only",
     "purge-personal-data": "user-invocable-only",
     "run-skill-generator": "user-invocable-only",
+    "secure-me": "user-invocable-only",
     "seo": "user-invocable-only",
     "simplify": "user-invocable-only",
     "technical-analysis": "user-invocable-only",

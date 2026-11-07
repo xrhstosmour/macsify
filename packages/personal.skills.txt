@@ -6,4 +6,5 @@ harden-accounts
 marketing
 promo-video
 purge-personal-data
+secure-me
 seo
