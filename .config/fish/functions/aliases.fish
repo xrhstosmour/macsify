@@ -81,7 +81,7 @@ function aliases_cheat_sheet --description "Display all command abbreviations an
     echo "  - oc               Open OpenCode CLI"
     echo "  - ocl              List OpenCode sessions"
     echo "  - cc               Run Claude Code in plan mode"
-    echo "  - ccy              Run Claude Code, skipping permissions"
+    echo "  - ccy              Run Claude Code unattended, no permissions, unsigned commits"
     echo "  - c                Open VS Code"
     echo "  - cl               Clear screen"
     echo "  - eva <expr>       Calculate expression"

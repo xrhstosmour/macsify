@@ -7,7 +7,8 @@
 # draft, one from a fork or another branch, one that moved, and `main`. The git
 # script commits a fixup only of a commit of the pull request and only of
 # changed files inside the worktree, rewords only through an `amend!` of one
-# line, pushes only with a matching lease, autosquashes without moving a branch
+# line, pushes only with a matching lease, signs as the git configuration
+# says even from `ccy`, autosquashes without moving a branch
 # of the viewer, leaves a conflicting rebase in progress and continues it only
 # with exactly the conflicted files and no marker left, aborts it on request,
 # and refuses any folder that is not a `resolves` worktree.
@@ -128,7 +129,17 @@ printf 'three\n' >"$WORKTREE/a.txt"
 "$GIT_SCRIPT" fixup "$WORKTREE" "$CHANGE_SHA" ../a.txt >/dev/null 2>&1 && fail "the git script accepted a file outside the worktree"
 "$GIT_SCRIPT" fixup "$WORKTREE" "$CHANGE_SHA" '*' >/dev/null 2>&1 && fail "the git script read a file name as a pattern"
 "$GIT_SCRIPT" fixup "$WORKTREE" "$CHANGE_SHA" -- >/dev/null 2>&1 && fail "the git script accepted an option as a file"
-FIXUP_SHA="$("$GIT_SCRIPT" fixup "$WORKTREE" "$CHANGE_SHA" a.txt 2>/dev/null)" || fail "the git script refused a fixup of a commit of the pull request"
+# Started from `ccy`, the fixup is still signed when the git configuration signs, by a stub signer that only prints a signature.
+cat >"$TEST_DIRECTORY/bin/signer" <<'EOF'
+#!/bin/sh
+cat >/dev/null
+printf '\n[GNUPG:] SIG_CREATED D 1 8 00 0 stub\n' >&2
+printf '%s\n' '-----BEGIN PGP SIGNATURE-----' 'stub' '-----END PGP SIGNATURE-----'
+EOF
+chmod +x "$TEST_DIRECTORY/bin/signer"
+printf '[include]\n  path = %s\n[commit]\n  gpgsign = true\n[gpg]\n  format = openpgp\n  program = %s\n' "$GIT_CONFIG_GLOBAL" "$TEST_DIRECTORY/bin/signer" >"$TEST_DIRECTORY/signing-gitconfig"
+FIXUP_SHA="$(GIT_CONFIG_GLOBAL="$TEST_DIRECTORY/signing-gitconfig" AGENTIC_UNSIGNED_COMMITS=1 GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=commit.gpgsign GIT_CONFIG_VALUE_0=false "$GIT_SCRIPT" fixup "$WORKTREE" "$CHANGE_SHA" a.txt 2>/dev/null)" || fail "the git script refused a fixup of a commit of the pull request"
+git -C "$WORKTREE" cat-file commit "$FIXUP_SHA" | sed '/^$/q' | grep -q '^gpgsig' || fail "the git script left a fixup unsigned under ccy"
 [ "$(git -C "$WORKTREE" log -1 --format=%s)" = "fixup! change a" ] || fail "the git script did not commit a fixup of the target"
 [ "$FIXUP_SHA" = "$(git -C "$WORKTREE" rev-parse HEAD)" ] || fail "the git script did not print the new head"
 printf 'four\n' >"$WORKTREE/a.txt"

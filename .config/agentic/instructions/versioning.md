@@ -43,6 +43,7 @@ Remove redundant `alembic` and `initial_data` from `prestart.sh`
 - Never commit `.env`, secrets, or credentials, warn immediately if staged.
 - Never commit, push, or open a PR unless explicitly asked.
 - Confirm before `git reset --hard`, `git clean -f`, and `git branch -D`.
+- With `AGENTIC_UNSIGNED_COMMITS` set, by the `ccy` abbreviation, commits are unsigned so 1Password never stops the work. Only when `git config --global --get commit.gpgsign` is `true`, never push them unsigned: at the end goal, before the first push, ask the user once, then re-sign the branch with `git rebase --force-rebase --gpg-sign <base>`, check with `git log --format='%h %G?' <base>..HEAD` that every commit shows `G`, and push.
 
 ### Fixups
 
