@@ -3,9 +3,6 @@
 base_brewfile = File.join(__dir__, "base.Brewfile")
 instance_eval(File.read(base_brewfile), base_brewfile, 1)
 
-# Install necessary third party taps.
-tap 'wickenico/wailbrew'
-
 # Install dependencies for various utilities and applications.
 brew 'clamav'
 brew 'cocoapods'
@@ -28,5 +25,4 @@ cask 'tailscale-app'
 cask 'utm'
 cask 'veracrypt'
 cask 'viber'
-cask 'wailbrew'
 cask 'whatsapp'
