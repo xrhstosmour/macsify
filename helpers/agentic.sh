@@ -132,3 +132,19 @@ restore_claude_settings() {
     log_warning "Could not restore ${preserved} in ${file}, add it back by hand."
   fi
 }
+
+# Turns on a plugin in the settings file just copied over the installed one,
+# for a plugin the committed file cannot list on every machine. The other
+# `enabledPlugins` entries stay, a file that is not `JSON` is left alone.
+# Usage:
+#   enable_claude_plugin <installed settings file> <plugin@marketplace>
+enable_claude_plugin() {
+  local file="$1" plugin="$2" merged
+  merged=$(mktemp)
+  if jq --arg plugin "$plugin" '.enabledPlugins[$plugin] = true' "$file" >"$merged" 2>/dev/null; then
+    mv "$merged" "$file"
+  else
+    rm -f "$merged"
+    log_warning "Could not enable ${plugin} in ${file}, run /plugin install ${plugin} by hand."
+  fi
+}
