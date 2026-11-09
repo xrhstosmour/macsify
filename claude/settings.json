@@ -330,6 +330,7 @@
     { "serverName": "claude.ai Claude Docs" },
     { "serverName": "claude.ai Context7" },
     { "serverName": "claude.ai Datadog" },
+    { "serverName": "claude.ai Datadog (2)" },
     { "serverName": "claude.ai Dovetail" },
     { "serverName": "claude.ai Figma" },
     { "serverName": "claude.ai Gmail" },
