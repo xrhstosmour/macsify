@@ -186,7 +186,7 @@ Fetch with `pha_task_get` by numeric ID to confirm the task and show a before an
 - Due date: a real field is set directly. Without one, fetch the description with `pha_task_get`, add or replace the `**Due:**` line at the bottom, and write the whole description back.
 - Reference: a real `reference` parameter is set directly, extra links go in `## References`. Without one, make sure the PR/branch value is in `## References`. That section always sits below the `**Due:**` line.
 - Board column: see "Workboard columns". Stakeholder status update: see "Status update comment", not a plain comment.
-- To comment or add subscribers, use `pha_task_add_comment` and mention each person as `@<phid>`.
+- To comment or add subscribers, use `pha_task_add_comment` and mention each person as `@<phid>`. A comment follows Posted messages in `~/.config/agentic/instructions/communication.md`, with the Remarkup blank lines from "Description generation", a `Status update comment` keeps its own one-sentence format.
 
 ## Priority keywords
 

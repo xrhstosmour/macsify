@@ -22,4 +22,4 @@ gh issue edit <number> --add-label <name> --remove-label <name>
 gh issue edit <number> --add-assignee <login> --remove-assignee <login>
 ```
 
-The title follows the title rule in `~/.config/agentic/instructions/versioning.md`, at most 45 characters, one change.
+The title follows the title rule in `~/.config/agentic/instructions/versioning.md`. A comment follows Posted messages in `~/.config/agentic/instructions/communication.md`.
