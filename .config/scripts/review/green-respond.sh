@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The GitHub writes of the `green-github-prs-watcher` skill on a pull request of yours: a reaction, a thread reply, a pull request comment, resolving a thread, correcting the description and re-requesting reviews, plus the one read that needs GraphQL, the review threads.
+# The GitHub writes of the `green-github-prs-watcher` skill on a pull request of yours: a reaction, a thread reply, a pull request comment, resolving a thread, correcting the description and re-requesting reviews and starting a test workflow by `workflow_dispatch`, plus the one read that needs GraphQL, the review threads.
 # Allowed in claude/settings.json by its path, so the script validates every input itself and calls one fixed endpoint per action, never a caller supplied one.
 # Only an open pull request you opened that is not a draft, and only a comment or a thread of that pull request, so a comment id read from somewhere else never lands on another one.
 #
@@ -10,6 +10,7 @@
 #        green-respond.sh body <owner/repo> <number> <body file>
 #        green-respond.sh threads <owner/repo> <number>
 #        green-respond.sh rerequest <owner/repo> <number>
+#        green-respond.sh dispatch <owner/repo> <number> <head sha> <workflow file>
 #   react    `review` for a comment in a review thread, `issue` for a comment on the pull request
 #   reply    answers in the thread of the comment, the replies endpoint takes the first comment of the thread, so that is where it is sent
 #   comment  a comment on the pull request, the answer to a comment outside a thread or to a review body
@@ -17,6 +18,7 @@
 #   body     replaces the description of the pull request, GitHub keeps the one before in the edit history of the description
 #   threads  prints the first 100 review threads, 50 comments each, as JSON, only the comments of owners, members, collaborators, bots and you, the read `resolve-github-pr-comments` makes with `gh api graphql -f`, which waits for a prompt
 #   rerequest  requests a review again from every reviewer whose latest approve or change request is not an approval, only owners, members and collaborators, bots and you left out, as `prepare-github-pr-for-review` step 6 picks them, the caller never names one
+#   dispatch   starts the workflow file of `.github/workflows` on the pull request branch, only at the head the caller saw, only when it has `workflow_dispatch`, and neither it, a workflow or local action it calls, nor a workflow chained by `workflow_run` or `create` at the head or on the default branch names a deploy, release, publish, promotion, production, migration or environment, and never for a pull request that changes `.github`, whose workflows would run with the repository's secrets. A tree that mentions a deploy exits 5, see `require_test_only_tree` in `lib.sh` for what can be trusted
 #   body file: a regular file the caller wrote in a temporary directory, nothing else is read for it
 # Prints the URL of what was posted, the thread id once resolved, the threads, or the reviewers requested, nothing when there is none.
 
@@ -26,7 +28,7 @@ set -e
 . "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 usage() {
-  echo "usage: green-respond.sh react <owner/repo> <number> review|issue <comment id> +1|eyes | reply <owner/repo> <number> <comment id> <body file> | comment <owner/repo> <number> <body file> | resolve <owner/repo> <number> <thread id> | body <owner/repo> <number> <body file> | threads <owner/repo> <number> | rerequest <owner/repo> <number>" >&2
+  echo "usage: green-respond.sh react <owner/repo> <number> review|issue <comment id> +1|eyes | reply <owner/repo> <number> <comment id> <body file> | comment <owner/repo> <number> <body file> | resolve <owner/repo> <number> <thread id> | body <owner/repo> <number> <body file> | threads <owner/repo> <number> | rerequest <owner/repo> <number> | dispatch <owner/repo> <number> <head sha> <workflow file>" >&2
   exit 2
 }
 
@@ -35,6 +37,7 @@ case "$action" in
   react) [ $# -eq 6 ] || usage ;;
   reply) [ $# -eq 5 ] || usage ;;
   comment | resolve | body) [ $# -eq 4 ] || usage ;;
+  dispatch) [ $# -eq 5 ] || usage ;;
   threads | rerequest) [ $# -eq 3 ] || usage ;;
   *) usage ;;
 esac
@@ -66,6 +69,12 @@ case "$action" in
       echo "invalid thread id: $thread_id" >&2
       exit 2
     fi
+    ;;
+  dispatch)
+    head_sha="$4"
+    workflow="$5"
+    require_sha "head" "$head_sha"
+    require_workflow_file "$workflow"
     ;;
 esac
 
@@ -144,5 +153,52 @@ case "$action" in
     if [ "$reviewers" != "[]" ]; then
       jq -n --argjson reviewers "$reviewers" '{reviewers: $reviewers}' | gh api "repos/$repository/pulls/$number/requested_reviewers" --method POST --input - --jq '.requested_reviewers[].login'
     fi
+    ;;
+  dispatch)
+    # A trust line names the repository the reads below go to, and only the workflow started here.
+    trust_repository="$repository"
+    trust_workflow=".github/workflows/$workflow"
+    trust_ref="$head_sha"
+    # The run starts at the branch, so the branch must still be at the head the caller checked, in this repository and not a fork.
+    pull_request="$(gh api "repos/$repository/pulls/$number" --jq '"\(.head.sha) \(.head.repo.full_name) \(.changed_files) \(.head.ref)"')"
+    read -r current_head head_repository changed_files ref <<<"$pull_request"
+    if [ "$current_head" != "$head_sha" ] || [ "$head_repository" != "$repository" ]; then
+      echo "pull request $number is not at $head_sha in $repository" >&2
+      exit 1
+    fi
+    require_branch "branch" "$ref"
+    # The files endpoint lists at most 3000, a longer list could hide a workflow change.
+    require_number "changed files" "$changed_files"
+    if [ "$changed_files" -gt 3000 ]; then
+      echo "pull request $number changes more files than can be checked, trigger its tests by hand" >&2
+      exit 1
+    fi
+    workflow_changes="$(gh api --paginate "repos/$repository/pulls/$number/files?per_page=100" --jq '.[].filename | select(startswith(".github/"))')"
+    if [ -n "$workflow_changes" ]; then
+      echo "the pull request changes .github, trigger its tests by hand" >&2
+      exit 1
+    fi
+    content="$(gh api "repos/$repository/contents/.github/workflows/$workflow?ref=$head_sha" -H 'Accept: application/vnd.github.raw+json')"
+    if ! trigger_block "$content" | grep -qE '(^|[^a-z_])workflow_dispatch([^a-z_]|$)'; then
+      echo "$workflow has no workflow_dispatch trigger" >&2
+      exit 1
+    fi
+    read_repository_file() { gh api "repos/$repository/contents/$2?ref=$1" -H 'Accept: application/vnd.github.raw+json'; }
+    list_workflows() { gh api "repos/$repository/contents/.github/workflows?ref=$1" --jq '.[] | select(.type == "file") | .name'; }
+    require_test_only_tree "$head_sha" ".github/workflows/$workflow" "$content"
+    # A workflow chained after the run, or after any other, would run next to the tests. A `workflow_run` runs the file of the default branch, so that branch is read too, by its commit so no name lands in a URL.
+    require_no_deploy_started "$head_sha" ""
+    default_branch="$(gh api "repos/$repository" --jq .default_branch)"
+    require_branch "default branch" "$default_branch"
+    default_sha="$(gh api "repos/$repository/commits/$(jq -rn --arg branch "$default_branch" '$branch | @uri')" --jq .sha)"
+    require_sha "default branch commit" "$default_sha"
+    require_no_deploy_started "$default_sha" ""
+    # The reads above took a while, a push in the meantime would run workflows nobody checked.
+    if [ "$(gh api "repos/$repository/pulls/$number" --jq .head.sha)" != "$head_sha" ]; then
+      echo "pull request $number moved from $head_sha, trigger its tests by hand" >&2
+      exit 1
+    fi
+    jq -n --arg ref "$ref" '{ref: $ref}' | gh api "repos/$repository/actions/workflows/$workflow/dispatches" --method POST --input - >/dev/null
+    echo "$workflow"
     ;;
 esac

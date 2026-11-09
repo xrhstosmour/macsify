@@ -10,12 +10,15 @@
 #        green-git.sh autosquash <worktree> <lease sha>
 #        green-git.sh continue <worktree> <lease sha> <file>...
 #        green-git.sh abort <worktree>
+#        green-git.sh tests <worktree> <head sha> <workflow file> <branch pattern>
 #   fixup       stages the files, which must be changed and inside the worktree, and commits them as `fixup!` of the target, a commit of the pull request that is not a fixup itself, nothing else may be staged
 #   reword      commits an empty `amend!` of the target whose message is the one line of the message file, so the autosquash replaces the target's message
 #   push        pushes the worktree head to the pull request branch
 #   autosquash  rebases onto the base with `--autosquash`, refuses a `fixup!`, `squash!` or `amend!` subject left over, then pushes like `push`
 #   continue    after a conflict, stages the resolved files, exactly the conflicted ones and with no conflict marker left, continues the rebase, then checks and pushes like `autosquash`
 #   abort       gives the rebase up, for a conflict whose intent stays unclear
+#   tests       triggers a test workflow of `.github/workflows` that runs on a `push` to a branch pattern like `tests/**`, by pushing the head, which must be the head of the pull request on origin, to `<prefix>/<branch>`, so its checks land on the pull request's commit. The pattern is one of the workflow's `push` `branches:`, a prefix and `/**` or `/*`, and every workflow that push starts or chains, at the head and on the default branch, is checked with the workflows and local actions it calls, not only the one named. An existing tests branch is replaced only when the watcher pushed it, recorded under `refs/green-trigger`, or when the head contains it. A tree that mentions a deploy exits 5, see `require_test_only_tree` in `lib.sh` for what can be trusted
+# A workflow on `push` runs the workflow files of the pushed commit with the repository's secrets, so `tests` refuses a pull request that changes `.github`, a fixup from a comment could have put a workflow there.
 # On a conflict `autosquash` and `continue` leave the rebase in progress, print the stopped commit as `<sha> <subject>` and then one conflicted file per line, and exit 3.
 # Every other command prints the worktree head when it is done.
 # The developer directory is `~/Developer`, `REVIEW_DEVELOPER_DIRECTORY` replaces it for the tests.
@@ -31,7 +34,7 @@ if [ -n "${AGENTIC_UNSIGNED_COMMITS:-}" ]; then
 fi
 
 usage() {
-  echo "usage: green-git.sh fixup <worktree> <target sha> <file>... | reword <worktree> <target sha> <message file> | push <worktree> <lease sha> | autosquash <worktree> <lease sha> | continue <worktree> <lease sha> <file>... | abort <worktree>" >&2
+  echo "usage: green-git.sh fixup <worktree> <target sha> <file>... | reword <worktree> <target sha> <message file> | push <worktree> <lease sha> | autosquash <worktree> <lease sha> | continue <worktree> <lease sha> <file>... | abort <worktree> | tests <worktree> <head sha> <workflow file> <branch pattern>" >&2
   exit 2
 }
 
@@ -44,6 +47,7 @@ case "$command" in
   fixup | continue) [ $# -ge 2 ] || usage ;;
   reword) [ $# -eq 2 ] || usage ;;
   push | autosquash) [ $# -eq 1 ] || usage ;;
+  tests) [ $# -eq 3 ] || usage ;;
   abort) [ $# -eq 0 ] || usage ;;
   *) usage ;;
 esac
@@ -166,7 +170,7 @@ finish_rebase() {
 
 # A stopped rebase is left for `continue` or `abort`, a commit or push in the middle of it would land on the partly rebased history and drop the commits after it.
 case "$command" in
-  fixup | reword | push | autosquash)
+  fixup | reword | push | autosquash | tests)
     if rebase_in_progress; then
       echo "a rebase is in progress in $worktree, continue or abort it" >&2
       exit 1
@@ -248,6 +252,89 @@ case "$command" in
     if rebase_in_progress; then
       git_without_hooks rebase --abort >&2
     fi
+    ;;
+  tests)
+    workflow="$1"
+    pattern="$2"
+    require_workflow_file "$workflow"
+    # A trigger namespace, never a fixed branch, and never one named after a deploy target.
+    if ! [[ $pattern =~ ^([A-Za-z0-9_][A-Za-z0-9._-]{0,50})/\*\*?$ ]]; then
+      echo "the branch pattern must be a prefix and /** or /*: $pattern" >&2
+      exit 2
+    fi
+    prefix="${BASH_REMATCH[1]}"
+    case "$(printf '%s' "$prefix" | tr '[:upper:]' '[:lower:]')" in
+      main | master | release* | deploy* | prod* | stag* | stg | uat | live | preview* | hotfix* | publish*)
+        echo "refusing a branch pattern named after a deploy target: $pattern" >&2
+        exit 1
+        ;;
+    esac
+    git_without_hooks fetch --quiet origin "+refs/heads/$base:refs/remotes/origin/$base" "+refs/heads/$branch:refs/remotes/origin/$branch" >&2
+    # Checks are shown on the pull request by commit, tests of any other commit would run where nobody sees them.
+    if [ "$(git -C "$worktree" rev-parse HEAD)" != "$sha" ] || [ "$(git -C "$worktree" rev-parse "refs/remotes/origin/$branch")" != "$sha" ]; then
+      echo "$sha is not the head of the worktree and of $branch on origin" >&2
+      exit 1
+    fi
+    if ! git_without_hooks diff --quiet "refs/remotes/origin/$base...HEAD" -- .github; then
+      echo "the pull request changes .github, trigger its tests by hand" >&2
+      exit 1
+    fi
+    if ! content="$(git_without_hooks show "HEAD:.github/workflows/$workflow" 2>/dev/null)" || ! push_branch_patterns "$content" | grep -qxF -- "$pattern"; then
+      echo "$workflow does not run on a push to $pattern" >&2
+      exit 1
+    fi
+    # `*` stops at a slash on GitHub, `**` does not.
+    if [[ $pattern == */\*\* ]]; then
+      target="$prefix/$branch"
+    else
+      target="$prefix/${branch//\//-}"
+    fi
+    require_branch "tests branch" "$target"
+    # The repository of a trust line is the one the fetches above went to, never an argument.
+    origin_url="$(git -C "$worktree" config --get remote.origin.url)"
+    trust_repository="${origin_url%.git}"
+    trust_repository="${trust_repository#*github.com[:/]}"
+    if [ "$trust_repository" = "${origin_url%.git}" ] || ! [[ $trust_repository =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9._-]{1,100}$ ]]; then
+      trust_repository=""
+    fi
+    trust_workflow=".github/workflows/$workflow"
+    trust_ref=HEAD
+    read_repository_file() { git_without_hooks show "$1:$2"; }
+    list_workflows() {
+      local listing
+      listing="$(git_without_hooks ls-tree --name-only "$1" -- .github/workflows/)" || return 1
+      [ -z "$listing" ] || printf '%s\n' "${listing//.github\/workflows\//}"
+    }
+    # Every workflow the push starts or chains, a deploy that runs on any branch, on a new branch or after the tests would run next to them. A `workflow_run` runs the file of the default branch, so that branch is read too.
+    require_no_deploy_started HEAD "$target"
+    default_branch=""
+    while read -r first second _; do
+      if [ "$first" = ref: ] && [[ $second == refs/heads/* ]]; then
+        default_branch="${second#refs/heads/}"
+      fi
+    done <<<"$(git_without_hooks ls-remote --symref origin HEAD)"
+    if [ -z "$default_branch" ]; then
+      echo "the default branch of origin is unknown, trigger the tests by hand" >&2
+      exit 1
+    fi
+    require_branch "default branch" "$default_branch"
+    git_without_hooks fetch --quiet origin "+refs/heads/$default_branch:refs/remotes/origin/$default_branch" >&2
+    require_no_deploy_started "refs/remotes/origin/$default_branch" ""
+    # The tests branch may be a person's own, so it is replaced only when it is missing, still what this command pushed last, or behind the pull request, and the push is a lease on what was read.
+    remote_target=""
+    while read -r object reference; do
+      if [ "$reference" = "refs/heads/$target" ]; then
+        remote_target="$object"
+      fi
+    done <<<"$(git_without_hooks ls-remote origin "refs/heads/$target")"
+    recorded="$(git_without_hooks rev-parse -q --verify "refs/green-trigger/$target" || true)"
+    if [ -n "$remote_target" ] && [ "$remote_target" != "$recorded" ] &&
+      ! { git_without_hooks cat-file -e "$remote_target^{commit}" 2>/dev/null && git_without_hooks merge-base --is-ancestor "$remote_target" HEAD; }; then
+      echo "$target exists on origin and was not pushed by the watcher, trigger the tests by hand" >&2
+      exit 1
+    fi
+    git_without_hooks push --quiet "--force-with-lease=refs/heads/$target:$remote_target" origin "HEAD:refs/heads/$target" >&2
+    git_without_hooks update-ref "refs/green-trigger/$target" "$sha"
     ;;
 esac
 

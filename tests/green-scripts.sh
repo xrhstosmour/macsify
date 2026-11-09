@@ -14,11 +14,14 @@
 # reads the threads of that pull request without an outsider's comment,
 # corrects its description through the pull request endpoint,
 # re-requests reviews only of reviewers not approving, never of a bot or the
-# viewer, and rejects a bad action, reaction, id or body.
+# viewer, dispatches a test workflow only at the head the caller saw, never
+# for a fork, a change to `.github` or a workflow that could deploy, and rejects
+# a bad action, reaction, id or body.
 
 TESTS_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 WATCHER="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/review/watch-green-prs.sh"
 RESPONDER="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/review/green-respond.sh"
+TRUST_SCRIPT="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/review/green-trust.sh"
 
 TEST_DIRECTORY=$(mktemp -d)
 trap 'rm -rf "$TEST_DIRECTORY"' EXIT
@@ -32,6 +35,9 @@ fail() {
 HEAD_SHA=0123456789012345678901234567890123456789
 mkdir -p "$TEST_DIRECTORY/bin"
 export XDG_CACHE_HOME="$TEST_DIRECTORY/cache"
+# The trust file lives under `HOME`, your own must never approve a test tree.
+export HOME="$TEST_DIRECTORY/home"
+TRUST_FILE="$HOME/.config/green-github-prs-watcher/trusted-workflows"
 export STUB_POSTED="$TEST_DIRECTORY/posted"
 STATE="$XDG_CACHE_HOME/green-github-prs-watcher"
 
@@ -41,8 +47,18 @@ STATE="$XDG_CACHE_HOME/green-github-prs-watcher"
 # of the script would, review comment 2 replies to 1 on pull request 5, review
 # comment 9 and issue comment 8 are on pull request 6, issue comment 3 on 5, and
 # thread `PRRT_five` is on 5. A write keeps its endpoint and standard input.
+# The contents endpoint serves `STUB_TREE/<ref>/<path>`, a folder as the JSON
+# listing GitHub sends, the default branch `main` is at commit 2222.
 cat >"$TEST_DIRECTORY/bin/gh" <<'STUB'
 #!/bin/bash
+filter=""
+arguments=("$@")
+for index in "${!arguments[@]}"; do
+  [ "${arguments[index]}" = --jq ] && filter="${arguments[index + 1]}"
+done
+apply() {
+  if [ -n "$filter" ]; then jq -r "$filter"; else cat; fi
+}
 case "$*" in
   *"--method POST"*) { echo "$2"; cat; } >"$STUB_POSTED"; echo "https://github.com/owner/repo/pull/5#posted" ;;
   *"--method PATCH"*) { echo "$2"; cat; } >"$STUB_POSTED"; echo "https://github.com/owner/repo/pull/5" ;;
@@ -52,6 +68,26 @@ case "$*" in
   "api --paginate repos/owner/repo/pulls/5/reviews "*) [ -z "$STUB_READ_FAILS" ] || exit 1; printf '%s\n' "$STUB_REVIEWS" ;;
   "api --paginate repos/owner/repo/pulls/5/comments "*) printf '%s\n' "$STUB_REVIEW_COMMENTS" ;;
   "api user"*) echo me ;;
+  "api repos/owner/repo/pulls/5 --jq .head.sha") echo "${STUB_LATER_HEAD:-0123456789012345678901234567890123456789}" ;;
+  "api repos/owner/repo/pulls/5 --jq "*head.sha*) echo "${STUB_HEAD:-0123456789012345678901234567890123456789 owner/repo 2 fix/thing}" ;;
+  "api --paginate repos/owner/repo/pulls/5/files"*) [ -z "$STUB_READ_FAILS" ] || exit 1; printf '%s\n' "${STUB_FILES:-a.txt}" | jq -R '[{filename: .}]' | apply ;;
+  "api repos/owner/repo --jq .default_branch") echo main ;;
+  "api repos/owner/repo/commits/main --jq .sha") echo 2222222222222222222222222222222222222222 ;;
+  "api repos/owner/repo/contents/"*)
+    path="${2#repos/owner/repo/contents/}"
+    file="$STUB_TREE/${path##*\?ref=}/${path%%\?ref=*}"
+    if [ -n "$STUB_LIST_FAILS" ] && [ -d "$file" ]; then
+      exit 1
+    elif [ -d "$file" ]; then
+      for entry in "$file"/*; do
+        [ -e "$entry" ] || continue
+        jq -n --arg name "${entry##*/}" --arg type "$([ -d "$entry" ] && echo dir || echo file)" '{name: $name, type: $type}'
+      done | jq -s . | apply
+    elif [ -f "$file" ]; then
+      cat "$file"
+    else
+      exit 1
+    fi ;;
   "api repos/owner/repo/pulls/5 "*) echo "${STUB_STATE:-open false me}" ;;
   "api repos/owner/repo/pulls/comments/2 --jq .pull_request_url") echo "https://api.github.com/repos/owner/repo/pulls/5" ;;
   "api repos/owner/repo/pulls/comments/2 "*) echo 1 ;;
@@ -288,6 +324,118 @@ STUB_REVIEW_COMMENTS='' STUB_REVIEWS='{"login":"alice","type":"User","associatio
 [ ! -e "$STUB_POSTED" ] || fail "the responder re-requested with every reviewer approving"
 STUB_STATE="open true me" respond rerequest owner/repo 5 && fail "the responder re-requested on a draft"
 respond rerequest owner/repo 5 bob && fail "the responder accepted a reviewer named by the caller"
+
+# A test workflow is dispatched only at the head the caller saw, on its branch, never one that could deploy.
+DEFAULT_SHA=2222222222222222222222222222222222222222
+export STUB_TREE="$TEST_DIRECTORY/tree"
+TEST_WORKFLOW=$'on:\n  workflow_dispatch:\njobs:\n  test:\n    steps:\n      - run: make test'
+# Writes a file of the commit, `tree_file <ref> <path> <content>`.
+tree_file() {
+  mkdir -p "$(dirname "$STUB_TREE/$1/$2")"
+  printf '%s\n' "$3" >"$STUB_TREE/$1/$2"
+}
+# Starts both commits over, the head with the test workflow, or the one given, and the default branch with no workflow.
+tree_reset() {
+  rm -rf "$STUB_TREE"
+  mkdir -p "$STUB_TREE/$DEFAULT_SHA/.github/workflows"
+  tree_file "$HEAD_SHA" .github/workflows/tests.yaml "${1:-$TEST_WORKFLOW}"
+}
+# Fails unless the dispatch is refused and nothing is posted.
+dispatch_refused() {
+  respond dispatch owner/repo 5 "$HEAD_SHA" tests.yaml && fail "the responder dispatched $1"
+  [ ! -e "$STUB_POSTED" ] || fail "the responder posted after refusing $1"
+}
+# Fails unless the dispatch is refused for a deploy, exit 5, and nothing is posted.
+dispatch_deploy_refused() {
+  respond dispatch owner/repo 5 "$HEAD_SHA" tests.yaml
+  [ $? -eq 5 ] || fail "the responder did not exit 5 on $1"
+  [ ! -e "$STUB_POSTED" ] || fail "the responder posted after refusing $1"
+}
+tree_reset
+respond dispatch owner/repo 5 "$HEAD_SHA" tests.yaml || fail "the responder refused to dispatch a test workflow"
+[ "$(head -1 "$STUB_POSTED")" = "repos/owner/repo/actions/workflows/tests.yaml/dispatches" ] || fail "the responder dispatched on another endpoint"
+[ "$(tail -n +2 "$STUB_POSTED" | jq -c .)" = '{"ref":"fix/thing"}' ] || fail "the responder dispatched on another ref"
+respond dispatch owner/repo 5 1111111111111111111111111111111111111111 tests.yaml && fail "the responder dispatched at a head the pull request moved from"
+STUB_LATER_HEAD=1111111111111111111111111111111111111111 dispatch_refused "for a pull request that moved while the workflows were read"
+STUB_HEAD="$HEAD_SHA fork/repo 2 fix/thing" dispatch_refused "for a pull request from a fork"
+STUB_HEAD="$HEAD_SHA owner/repo 3001 fix/thing" dispatch_refused "for a pull request with more files than it can check"
+STUB_FILES=$'a.txt\n.github/workflows/tests.yaml' dispatch_refused "for a pull request that changes .github"
+STUB_READ_FAILS=1 dispatch_refused "after failing to read the files"
+tree_reset $'on:\n  push:\njobs:\n  workflow_dispatch: {}'
+dispatch_refused "a workflow without a workflow_dispatch trigger"
+for word in "run: ./deploy" "environment: production" "run: make release" "run: rails db:migrate" "run: npx vercel --prod" "run: terraform apply"; do
+  tree_reset "$TEST_WORKFLOW"$'\n      - '"$word"
+  dispatch_deploy_refused "a workflow with $word"
+done
+tree_reset "$TEST_WORKFLOW"$'\n      # Deploy is another workflow.'
+respond dispatch owner/repo 5 "$HEAD_SHA" tests.yaml || fail "the responder refused a workflow whose comment names a deploy"
+# A workflow or local action the test workflow calls runs with it, one of another repository cannot be read.
+tree_reset "$TEST_WORKFLOW"$'\n  shared:\n    uses: ./.github/workflows/shared.yml'
+tree_file "$HEAD_SHA" .github/workflows/shared.yml $'on: workflow_call\njobs:\n  ship:\n    steps:\n      - run: ./deploy'
+dispatch_deploy_refused "a workflow calling a reusable workflow that deploys"
+tree_file "$HEAD_SHA" .github/workflows/shared.yml $'on: workflow_call\njobs:\n  check:\n    steps:\n      - uses: ./.github/actions/setup'
+tree_file "$HEAD_SHA" .github/actions/setup/action.yml $'runs:\n  using: composite\n  steps:\n    - run: ./scripts/deploy.sh'
+dispatch_deploy_refused "a workflow whose reusable workflow calls a local action that deploys"
+tree_file "$HEAD_SHA" .github/actions/setup/action.yml $'runs:\n  using: composite\n  steps:\n    - run: make setup'
+respond dispatch owner/repo 5 "$HEAD_SHA" tests.yaml || fail "the responder refused a workflow whose callees only test"
+tree_reset "$TEST_WORKFLOW"$'\n  shared:\n    uses: other/repo/.github/workflows/shared.yml@main'
+dispatch_refused "a workflow calling a reusable workflow of another repository"
+tree_reset "$TEST_WORKFLOW"$'\n      - uses: ./missing'
+dispatch_refused "a workflow calling a local action it cannot read"
+# A deploy chained after a run, or on a new branch, would run next to the tests, a chained one that only tests does not block them. A `workflow_run` runs from the default branch, so a deploy chained only there blocks them too.
+for trigger in $'on:\n  workflow_run:\n    workflows: [other]' 'on: [create]'; do
+  tree_reset
+  tree_file "$HEAD_SHA" .github/workflows/chained.yml "$trigger"$'\njobs:\n  ship:\n    steps:\n      - run: ./deploy'
+  dispatch_deploy_refused "next to a deploy chained by $trigger"
+done
+tree_reset
+tree_file "$DEFAULT_SHA" .github/workflows/chained.yml $'on:\n  workflow_run:\n    workflows: [tests]\njobs:\n  ship:\n    steps:\n      - run: ./deploy'
+dispatch_deploy_refused "next to a deploy chained on the default branch only"
+tree_reset
+tree_file "$HEAD_SHA" .github/workflows/chained.yml $'on:\n  workflow_run:\n    workflows: [tests]\njobs:\n  report:\n    steps:\n      - run: make report'
+respond dispatch owner/repo 5 "$HEAD_SHA" tests.yaml || fail "the responder refused next to a chained workflow that only tests"
+# An anchor or alias can move a trigger where the line reader does not look, so such a workflow counts as chained.
+tree_reset
+tree_file "$HEAD_SHA" .github/workflows/chained.yml $'triggers: &triggers\n  workflow_run:\n    workflows: [tests]\non: *triggers\njobs:\n  ship:\n    steps:\n      - run: ./deploy'
+dispatch_deploy_refused "next to a deploy chained through an alias"
+# The dispatched tree that mentions a deploy exits 5 with the command that trusts it for the repository named, and dispatch runs it once trusted, until any of its files changes.
+tree_reset "$TEST_WORKFLOW"$'\n      - uses: ./.github/actions/setup'
+tree_file "$HEAD_SHA" .github/actions/setup/action.yml $'runs:\n  using: composite\n  steps:\n    - run: ./scripts/deploy.sh'
+"$RESPONDER" dispatch owner/repo 5 "$HEAD_SHA" tests.yaml >/dev/null 2>"$TEST_DIRECTORY/refused"
+[ $? -eq 5 ] || fail "the responder did not exit 5 on a workflow tree that mentions a deploy"
+grep -q 'action.yml: .*deploy' "$TEST_DIRECTORY/refused" || fail "the refusal did not show the matched line"
+TRUST_ARGUMENTS="$(grep -oE 'green-trust\.sh owner/repo \.github/workflows/tests\.yaml [0-9a-f]{64}$' "$TEST_DIRECTORY/refused" | cut -d ' ' -f 2-)"
+[ -n "$TRUST_ARGUMENTS" ] || fail "the refusal did not print the command that trusts the tree"
+# shellcheck disable=SC2086
+"$TRUST_SCRIPT" $TRUST_ARGUMENTS >/dev/null || fail "green-trust.sh refused the printed line"
+respond dispatch owner/repo 5 "$HEAD_SHA" tests.yaml || fail "the responder refused a trusted workflow tree"
+[ "$(head -1 "$STUB_POSTED")" = "repos/owner/repo/actions/workflows/tests.yaml/dispatches" ] || fail "the responder did not dispatch a trusted workflow tree"
+tree_file "$HEAD_SHA" .github/actions/setup/action.yml $'runs:\n  using: composite\n  steps:\n    - run: ./scripts/deploy.sh --again'
+dispatch_deploy_refused "a trusted tree after a file it calls changed"
+# A workflow chained next to the trusted one is never trusted, even when it calls the same action.
+tree_file "$HEAD_SHA" .github/actions/setup/action.yml $'runs:\n  using: composite\n  steps:\n    - run: ./scripts/deploy.sh'
+tree_file "$HEAD_SHA" .github/workflows/chained.yml $'on:\n  workflow_run:\n    workflows: [tests]\njobs:\n  ship:\n    steps:\n      - uses: ./.github/actions/setup'
+"$RESPONDER" dispatch owner/repo 5 "$HEAD_SHA" tests.yaml >/dev/null 2>"$TEST_DIRECTORY/refused"
+[ $? -eq 5 ] || fail "the responder did not exit 5 next to a chained deploy calling a trusted action"
+grep -q 'chained.yml mentions a deploy' "$TEST_DIRECTORY/refused" || fail "the responder did not name the chained workflow"
+grep -q 'green-trust.sh' "$TEST_DIRECTORY/refused" && fail "the responder offered to trust a chained workflow"
+# A pull request that changes `.github`, a line of another repository, or a reusable workflow it cannot read is never trusted.
+tree_reset "$TEST_WORKFLOW"$'\n      - uses: ./.github/actions/setup'
+tree_file "$HEAD_SHA" .github/actions/setup/action.yml $'runs:\n  using: composite\n  steps:\n    - run: ./scripts/deploy.sh'
+STUB_FILES=$'a.txt\n.github/workflows/tests.yaml' dispatch_refused "a trusted tree in a pull request that changes .github"
+cp "$TRUST_FILE" "$TEST_DIRECTORY/trusted"
+sed 's|^owner/repo |other/repo |' "$TEST_DIRECTORY/trusted" >"$TRUST_FILE"
+dispatch_deploy_refused "a tree trusted only for another repository"
+cp "$TEST_DIRECTORY/trusted" "$TRUST_FILE"
+tree_reset "$TEST_WORKFLOW"$'\n      - run: ./deploy\n  shared:\n    uses: other/repo/.github/workflows/shared.yml@main'
+"$RESPONDER" dispatch owner/repo 5 "$HEAD_SHA" tests.yaml 2>&1 >/dev/null | grep -q 'green-trust.sh' && fail "the responder offered to trust a reusable workflow of another repository"
+rm -r "$HOME/.config"
+tree_reset
+STUB_LIST_FAILS=1 dispatch_refused "after failing to list the workflows"
+STUB_STATE="open true me" dispatch_refused "on a draft"
+respond dispatch owner/repo 5 "$HEAD_SHA" ../tests.yaml && fail "the responder accepted a workflow path outside the workflows folder"
+respond dispatch owner/repo 5 HEAD tests.yaml && fail "the responder accepted a head that is not a sha"
+[ ! -e "$STUB_POSTED" ] || fail "the responder dispatched something it refused"
 
 if [ "$failures" -gt 0 ]; then
   exit 1
