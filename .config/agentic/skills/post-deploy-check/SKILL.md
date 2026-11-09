@@ -12,7 +12,7 @@ Read-only. You change nothing in production, the error tracker, the metrics stor
 
 - Target: a PR number or URL, a branch, a commit, a timestamp, or a description such as "since this morning's deploy". `my PRs today` is a target of its own, step 1b, not a time window.
 - Asking the user: use the question tool when the agent has one, `AskUserQuestion` in Claude Code, otherwise ask in plain chat with short numbered options and wait for the answer.
-- No target: ask whether to check the PRs the user merged today in this repository, or to give a PR, branch or commit. Skip the question for a scheduled run.
+- No target: ask whether to check the PRs the user merged today in this repository, or to give a PR, branch or commit. Skip the question for a scheduled run, or when the prompt already names `my PRs today`.
 - Context, optional free text: what the user thinks may be affected. It tells you where to look first, never a reason to skip the general checks. Repeat it back in one line at the start of the report.
 - Flags: which feature flags the change uses and whether they are on. If the user does not say, read them from the PR or the diff and state your assumption.
 - Time zone: the local one from `date +%z`. Error trackers and log stores often answer in UTC, keep the zones apart and state the zone in the report.
@@ -56,7 +56,8 @@ When the scan finds no error tracker, no logs or metrics tool and no deploy work
 
 ### 1b. My PRs today
 
-- List the PRs the user authored that merged today, in the local zone, in the current repository. Pass the start of the local day with its offset, a bare date is read as UTC and drops the first hours: `gh search prs --author @me --merged --merged-at ">=<today>T00:00:00<offset>" --repo <owner>/<repo> --json number,title,closedAt,url --limit 100`. Widen to `--owner <owner>` only when the user asks for other repositories, then group by repository and run steps 1 to 5 once per repository with its own tools and live release.
+- List the PRs the user authored that merged today, in the local zone, in the current repository. Pass the start of the local day with its offset, a bare date is read as UTC and drops the first hours: `gh search prs --author @me --merged --merged-at ">=<today>T00:00:00<offset>" --repo <owner>/<repo> --json number,title,closedAt,url --limit 100`. Widen to `--owner <owner>` only when the user asks for other repositories, then group by repository and run steps 1 to 5 once per repository with its own tools and live release. Map each repository to its tracker project by name. With no matching project, run the org-wide keyword searches of step 3 from the domain words in the diffs, and mark the deploy "not verifiable by release".
+- "Yours" means authored by the user, state that assumption in the report.
 - Start the window at the earliest merge of the day. Report each PR as live or "merged, not live yet", and skip the tracker checks for those not live.
 - No PRs: say so and stop.
 
@@ -65,7 +66,7 @@ When the scan finds no error tracker, no logs or metrics tool and no deploy work
 Use the deploy, release and merge gating workflows from step 0.
 
 - Runs in the window: `gh run list --workflow <file> --created ">=<window start ISO>" --limit 100 --json databaseId,status,conclusion,displayTitle,createdAt,url`. `--created` filters on the server, so a busy day does not push runs out of the list.
-- PRs deployed in the window: `git log --first-parent --merges --format='%h %s' <old release>..<new release>`, or the compare API for another repository.
+- PRs deployed in the window: `git log --first-parent --merges --format='%h %s' <old release>..<new release>`, or the compare API for another repository, see the Command reference.
 - A failed deploy or release run is a finding for the change it deployed. A failed run on a PR branch only means that PR did not land. Two or more different PRs failing in a row point at the default branch or the pipeline, not one PR. `cancelled` is not a failure, runs behind a failed one are often cancelled. `in_progress` is pending.
 - For a failed run name the failed job and step: `gh run view <id> --json jobs --jq '.jobs[] | select(.conclusion == "failure") | {name, url}'`. Read `--log-failed` only to tell a flaky step from a real one, never paste it.
 - Open CI/CD issues created in the window, titles and numbers only: `gh issue list --state open --search "created:>=<date> ci OR cd OR deploy OR pipeline OR build OR flaky in:title,body" --json number,title,url`.
@@ -75,8 +76,9 @@ Use the deploy, release and merge gating workflows from step 0.
 
 - New issues since the deploy, per project, most frequent first. Use relative windows such as `firstSeen:-3h`, an absolute date is often rejected. The window is the real time since the deploy rounded up, or events from before it are silently dropped.
 - Never rely on a saved view, it is personal and may not exist for the user running this. Give the link to a search with the same query in the report.
-- Search the signals the diff adds: every new log message, reported message and validation error string. Search the static part, without interpolated values, one search per message.
+- Search the signals the diff adds: every new log message, reported message and validation error string. Search the static part, without interpolated values, one search per message. Search each new log message in the log store too, counts only, with the control query of step 4 before trusting an empty result.
 - Keyword search across all projects for the feature, using the domain words from the diff and from the user's context.
+- Watch the services the diff calls from both sides: new issues in that service's own tracker project, and the client errors it raises inside this app, such as timeouts and server errors, by keyword with the same relative window. Suspect only when the culprit matches the diff and it started after the deploy, old timeouts are background noise.
 - Issues on the live release: add the release filter to the query.
 - Verify before reporting. A list returns issues with activity in the window, not only new ones. For each suspect read its first seen, count and last seen, and the release value of its events in the window. Print only the release value, other tags can carry user data. An issue that only hit older releases, or stopped before the deploy, is not from this change. Run the ancestor check from step 1 for each release the events show.
 - Old, recurring issues such as long-standing N+1 or timeout noise are background. Compare the true first seen date.
@@ -99,6 +101,7 @@ Only when the user names one or the project documents one, such as orders, signu
 - Run it through a connector, MCP or CLI the session has, bounded range, counts only. If there is none, give the query to the user and report the metric as not checked.
 - Compare per hour, today against the same weekday one and two weeks earlier. The deploy hour and the current hour are partial, pro-rate them. If a daylight saving change falls between today and a baseline, shift that baseline by one hour or drop it.
 - Look for a step change at the deploy time, not a constant gap. A gap that was there before the deploy is not from the change.
+- For a region, provider or feature change, add the filter the change touches, counts only. If the change claims no impact on a segment, check that segment too.
 - A filter on an unindexed column can time out on a live database. Check the schema for an index first. After one timeout stop, do not retry, report it as not run.
 - Warehouse or batch data refreshes later, so it has nothing for today. Use it only the next day.
 
@@ -136,7 +139,7 @@ Answer first, plain words, no personal data.
 7. Logs and metrics: what was compared and the result, or inconclusive.
 8. Product metric: a small table for the hours around the deploy with the percentage against both baselines, partial hours marked.
 9. Not checked: tools without access, short window, paths not exercised with the flags off.
-10. Follow-up: from the tools found in step 0, one line each with the exact query or link when you can build one. Offer to run the ones you can.
+10. Follow-up: from the tools found in step 0, one line each with the exact query or link when you can build one. Offer to run the ones you can. With flags off, offer a single re-run once they are turned on.
 
 For "my PRs today", open with a table of PR, repository, merged at local time, live yes or no, and verdict, then one block per repository with items 4 to 10. The top verdict is "issue found" when any PR has one.
 
@@ -148,7 +151,7 @@ On a busy day one check is not enough. At the end of a manual run, offer to repe
 
 - Needs a scheduler. Claude Code has `CronCreate`, `CronList` and `CronDelete`. An agent without one skips the offer and says the check can be re-run by hand or from the user's own scheduler.
 - Ask: every 30 minutes, every hour, or no schedule. Skip the question for a scheduled run, when `CronList` already shows a job for this target, or when the end time is less than 30 minutes away. Leave out "every hour" when its last slot has passed.
-- Create it with `CronCreate`, `recurring: true`, in local time and at off-minutes. Pin the day and month so it stops by itself at the end time. Hourly: `7 <current hour>-<end hour minus 1> <day> <month> *`. Every 30 minutes: `7,37 <current hour>-<end hour minus 1> <day> <month> *`.
+- Create it with `CronCreate`, `recurring: true`, in local time and at off-minutes. Pin the day and month so it stops by itself at the end time. Hourly: `7 <current hour>-<end hour minus 1> <day> <month> *`. Every 30 minutes: `7,37 <current hour>-<end hour minus 1> <day> <month> *`. A cron fires only at future matches, so a slot of the current hour that has already passed is skipped.
 - The cron prompt is `/post-deploy-check <target> scheduled run`, plus the user's context. The target can be the default branch, each run then covers every PR merged since the previous run. For "my PRs today" each run lists the PRs again, checks the new ones, and looks for new issues on the ones already checked.
 - Tell the user that jobs are session-only, fire only while the session is idle, so the session must stay open, and that `CronDelete` cancels the job.
 - Scheduling is the only action beyond reading, and it changes nothing in production, the tracker, CI/CD or GitHub.
@@ -169,6 +172,7 @@ Release and liveness:
 
 - Same repository: `git fetch origin`, then `git merge-base --is-ancestor <merge sha> <release sha>`, exit code 0 means live.
 - Another repository: `gh api repos/<owner>/<repo>/compare/<merge sha>...<release sha> --jq .status`.
+- Merged PRs between two releases of another repository: `gh api repos/<owner>/<repo>/compare/<old release>...<new release> --jq '.commits[] | select(.parents | length > 1) | .sha[0:7] + " " + (.commit.message | split("\n")[0])'`.
 - Release tag of recent events, most frequent first, `<tracker command listing events with only the release field> | sort | uniq -c | sort -rn | head -3`. Select the release field only, never whole events.
 
 GitHub Actions:
@@ -182,7 +186,9 @@ Sentry, CLI or MCP:
 - New issues: query `is:unresolved firstSeen:-<N>h`, sort by frequency, small limit, fields limited to ID, title, culprit, count, user count and first seen.
 - One suspect: first seen, last seen and count, then the release value of its events in the window.
 - Release filter: `release:<sha>`. Relative dates only.
-- MCP search can reject `OR` and `AND`, so run one keyword per search.
+- CLI: set `SENTRY_LOG_LEVEL=error` so warnings do not mix into parsed output.
+- MCP: `search_issues` for the lists, `get_sentry_resource` for one issue, `search_errors` with fields `release` and `count()` for the live release. MCP search can reject `OR` and `AND`, so run one keyword per search.
+- The issue tags endpoint counts over the issue's lifetime, so for an old issue count the tag from its events in the window instead.
 - Other trackers: the same questions, new issues since the deploy, and events per release.
 
 Loki or Grafana, through `search-grafana-logs` when installed:
