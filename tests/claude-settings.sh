@@ -55,6 +55,12 @@ expect_rule allow 'Bash(qmd *)' absent
 expect_rule allow 'Bash(gh api search/*)' present
 expect_rule ask 'Bash(gh api *-X*)' present
 expect_rule ask 'Bash(gh api *-f*)' present
+# Trusting a workflow that mentions a deploy is your call, `green-trust.sh` is a script of its own on no allow list so every run asks, and the trust file is never written outside it.
+# A Bash rule matches the command text, so the ask rule takes any spelling of the path, `~`, `$HOME` or absolute.
+expect_rule ask 'Bash(*green-trust.sh*)' present
+expect_rule allow 'Bash(~/.config/scripts/review/green-trust.sh *)' absent
+expect_rule deny 'Edit(~/.config/green-github-prs-watcher/**)' present
+expect_rule deny 'Bash(*trusted-workflows*)' present
 # `rg --pre` runs any command, so `rg` stays prompted.
 expect_rule allow 'Bash(rg *)' absent
 
