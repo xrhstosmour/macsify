@@ -15,7 +15,6 @@
   "autoUpdatesChannel": "stable",
   "autoCompactWindow": 200000,
   "idleCompaction": true,
-  "subagentPromptCacheTtl": "1h",
   "env": {
     "CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS": "200000",
     "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet"
@@ -330,6 +329,7 @@
     { "serverName": "claude.ai Claude Docs" },
     { "serverName": "claude.ai Context7" },
     { "serverName": "claude.ai Datadog" },
+    { "serverName": "claude.ai Datadog (2)" },
     { "serverName": "claude.ai Dovetail" },
     { "serverName": "claude.ai Figma" },
     { "serverName": "claude.ai Gmail" },
@@ -339,6 +339,16 @@
   ],
   "skillOverrides": {
     "agent-models": "user-invocable-only",
+    "anthropic-skills:brag-document": "user-invocable-only",
+    "anthropic-skills:category-brief": "user-invocable-only",
+    "anthropic-skills:docs": "user-invocable-only",
+    "anthropic-skills:docx": "user-invocable-only",
+    "anthropic-skills:google-workspace": "user-invocable-only",
+    "anthropic-skills:import-memory": "user-invocable-only",
+    "anthropic-skills:morning": "user-invocable-only",
+    "anthropic-skills:pdf": "user-invocable-only",
+    "anthropic-skills:pptx": "user-invocable-only",
+    "anthropic-skills:xlsx": "user-invocable-only",
     "batch": "user-invocable-only",
     "capture-knowledge": "user-invocable-only",
     "caveman": "user-invocable-only",
