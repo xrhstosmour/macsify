@@ -1,6 +1,6 @@
 import { View, div } from "gpui-kit";
 import { exec, home, machines, notify, panes, readTextFile, setShared, shared } from "herdr";
-import { discoverWorktrees, isOccupiedBy, isProtected, linkedWorktreeRoot, parseProtected, sweepWorktree, trackedWorktree } from "./logic.js";
+import { discoverWorktrees, isOccupiedBy, isProtected, linkedWorktreeRoot, parseProtected, removalNotice, sweepWorktree, trackedWorktree } from "./logic.js";
 
 // Removes a linked worktree once the last terminal in it is gone. The app has
 // no workspace-closed event, so this watches `panes()` and sweeps a tracked
@@ -125,7 +125,7 @@ export default class WorktreeCleanup extends View {
           this.absentSince.delete(path);
           this.retryAt.delete(path);
           changed = true;
-          if (outcome === "removed") notify({ title: "Worktree removed", body: path, level: "info", timeout: 6000 });
+          if (outcome === "removed") notify({ ...removalNotice(path, WORKTREE_ROOTS), level: "info", timeout: 6000 });
         }
 
         // Shared state re-renders every mod, so write it only when the list changed.
