@@ -86,39 +86,46 @@ export async function isOccupiedBy(path, folders, rootOf) {
   return false;
 }
 
-// Whether a branch's work is on the origin default branch: its tip is an ancestor
-// of it, or the tip is exactly the head of a merged pull request, which covers
-// squash and rebase merges. A branch that gained commits after its pull request
-// merged is not merged. One fetch per repository per pass, the caller passes
-// `fetched` to share it. Resolves to `{ merged, reason }`.
-export async function branchMerged(exec, mainCheckout, branch, fetched = new Set()) {
-  const defaultReference = await git(exec, mainCheckout, ["symbolic-ref", "--short", "refs/remotes/origin/HEAD"]);
-  if (!defaultReference) return { merged: false, reason: "no origin default branch" };
-  if (branch === defaultReference.replace(/^origin\//, "")) return { merged: false, reason: "on the default branch" };
+function defaultBranch(exec, mainCheckout) {
+  return git(exec, mainCheckout, ["symbolic-ref", "--short", "refs/remotes/origin/HEAD"]);
+}
 
-  const tip = await git(exec, mainCheckout, ["rev-parse", "--verify", "--quiet", `refs/heads/${branch}`]);
-  if (!tip) return { merged: false, reason: "no local branch" };
-
+// Whether a commit is an ancestor of the origin default branch. One fetch per
+// repository per pass, the caller passes `fetched` to share it.
+async function commitMerged(exec, mainCheckout, commit, defaultReference, fetched) {
   const isAncestor = async () => {
     try {
-      return (await exec("git", ["merge-base", "--is-ancestor", tip, defaultReference], { cwd: mainCheckout })).code === 0;
+      return (await exec("git", ["merge-base", "--is-ancestor", commit, defaultReference], { cwd: mainCheckout })).code === 0;
     } catch {
       return false;
     }
   };
 
   // Merged by the last known refs needs no network.
-  if (await isAncestor()) return { merged: true, reason: `merged into ${defaultReference}` };
-
-  if (!fetched.has(mainCheckout)) {
-    fetched.add(mainCheckout);
-    try {
-      await networkExec(exec, "git", ["fetch", "origin", "--quiet"], { cwd: mainCheckout });
-    } catch {
-      // Fall through to the last known refs.
-    }
-    if (await isAncestor()) return { merged: true, reason: `merged into ${defaultReference}` };
+  if (await isAncestor()) return true;
+  if (fetched.has(mainCheckout)) return false;
+  fetched.add(mainCheckout);
+  try {
+    await networkExec(exec, "git", ["fetch", "origin", "--quiet"], { cwd: mainCheckout });
+  } catch {
+    // Fall through to the last known refs.
   }
+  return isAncestor();
+}
+
+// Whether a branch's work is on the origin default branch: its tip is an ancestor
+// of it, or the tip is exactly the head of a merged pull request, which covers
+// squash and rebase merges. A branch that gained commits after its pull request
+// merged is not merged. Resolves to `{ merged, reason }`.
+export async function branchMerged(exec, mainCheckout, branch, fetched = new Set()) {
+  const defaultReference = await defaultBranch(exec, mainCheckout);
+  if (!defaultReference) return { merged: false, reason: "no origin default branch" };
+  if (branch === defaultReference.replace(/^origin\//, "")) return { merged: false, reason: "on the default branch" };
+
+  const tip = await git(exec, mainCheckout, ["rev-parse", "--verify", "--quiet", `refs/heads/${branch}`]);
+  if (!tip) return { merged: false, reason: "no local branch" };
+
+  if (await commitMerged(exec, mainCheckout, tip, defaultReference, fetched)) return { merged: true, reason: `merged into ${defaultReference}` };
 
   try {
     const pulls = await networkExec(exec, "gh", ["pr", "list", "--head", branch, "--state", "merged", "--json", "headRefOid", "--jq", ".[].headRefOid"], { cwd: mainCheckout });
@@ -145,13 +152,57 @@ export async function branchPushed(exec, mainCheckout, branch) {
   }
 }
 
+// The linked worktrees under the roots, found by the `.git` file each one has at
+// its top, for worktrees no terminal of the app ever sat in. A root missing or
+// unreadable yields nothing.
+export async function discoverWorktrees(exec, roots) {
+  const found = new Set();
+  const rootOf = (folder) => linkedWorktreeRoot(exec, folder);
+  for (const root of roots) {
+    let listing;
+    try {
+      listing = await exec("find", [root, "-mindepth", "2", "-maxdepth", "3", "-name", ".git", "-type", "f"]);
+    } catch {
+      continue;
+    }
+    for (const marker of listing.stdout.split("\n").filter(Boolean)) {
+      const worktree = await trackedWorktree(rootOf, marker.replace(/\/\.git$/, ""), roots);
+      if (worktree) found.add(worktree);
+    }
+  }
+  return [...found];
+}
+
+// Whether anything at the top of the worktree or in its own git directory
+// changed in the last `minutes`, a sign someone outside the app works there.
+// The index and the git directory itself are left out, every `git status`,
+// this mod's own included, may rewrite the index, and a staged change already
+// keeps the worktree as uncommitted. Only one level deep, a write further down
+// with nothing new at the top passes as idle.
+async function recentlyActive(exec, path, minutes) {
+  const gitDirectory = await git(exec, path, ["rev-parse", "--path-format=absolute", "--git-dir"]);
+  if (!gitDirectory) return true;
+  const age = ["-mmin", `-${minutes}`];
+  try {
+    const top = await exec("find", [path, "-maxdepth", "1", ...age], { cwd: path });
+    const own = await exec("find", [gitDirectory, "-mindepth", "1", "-maxdepth", "1", "!", "-name", "index*", ...age], { cwd: path });
+    return top.code !== 0 || own.code !== 0 || `${top.stdout}${own.stdout}`.trim() !== "";
+  } catch {
+    // Unknown counts as active, the worktree stays.
+    return true;
+  }
+}
+
 // Removes one linked worktree when it is safe to, and its branch once the work
 // is merged or pushed. Resolves to `{ outcome, reason }` with outcome one of `removed`,
 // `kept` (check again later) or `untrack` (nothing left to watch). Never forces:
 // git itself refuses a locked or dirty worktree. `isOccupied` is asked right
 // before the removal, the merge check can take a while and a terminal may have
-// opened in the folder since the caller looked.
-export async function sweepWorktree(path, { exec, protectedEntries = [], fetched = new Set(), isOccupied = async () => false }) {
+// opened in the folder since the caller looked. A worktree no terminal of the
+// app sat in passes `allowPushed: false` and `idleMinutes`, an agent in another
+// terminal may still be working on a pushed branch or a fresh one, so it also
+// needs a commit made in it.
+export async function sweepWorktree(path, { exec, protectedEntries = [], fetched = new Set(), isOccupied = async () => false, allowPushed = true, idleMinutes = null }) {
   if (isProtected(path, protectedEntries)) return { outcome: "untrack", reason: "protected" };
 
   const common = await git(exec, path, ["rev-parse", "--path-format=absolute", "--git-common-dir"]);
@@ -159,10 +210,7 @@ export async function sweepWorktree(path, { exec, protectedEntries = [], fetched
   const mainCheckout = common.replace(/\/\.git$/, "");
   if (mainCheckout === path) return { outcome: "untrack", reason: "the main checkout" };
 
-  // Commits on a detached HEAD are reachable from nothing once the worktree is gone.
-  const headReference = await git(exec, path, ["symbolic-ref", "--quiet", "HEAD"]);
-  if (!headReference) return { outcome: "kept", reason: "detached HEAD" };
-  const branch = headReference.replace(/^refs\/heads\//, "");
+  if (idleMinutes !== null && (await recentlyActive(exec, path, idleMinutes))) return { outcome: "kept", reason: `active in the last ${idleMinutes} minutes` };
 
   // `--untracked-files=all` so a new, never added file counts as work worth keeping.
   const status = await git(exec, path, ["status", "--porcelain", "--untracked-files=all"]);
@@ -176,18 +224,43 @@ export async function sweepWorktree(path, { exec, protectedEntries = [], fetched
     }
   }
 
+  // A fresh worktree, `HEAD` never on another commit since `git worktree add`,
+  // sits on the default branch and so looks merged, yet an agent may be about to
+  // start in it. Distinct commits, `worktree add` itself logs `HEAD` twice. A
+  // missing reflog counts as fresh too.
+  if (idleMinutes !== null) {
+    const moves = await git(exec, path, ["reflog", "show", "--format=%H", "HEAD"]);
+    if (!moves || new Set(moves.split("\n")).size < 2) return { outcome: "kept", reason: "no commits made in it yet" };
+  }
+
+  const remove = async () => {
+    if (await isOccupied()) return "a terminal opened in it";
+    const removal = await exec("git", ["worktree", "remove", path], { cwd: mainCheckout });
+    return removal.code === 0 ? null : `remove failed: ${removal.stderr.trim()}`;
+  };
+
+  // Commits on a detached HEAD are reachable from nothing once the worktree is
+  // gone, so only one already on the default branch goes.
+  const headReference = await git(exec, path, ["symbolic-ref", "--quiet", "HEAD"]);
+  if (!headReference) {
+    const head = await git(exec, path, ["rev-parse", "--verify", "--quiet", "HEAD"]);
+    const defaultReference = await defaultBranch(exec, mainCheckout);
+    if (!head || !defaultReference || !(await commitMerged(exec, mainCheckout, head, defaultReference, fetched))) return { outcome: "kept", reason: "detached HEAD not merged" };
+    const failure = await remove();
+    return failure ? { outcome: "kept", reason: failure } : { outcome: "removed", reason: `detached HEAD merged into ${defaultReference}` };
+  }
+  const branch = headReference.replace(/^refs\/heads\//, "");
+
   // Merged, or pushed in full, either way no commit exists only here.
   const merged = await branchMerged(exec, mainCheckout, branch, fetched);
-  if (!merged.merged && (await branchPushed(exec, mainCheckout, branch))) {
+  if (!merged.merged && allowPushed && (await branchPushed(exec, mainCheckout, branch))) {
     merged.merged = true;
     merged.reason = "pushed to origin";
   }
-  if (!merged.merged) return { outcome: "kept", reason: `branch '${branch}' ${merged.reason}, not pushed` };
+  if (!merged.merged) return { outcome: "kept", reason: `branch '${branch}' ${merged.reason}${allowPushed ? ", not pushed" : ""}` };
 
-  if (await isOccupied()) return { outcome: "kept", reason: "a terminal opened in it" };
-
-  const removal = await exec("git", ["worktree", "remove", path], { cwd: mainCheckout });
-  if (removal.code !== 0) return { outcome: "kept", reason: `remove failed: ${removal.stderr.trim()}` };
+  const failure = await remove();
+  if (failure) return { outcome: "kept", reason: failure };
 
   const deletion = await exec("git", ["branch", "-D", branch], { cwd: mainCheckout });
   return { outcome: "removed", reason: deletion.code === 0 ? `branch '${branch}' deleted, ${merged.reason}` : `branch '${branch}' kept, delete failed` };
