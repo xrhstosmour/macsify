@@ -83,6 +83,16 @@ function git_fetch_and_rebase
     end
 end
 
+# Function to delete the stale `origin` remote references one by one.
+# `git remote prune` deletes them in one transaction, so two names that differ only in case lock the same file on a case-insensitive file system and the whole prune fails.
+# Usage:
+#   git_prune_remote_references
+function git_prune_remote_references
+    for reference in (git remote prune --dry-run origin | string replace --filter --regex '^ \* \[would prune\] ' '')
+        git update-ref -d "refs/remotes/$reference"
+    end
+end
+
 # Function to choose commit to fixup.
 # Pressing:
 #   - ENTER will fixup the commit
