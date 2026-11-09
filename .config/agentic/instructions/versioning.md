@@ -17,6 +17,7 @@
 - Specific and unique, never "Fix bug" or "Update README.md".
 - Wrap in plain backticks: technical identifiers, code elements, file names and paths, product, company and tool names, not natural language words, headings, or `YAML` frontmatter fields. Pass the message with a single-quoted `-m` or `-F <file>` so the shell never turns `` ` `` into `` \` ``. Verify with `git log -1 --format="%s"`.
 - PR titles, bodies, and review comments use the same short, direct language, per `communication.md`.
+- PR, GitHub issue, and Phabricator task titles stay at most 45 characters, so they fit one line next to the number on GitHub. One change per title, never two changes joined with "and", the second belongs in the description or its own PR.
 - Single-word project scope and colon, only when the repo name does not already match it.
 
 ```text

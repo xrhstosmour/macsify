@@ -224,9 +224,9 @@ Rules:
 - Short, descriptive, natural language.
 - No type prefixes, `perf:`, `feat:`, `fix:`.
 - No semicolons.
-- Keep under 60 characters. And follow the style in `~/.config/agentic/instructions/communication.md`.
-- Derive from the first commit message or branch name.
-- Example: `Replace single-column indexes with compound indexes` not `perf: Replace...; add outbox...`
+- Follow the title rule in `~/.config/agentic/instructions/versioning.md` and the style in `~/.config/agentic/instructions/communication.md`.
+- Derive from the first commit message or branch name, shortened to fit the title rule.
+- Example: `Use compound indexes for orders` not `perf: Replace...; add outbox...`
 
 ### 6. Preview + Approval
 

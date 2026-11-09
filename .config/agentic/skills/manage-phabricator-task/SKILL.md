@@ -96,7 +96,7 @@ A distinct, opt-in action, not a generic comment. Some workflows rely on the lit
 ### 1. Gather required fields
 
 - Tag, required. If the user named it, resolve and confirm it. If "Tag model" applies, gather domain (required, one), umbrella (y/n), and later (y/n) together in one prompt from the live candidate list. Otherwise ask "Which tag?", offering tags from the user's own tasks of the last week plus "or something else". Resolve a name to a PHID with `pha_project_search` (`name_like=<text>`), showing candidates when there is no exact match.
-- Title, required: a short imperative phrase, at most about 60 characters, stating the outcome ("Support dark mode", not "Investigate dark mode support"). No priority prefix, no backticks, Phabricator titles are plain text.
+- Title, required: a short imperative phrase, at most 45 characters per the title rule in `~/.config/agentic/instructions/versioning.md`, stating the outcome ("Support dark mode", not "Investigate dark mode support"). No priority prefix, no backticks, Phabricator titles are plain text.
 
 ### 2. Gather optional fields
 
