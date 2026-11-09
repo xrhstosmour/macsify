@@ -3,8 +3,8 @@ import { v_flex, h_flex } from "gpui-base";
 import { agents, closeOverlay, focused, hc, nextCommand, props, run, theme } from "herdr";
 
 // Vendored from herdrdev/herdr-layout-examples `tmux-prefix` at commit
-// 0ec967640bf854ffb839e9af06c1e0c328bc9815, with `BINDINGS` ported from the
-// former `tmux`-style `[keys]` table of the `Herdr` multiplexer. Only repeatable actions
+// 0ec967640bf854ffb839e9af06c1e0c328bc9815, with `BINDINGS` replaced by our
+// own `tmux`-style prefix keys. Only repeatable actions
 // start a timer: the first key after Ctrl+B can take as long as you like.
 const REPEAT_MS = 500;
 const BINDINGS = [
@@ -31,7 +31,7 @@ const BINDINGS = [
   ["J", "Next space", "space.next", {}, true],
   ["K", "Previous space", "space.prev", {}, true],
   ["z", "Zoom pane", "pane.zoom"],
-  // Digits jump to an agent by its place in the sidebar, as the former multiplexer's `focus_agent` did.
+  // Digits jump to an agent by its place in the sidebar.
   ...Array.from({ length: 9 }, (_, i) => [String(i + 1), `Agent ${i + 1}`, "agent.index", { index: i + 1 }]),
 ];
 
