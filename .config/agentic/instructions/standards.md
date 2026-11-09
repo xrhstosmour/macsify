@@ -39,6 +39,7 @@ Before pushing, check the diff against this list:
 
 - New tests follow the `test-quality` skill.
 - Queries eager-load what they read in a loop, no N+1.
+- A rewritten query returns the same rows, no filter or scope added or dropped.
 - A multi-step write sits in a transaction, a mid-way failure cannot leave half the change.
 - An existing helper does not already do it, search before adding one.
 - Null, empty, and ambiguous-match inputs are handled, an arbitrary pick among several matches has a tiebreak.
