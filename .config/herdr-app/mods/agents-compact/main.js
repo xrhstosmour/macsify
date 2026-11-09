@@ -350,11 +350,13 @@ export default class Agents extends View {
       return h_flex()
         .id(`ag-${a.address}`)
         .px(8)
-        .h(30)
+        .min_h(30)
+        .py(6)
         .flex_none()
         .rounded(8)
         .items_center()
         .gap(9)
+        .tooltip(name)
         .when(a.focused, (el) => el.bg(t.selected))
         .cursor_pointer()
         .hover((s) => s.bg(t.hover))
@@ -371,8 +373,9 @@ export default class Agents extends View {
             cx.notify();
           })).child(pic)))
         .child(h_flex().flex_1().min_w(0).gap(5).items_center()
-          // Never cut or wrapped, a wider sidebar shows the whole title.
-          .child(div().flex_shrink(0).text_color(idle ? t.muted : t.foreground).child(name)))
+          // Wraps instead of cutting, the app ellipsizes a clipped name even
+          // when it never shrinks, the tooltip covers a single unbreakable word.
+          .child(div().min_w(0).whitespace_normal().text_color(idle ? t.muted : t.foreground).child(name)))
         .when(Boolean(machine), el => el.child(div().text_size(10).text_color(t.dim).child(machine)))
         .when(subs.length > 0, el => el.child(fold(a, subs)))
         .when(this.hovered === a.address, el => el.child(pin))
