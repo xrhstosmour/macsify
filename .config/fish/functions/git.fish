@@ -77,20 +77,28 @@ function git_fetch_and_rebase
 
     # Perform fetch and rebase with or without autostash.
     if test "$autostash_enabled" = "true"
-        git fetch --all --prune && git rebase -i "$branch_to_rebase_onto" --autosquash --autostash
+        git_prune_remote_references && git fetch --all && git rebase -i "$branch_to_rebase_onto" --autosquash --autostash
     else
-        git fetch --all --prune && git rebase -i "$branch_to_rebase_onto" --autosquash
+        git_prune_remote_references && git fetch --all && git rebase -i "$branch_to_rebase_onto" --autosquash
     end
 end
 
-# Function to delete the stale `origin` remote references one by one.
+# Function to delete the stale remote references of every remote one by one.
 # `git remote prune` deletes them in one transaction, so two names that differ only in case lock the same file on a case-insensitive file system and the whole prune fails.
 # Usage:
 #   git_prune_remote_references
 function git_prune_remote_references
-    for reference in (git remote prune --dry-run origin | string replace --filter --regex '^ \* \[would prune\] ' '')
-        git update-ref -d "refs/remotes/$reference"
+    set -l failed 0
+    for remote in (git remote)
+        # Force English output, the line format is translated on gettext builds.
+        set -l stale (LC_ALL=C git remote prune --dry-run $remote)
+        or return 1
+        for reference in (string replace --filter --regex '^ \* \[would prune\] ' '' -- $stale)
+            git update-ref -d "refs/remotes/$reference"
+            or set failed 1
+        end
     end
+    return $failed
 end
 
 # Function to choose commit to fixup.
