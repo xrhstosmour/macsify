@@ -15,6 +15,7 @@
 #   comments  a person of the organization, a collaborator or a bot commented after you, in an unresolved thread, on the pull request or in a review body, the key is `<owner>/<repo>#<number>+<epoch>` of the newest one, without the head, so the push of its own run does not start the cycle again
 #   prepare   no comments, but a `fixup!`, `squash!` or `amend!` commit is left or the pull request conflicts with its base, keyed `<owner>/<repo>#<number>~<head sha>`, once per head
 #   checks    no comments and nothing to prepare, but a check failed on the head and none still runs, so one run sees every failure, keyed `<owner>/<repo>#<number>=<head sha>`, apart from `prepare` so a conflict after a handled failure at the same head still counts, the push of its own run is a new head, so a failure after it starts the next cycle
+#   One line per pull request and poll, the first reason not done yet, a reason marked done falls through to the next, so an approval nobody answers never hides a conflict or a failed check. A reason still claimed holds the pull request, its run handles the rest.
 #   capped    the pull request already started `CYCLE_LIMIT` cycles in a day, of any reason, a failed one included, it is reported once per head, keyed `<owner>/<repo>#<number>@<head sha>`, and not resolved again until the day passes, so a bot that reviews every push or a run that keeps failing cannot loop
 # Outsiders never start an unattended change. Drafts, merged, closed, merge queue and cross repository pull requests are skipped, the push goes to `origin`.
 # A key is claimed at detection for two hours, so a run still going is not started twice, and recorded as done by `--mark`. Same as `watch-review-requests.sh`.
@@ -110,7 +111,7 @@ query($search: String!) {
 
 # A comment counts when a bot or a person of the organization or a collaborator wrote it, never you, never a deleted author.
 # In an unresolved thread it counts after your last comment there, on the pull request and in a review body after your last comment on the pull request. A review with an empty body is the wrapper of inline comments, the threads carry those.
-# One reason per pull request, comments before prepare before checks, the skill handles the other two in the same run. A `mergeable` still `UNKNOWN` while GitHub computes it is left for the next poll.
+# Every reason that applies, one line each, comments before prepare before checks, the loop below reports the first not done yet. A `mergeable` still `UNKNOWN` while GitHub computes it is left for the next poll.
 # A head with more than 100 checks is left alone, a pending one could hide past the page.
 # shellcheck disable=SC2016
 JQ_FILTER='
@@ -128,16 +129,19 @@ JQ_FILTER='
         | map(select(.author.__typename == "User")) | after($mine))
     ] | map(select(. != null)) | max) as $newest
   | .latest.nodes[0].commit.statusCheckRollup as $rollup
-  | (if $newest != null then "comments \($newest | fromdateiso8601)"
-     elif any(.commits.nodes[]; .commit.messageHeadline | test("^(fixup|squash|amend)! ")) or .mergeable == "CONFLICTING" then "prepare 0"
-     elif ($rollup.state // "" | IN("FAILURE", "ERROR")) and ($rollup.contexts.pageInfo.hasNextPage // false | not)
-       and all($rollup.contexts.nodes[]; (.status // "COMPLETED") == "COMPLETED" and (.state // "" | IN("PENDING", "EXPECTED") | not)) then "checks 0"
-     else empty end) as $reason
+  | ((if $newest != null then "comments \($newest | fromdateiso8601)" else empty end),
+     (if any(.commits.nodes[]; .commit.messageHeadline | test("^(fixup|squash|amend)! ")) or .mergeable == "CONFLICTING" then "prepare 0" else empty end),
+     (if ($rollup.state // "" | IN("FAILURE", "ERROR")) and ($rollup.contexts.pageInfo.hasNextPage // false | not)
+       and all($rollup.contexts.nodes[]; (.status // "COMPLETED") == "COMPLETED" and (.state // "" | IN("PENDING", "EXPECTED") | not)) then "checks 0" else empty end)) as $reason
   | "\(.repository.nameWithOwner) \(.number) \(.headRefOid) \($reason) \(.url) \(.headRefName)"'
 
-# Whether a key is done or claimed by a run that started less than two hours ago.
-claimed() {
-  awk -v key="$1" '$2 == key { found = 1 } END { exit !found }' "$SEEN_FILE" && return 0
+# Whether a key is marked done.
+done_key() {
+  awk -v key="$1" '$2 == key { found = 1 } END { exit !found }' "$SEEN_FILE"
+}
+
+# Whether a key is claimed by a run that started less than two hours ago.
+running() {
   awk -v key="$1" -v now="$(date +%s)" -v limit="$CLAIM_SECONDS" '$2 == key && now - $1 < limit { found = 1 } END { exit !found }' "$CLAIMED_FILE"
 }
 
@@ -155,24 +159,33 @@ poll() {
     fi
   done
 
+  local held=""
   gh api graphql -f query="$GRAPHQL_QUERY" -f "search=$search" --jq "$JQ_FILTER" |
     while read -r repository number head reason epoch url branch; do
       [ -n "$repository" ] || continue
 
       pull_request="$repository#$number"
+      if [ "$pull_request" = "$held" ]; then
+        continue
+      fi
       case "$reason" in
         comments) key="$pull_request+$epoch" ;;
         prepare) key="$pull_request~$head" ;;
         *) key="$pull_request=$head" ;;
       esac
+      # Done is checked before the claim, every done key was claimed when it was reported.
+      if done_key "$key"; then
+        continue
+      fi
+      held="$pull_request"
       # A cycle still going is skipped before the cap, its own claim would count it as capped otherwise.
-      if claimed "$key"; then
+      if running "$key"; then
         continue
       fi
       if [ "$(cycles "$pull_request")" -ge "$CYCLE_LIMIT" ]; then
         key="$pull_request@$head"
         reason=capped
-        if claimed "$key"; then
+        if done_key "$key" || running "$key"; then
           continue
         fi
       fi
