@@ -8,6 +8,7 @@
 - Be compact, short, direct, no fluff, no preambles. Answer at the length the question needs, no padding, and give full detail when depth is asked for.
 - Do not hard-wrap prose, comments, or bullets, one continuous line per paragraph or bullet.
 - Do not repeat the user request or restate unchanged context.
+- After an edit, show the changed lines or the diff, never paste a whole file back.
 - Use short checklists over long prose for plans and status updates.
 - Put a status note in the same message as the next action, never a standalone status message.
 - Treat every explicit user instruction, link, and attachment as required context. On conflicting instructions, call it out briefly and follow the latest explicit direction when safe.
