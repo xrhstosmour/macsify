@@ -198,6 +198,18 @@ nodes "$(ROLLUP='{"state":"SUCCESS","contexts":{"nodes":[{"status":"COMPLETED"}]
 # Comments come first, the run handles the rest, and the cap counts every reason.
 nodes "$(COMMITS='["fixup! Add the thing"]' ROLLUP="$FAILED" node '[[false, [["author","2026-11-05T11:00:00Z"]]]]')"
 [ "$(detect)" = "$LINE" ] || fail "the detector did not report comments before the rest"
+# A run still going holds the pull request, comments marked done fall through to a conflict or a failed check, an approval nobody answers never hides them.
+nodes "$(MERGEABLE=CONFLICTING node '[]' '[]' '[["author","2026-11-05T11:00:00Z","User","MEMBER","Approving"]]')"
+[ "$(detect)" = "$LINE" ] || fail "the detector did not report an approval body as comments"
+[ -z "$(detect)" ] || fail "the detector started a second run on a pull request whose comments run is going"
+"$WATCHER" --mark "$KEY"
+[ "$(detect)" = "$PREPARE" ] || fail "the detector hid a conflict behind handled comments"
+nodes "$(ROLLUP="$FAILED" node '[]' '[]' '[["author","2026-11-05T11:00:00Z"]]')"
+"$WATCHER" --mark "$KEY"
+[ "$(detect)" = "$CHECKS" ] || fail "the detector hid a failed check behind handled comments"
+nodes "$(COMMITS='["fixup! Add the thing"]' ROLLUP="$FAILED" node)"
+"$WATCHER" --mark "owner/repo#5~$HEAD_SHA"
+[ "$(detect)" = "$CHECKS" ] || fail "the detector hid a failed check behind a prepared head"
 nodes "$(ROLLUP="$FAILED" node)"
 mkdir -p "$STATE"
 echo "$(date +%s) owner/repo#5+1" >>"$STATE/claimed"
