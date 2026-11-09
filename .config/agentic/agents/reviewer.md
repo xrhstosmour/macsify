@@ -34,6 +34,13 @@ permission:
 
 Per changed code path, how often does it run (once is low, per item in a loop is medium, nested loop is high)? Flag N+1 queries, removed eager loading, external API calls, file I/O, bulk writes, or CPU-heavy work in a request handler that belong in background jobs, and caching that does not match how the code is called (a short-lived object in a loop, separate instances of one record with separate caches). Estimate cost as items per page times calls per item times cost per call.
 
+- Query equivalence: past the same-rows check in Self-Critique, a join that filters out or duplicates rows where the old eager load did not.
+- Unloaded relations: a join used only to filter leaves related records unloaded, check what callers read on the loaded records, a relation not loaded, filtering in memory what the database should filter, or a new query over a collection already in memory.
+- Cache the result, not the query: a cache entry holding a lazy query object still queries on every hit, materialize it with what callers read inside the cached block.
+- Global lookup in a loop: a class-level or global lookup called per item, even one behind a shared or remote cache, costs a round trip each time, load it once before the loop and pass it in.
+- Request-scoped helpers: a helper with database or cache access reached from several views, serializers, or layout parts in one request needs request-level memoization, a single call does not.
+- Critical paths: when the repo names its latency-tracked or high-traffic endpoints, jobs, or actions (a constant, an SLO file, `REVIEW.md`), changes feeding them get extra scrutiny.
+
 ## Security
 
 Other agents and skills cite this section and Severity calibration by heading name, keep both names stable.
