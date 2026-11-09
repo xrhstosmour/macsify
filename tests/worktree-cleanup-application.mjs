@@ -155,10 +155,13 @@ const untracked = worktree("untracked", { commit: true, merge: true });
 writeFileSync(join(untracked, "new-file"), "never added");
 await check("untracked file", untracked, "kept", false);
 
-// Detached HEAD: kept.
+// Detached HEAD: removed on a merged commit, kept on one only reachable from here.
 const detached = worktree("detached", { commit: true, merge: true });
 git(detached, "checkout", "--quiet", "--detach");
-await check("detached HEAD", detached, "kept", false);
+await check("detached HEAD merged", detached, "removed", true);
+const detachedUnmerged = worktree("detached-unmerged", { commit: true });
+git(detachedUnmerged, "checkout", "--quiet", "--detach");
+await check("detached HEAD not merged", detachedUnmerged, "kept", false);
 
 // A rebase in progress: kept.
 const rebasing = worktree("rebasing", { commit: true, merge: true });
