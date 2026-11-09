@@ -5,7 +5,9 @@
 # path outside `skills/` are kept, a review script gone from the repository is
 # removed from the installed copy, the old watcher cache is moved once and never
 # over the new one, and the `opencode.json` template gets every
-# agent model from `models.txt`, also when its formatting changes. Runs against a
+# agent model from `models.txt`, also when its formatting changes, a plugin
+# enabled by setup keeps the committed ones, and only a committed plugin not
+# installed yet is installed. Runs against a
 # temporary directory, never the installed configuration.
 
 set -e
@@ -112,6 +114,23 @@ printf 'not json' >"$installed"
 printf '{"model":"new"}\n' >"$installed"
 restore_claude_settings "$installed" "{}"
 [ "$(jq -c . "$installed")" = '{"model":"new"}' ] || fail "an empty preserved object changed the settings"
+
+# A plugin enabled by setup keeps the committed plugins, and a broken settings file stays as it was.
+printf '{"enabledPlugins":{"swift-lsp@claude-plugins-official":true},"model":"new"}\n' >"$installed"
+enable_claude_plugin "$installed" "xcode@claude-plugins-official"
+[ "$(jq -cS . "$installed")" = '{"enabledPlugins":{"swift-lsp@claude-plugins-official":true,"xcode@claude-plugins-official":true},"model":"new"}' ] || fail "enabled plugin settings were $(jq -c . "$installed")"
+printf 'not json' >"$installed"
+enable_claude_plugin "$installed" "xcode@claude-plugins-official" 2>/dev/null
+[ "$(cat "$installed")" = "not json" ] || fail "a broken settings file was changed when enabling a plugin"
+
+# Only a turned on plugin that is not installed is reported, a missing or broken installed list installs them all.
+printf '{"enabledPlugins":{"swift-lsp@claude-plugins-official":true,"claude-hud@claude-hud":true,"off@claude-hud":false}}\n' >"$installed"
+installed_plugins="$TEST_DIRECTORY/installed_plugins.json"
+printf '{"plugins":{"claude-hud@claude-hud":[{"scope":"user"}]}}\n' >"$installed_plugins"
+[ "$(missing_claude_plugins "$installed" "$installed_plugins")" = "swift-lsp@claude-plugins-official" ] || fail "missing plugins were $(missing_claude_plugins "$installed" "$installed_plugins")"
+[ "$(missing_claude_plugins "$installed" "$TEST_DIRECTORY/missing.json" | sort | tr '\n' ' ')" = "claude-hud@claude-hud swift-lsp@claude-plugins-official " ] || fail "a missing installed list did not report every plugin"
+printf 'not json' >"$installed_plugins"
+[ "$(missing_claude_plugins "$installed" "$installed_plugins" | wc -l | tr -d ' ')" = 2 ] || fail "a broken installed list did not report every plugin"
 
 if [ "$failures" -gt 0 ]; then
   exit 1

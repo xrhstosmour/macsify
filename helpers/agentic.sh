@@ -132,3 +132,34 @@ restore_claude_settings() {
     log_warning "Could not restore ${preserved} in ${file}, add it back by hand."
   fi
 }
+
+# Prints each plugin the settings file turns on that is not installed yet, one
+# `plugin@marketplace` per line. An `enabledPlugins` entry never downloads a
+# plugin, so a new machine has none of the committed ones until they are
+# installed. A missing or broken installed list counts as nothing installed.
+# Usage:
+#   missing_claude_plugins <installed settings file> <installed_plugins.json>
+missing_claude_plugins() {
+  local file="$1" installed_file="$2" installed=""
+  if [ -f "$installed_file" ]; then
+    installed=$(jq -c '.plugins // {}' "$installed_file" 2>/dev/null || true)
+  fi
+  [ -n "$installed" ] || installed="{}"
+  jq -r --argjson installed "$installed" '.enabledPlugins // {} | to_entries[] | select(.value == true and $installed[.key] == null) | .key' "$file"
+}
+
+# Turns on a plugin in the settings file just copied over the installed one,
+# for a plugin the committed file cannot list on every machine. The other
+# `enabledPlugins` entries stay, a file that is not `JSON` is left alone.
+# Usage:
+#   enable_claude_plugin <installed settings file> <plugin@marketplace>
+enable_claude_plugin() {
+  local file="$1" plugin="$2" merged
+  merged=$(mktemp)
+  if jq --arg plugin "$plugin" '.enabledPlugins[$plugin] = true' "$file" >"$merged" 2>/dev/null; then
+    mv "$merged" "$file"
+  else
+    rm -f "$merged"
+    log_warning "Could not enable ${plugin} in ${file}, run /plugin install ${plugin} by hand."
+  fi
+}

@@ -265,6 +265,49 @@ effort: ${effort}" "$HOME/.claude/agents/${agent}.md"
     log_info "Copying Claude Code settings..."
     cp "$AGENTIC_SCRIPT_DIRECTORY/../claude/settings.json" "$HOME/.claude/"
     restore_claude_settings "$HOME/.claude/settings.json" "$preserved_settings"
+
+    # The committed plugins are only turned on by the file, so each missing one is installed. A
+    # marketplace in `extraKnownMarketplaces` resolves from the settings just copied, the official
+    # one is not listed there and is added with `--marketplace` on a machine that never opened
+    # Claude Code. No `--yes`, a committed plugin that turns into a command source must be confirmed
+    # by hand instead of running unseen.
+    if command -v claude &>/dev/null; then
+        while IFS= read -r plugin; do
+            [ -n "$plugin" ] || continue
+            log_info "Installing the Claude Code ${plugin} plugin..."
+            if [ "${plugin#*@}" = "claude-plugins-official" ]; then
+                run_with_timeout 180 claude plugin install "${plugin%@*}" --marketplace anthropics/claude-plugins-official --scope user </dev/null || log_warning "Claude Code ${plugin} plugin install failed, run 'claude plugin install ${plugin}' by hand."
+            else
+                run_with_timeout 180 claude plugin install "$plugin" --scope user </dev/null || log_warning "Claude Code ${plugin} plugin install failed, run 'claude plugin install ${plugin}' by hand."
+            fi
+        done < <(missing_claude_plugins "$HOME/.claude/settings.json" "$HOME/.claude/plugins/installed_plugins.json")
+    else
+        log_warning "Skipping the Claude Code plugins, 'claude' CLI not found."
+    fi
+
+    # Apple's `xcode` plugin is linked from the installed Xcode through `xcrun`, so it is not in
+    # the committed file, a machine without Xcode, the work profile, would fail to load it. An
+    # `enabledPlugins` entry alone never installs a plugin, and its command source needs `--yes`
+    # without a terminal, `--marketplace` adds the official marketplace on a machine that never
+    # opened Claude Code. The copy above drops the entry, so an installed plugin is enabled again.
+    # An Xcode before agent plugins, 26.6 here, runs `mcpbridge` for `xcrun agent` and blocks
+    # waiting for Xcode instead of failing, hence the timeout. A zero exit alone is not enough, it
+    # must print a real plugin directory, and it goes to a file since `$(...)` would wait for the
+    # timeout's watcher.
+    xcode_plugin_path=$(mktemp)
+    if [ "$MACSIFY_PROFILE" != "personal" ]; then
+        log_info "Skipping the Claude Code xcode plugin, it needs the personal profile."
+    elif ! command -v claude &>/dev/null; then
+        log_warning "Skipping the Claude Code xcode plugin, 'claude' CLI not found."
+    elif ! { run_with_timeout 10 xcrun agent plugin path --plugin-format claude </dev/null >"$xcode_plugin_path" 2>/dev/null && [ -d "$(head -n 1 "$xcode_plugin_path")" ]; }; then
+        log_info "Skipping the Claude Code xcode plugin, it needs an Xcode with agent plugins."
+    elif jq -e '.plugins["xcode@claude-plugins-official"]' "$HOME/.claude/plugins/installed_plugins.json" &>/dev/null; then
+        enable_claude_plugin "$HOME/.claude/settings.json" "xcode@claude-plugins-official"
+    else
+        log_info "Installing the Claude Code xcode plugin..."
+        run_with_timeout 180 claude plugin install xcode --marketplace anthropics/claude-plugins-official --scope user --yes </dev/null || log_warning "Claude Code xcode plugin install failed, run 'claude plugin install xcode@claude-plugins-official' by hand."
+    fi
+    rm -f "$xcode_plugin_path"
     cp "$AGENTIC_SCRIPT_DIRECTORY/../claude/keybindings.json" "$HOME/.claude/"
 
     # `claude/settings.json` commits a bare `bun` in `statusLine.command` and this resolves it to
