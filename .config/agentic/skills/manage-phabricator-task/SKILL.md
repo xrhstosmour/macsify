@@ -96,7 +96,7 @@ A distinct, opt-in action, not a generic comment. Some workflows rely on the lit
 ### 1. Gather required fields
 
 - Tag, required. If the user named it, resolve and confirm it. If "Tag model" applies, gather domain (required, one), umbrella (y/n), and later (y/n) together in one prompt from the live candidate list. Otherwise ask "Which tag?", offering tags from the user's own tasks of the last week plus "or something else". Resolve a name to a PHID with `pha_project_search` (`name_like=<text>`), showing candidates when there is no exact match.
-- Title, required: a short imperative phrase, at most about 60 characters, stating the outcome ("Support dark mode", not "Investigate dark mode support"). No priority prefix, no backticks, Phabricator titles are plain text.
+- Title, required: a short imperative phrase, at most 45 characters per the title rule in `~/.config/agentic/instructions/versioning.md`, stating the outcome ("Support dark mode", not "Investigate dark mode support"). No priority prefix, no backticks, Phabricator titles are plain text.
 
 ### 2. Gather optional fields
 
@@ -186,7 +186,7 @@ Fetch with `pha_task_get` by numeric ID to confirm the task and show a before an
 - Due date: a real field is set directly. Without one, fetch the description with `pha_task_get`, add or replace the `**Due:**` line at the bottom, and write the whole description back.
 - Reference: a real `reference` parameter is set directly, extra links go in `## References`. Without one, make sure the PR/branch value is in `## References`. That section always sits below the `**Due:**` line.
 - Board column: see "Workboard columns". Stakeholder status update: see "Status update comment", not a plain comment.
-- To comment or add subscribers, use `pha_task_add_comment` and mention each person as `@<phid>`.
+- To comment or add subscribers, use `pha_task_add_comment` and mention each person as `@<phid>`. A comment follows Posted messages in `~/.config/agentic/instructions/communication.md`, with the Remarkup blank lines from "Description generation", a `Status update comment` keeps its own one-sentence format.
 
 ## Priority keywords
 
