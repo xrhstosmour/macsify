@@ -2,7 +2,9 @@
 
 # Checks the `Herdr` app's `worktree-cleanup` mod: a merged, clean worktree and
 # its branch are removed, and one that is unmerged, dirty, untracked, detached on
-# an unmerged commit, mid-rebase, protected or the main checkout is kept. The
+# an unmerged commit, mid-rebase, protected or the main checkout is kept. A
+# worktree found by scanning the roots goes only when a commit made in it is
+# merged and it is idle. The
 # decisions live in `logic.js`, `worktree-cleanup-application.mjs` runs them
 # against real temporary `git` repositories, so this needs `node` and `git`.
 

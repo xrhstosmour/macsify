@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const logicUrl = new URL("../.config/herdr-app/mods/worktree-cleanup/logic.js", import.meta.url);
-const { sweepWorktree, parseProtected, isProtected, isOccupiedBy, linkedWorktreeRoot, trackedWorktree } = await import(fileURLToPath(logicUrl));
+const { discoverWorktrees, sweepWorktree, parseProtected, isProtected, isOccupiedBy, linkedWorktreeRoot, trackedWorktree } = await import(fileURLToPath(logicUrl));
 
 const base = realpathSync(mkdtempSync(join(tmpdir(), "worktree-cleanup-")));
 let failures = 0;
@@ -162,6 +162,40 @@ await check("detached HEAD merged", detached, "removed", true);
 const detachedUnmerged = worktree("detached-unmerged", { commit: true });
 git(detachedUnmerged, "checkout", "--quiet", "--detach");
 await check("detached HEAD not merged", detachedUnmerged, "kept", false);
+
+// A worktree found by the scan, not by a terminal, goes only when a commit made in it is merged and it is idle.
+const scanned = join(base, "scanned");
+mkdirSync(join(scanned, "project"), { recursive: true });
+git(checkout, "worktree", "add", "--quiet", "-b", "feature/scanned-pushed", join(scanned, "project", "pushed"));
+git(checkout, "worktree", "add", "--quiet", "-b", "feature/scanned-fresh", join(scanned, "project", "fresh"));
+const found = await discoverWorktrees(exec, [scanned]);
+if (found.length !== 2 || !found.includes(join(scanned, "project", "fresh"))) fail(`the scan found ${JSON.stringify(found)}`);
+if ((await discoverWorktrees(exec, [join(base, "missing")])).length !== 0) fail("a missing root yielded worktrees");
+const scannedPushed = join(scanned, "project", "pushed");
+writeFileSync(join(scannedPushed, "pushed.txt"), "pushed");
+git(scannedPushed, "add", ".");
+git(scannedPushed, "commit", "--quiet", "-m", "pushed work");
+git(scannedPushed, "push", "--quiet", "origin", "feature/scanned-pushed");
+await check("scanned and pushed, not merged", scannedPushed, "kept", false, { allowPushed: false });
+await check("scanned and fresh, active", join(scanned, "project", "fresh"), "kept", false, { allowPushed: false, idleMinutes: 60 });
+const age = (path) => {
+  execFileSync("find", [path, git(path, "rev-parse", "--path-format=absolute", "--git-dir"), "-maxdepth", "1", "-exec", "touch", "-t", "202001010000", "{}", "+"]);
+  // A sweep that kept it ran `git status`, which must not count as activity.
+  git(path, "update-index", "--really-refresh");
+};
+// Fresh looks merged, its tip is the default branch, yet an agent may be about to start in it.
+const scannedFresh = join(scanned, "project", "fresh");
+age(scannedFresh);
+await check("scanned and fresh, idle", scannedFresh, "kept", false, { allowPushed: false, idleMinutes: 60 });
+const scannedMerged = join(scanned, "project", "merged");
+git(checkout, "worktree", "add", "--quiet", "-b", "feature/scanned-merged", scannedMerged);
+writeFileSync(join(scannedMerged, "scanned-merged.txt"), "scanned merged");
+git(scannedMerged, "add", ".");
+git(scannedMerged, "commit", "--quiet", "-m", "merged work");
+git(checkout, "merge", "--quiet", "--no-ff", "-m", "merge", "feature/scanned-merged");
+git(checkout, "push", "--quiet", "origin", "main");
+age(scannedMerged);
+await check("scanned, merged and idle", scannedMerged, "removed", true, { allowPushed: false, idleMinutes: 60 });
 
 // A rebase in progress: kept.
 const rebasing = worktree("rebasing", { commit: true, merge: true });

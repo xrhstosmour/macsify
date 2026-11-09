@@ -152,19 +152,65 @@ export async function branchPushed(exec, mainCheckout, branch) {
   }
 }
 
+// The linked worktrees under the roots, found by the `.git` file each one has at
+// its top, for worktrees no terminal of the app ever sat in. A root missing or
+// unreadable yields nothing.
+export async function discoverWorktrees(exec, roots) {
+  const found = new Set();
+  const rootOf = (folder) => linkedWorktreeRoot(exec, folder);
+  for (const root of roots) {
+    let listing;
+    try {
+      listing = await exec("find", [root, "-mindepth", "2", "-maxdepth", "3", "-name", ".git", "-type", "f"]);
+    } catch {
+      continue;
+    }
+    for (const marker of listing.stdout.split("\n").filter(Boolean)) {
+      const worktree = await trackedWorktree(rootOf, marker.replace(/\/\.git$/, ""), roots);
+      if (worktree) found.add(worktree);
+    }
+  }
+  return [...found];
+}
+
+// Whether anything at the top of the worktree or in its own git directory
+// changed in the last `minutes`, a sign someone outside the app works there.
+// The index and the git directory itself are left out, every `git status`,
+// this mod's own included, may rewrite the index, and a staged change already
+// keeps the worktree as uncommitted. Only one level deep, a write further down
+// with nothing new at the top passes as idle.
+async function recentlyActive(exec, path, minutes) {
+  const gitDirectory = await git(exec, path, ["rev-parse", "--path-format=absolute", "--git-dir"]);
+  if (!gitDirectory) return true;
+  const age = ["-mmin", `-${minutes}`];
+  try {
+    const top = await exec("find", [path, "-maxdepth", "1", ...age], { cwd: path });
+    const own = await exec("find", [gitDirectory, "-mindepth", "1", "-maxdepth", "1", "!", "-name", "index*", ...age], { cwd: path });
+    return top.code !== 0 || own.code !== 0 || `${top.stdout}${own.stdout}`.trim() !== "";
+  } catch {
+    // Unknown counts as active, the worktree stays.
+    return true;
+  }
+}
+
 // Removes one linked worktree when it is safe to, and its branch once the work
 // is merged or pushed. Resolves to `{ outcome, reason }` with outcome one of `removed`,
 // `kept` (check again later) or `untrack` (nothing left to watch). Never forces:
 // git itself refuses a locked or dirty worktree. `isOccupied` is asked right
 // before the removal, the merge check can take a while and a terminal may have
-// opened in the folder since the caller looked.
-export async function sweepWorktree(path, { exec, protectedEntries = [], fetched = new Set(), isOccupied = async () => false }) {
+// opened in the folder since the caller looked. A worktree no terminal of the
+// app sat in passes `allowPushed: false` and `idleMinutes`, an agent in another
+// terminal may still be working on a pushed branch or a fresh one, so it also
+// needs a commit made in it.
+export async function sweepWorktree(path, { exec, protectedEntries = [], fetched = new Set(), isOccupied = async () => false, allowPushed = true, idleMinutes = null }) {
   if (isProtected(path, protectedEntries)) return { outcome: "untrack", reason: "protected" };
 
   const common = await git(exec, path, ["rev-parse", "--path-format=absolute", "--git-common-dir"]);
   if (!common) return { outcome: "untrack", reason: "not a git worktree any more" };
   const mainCheckout = common.replace(/\/\.git$/, "");
   if (mainCheckout === path) return { outcome: "untrack", reason: "the main checkout" };
+
+  if (idleMinutes !== null && (await recentlyActive(exec, path, idleMinutes))) return { outcome: "kept", reason: `active in the last ${idleMinutes} minutes` };
 
   // `--untracked-files=all` so a new, never added file counts as work worth keeping.
   const status = await git(exec, path, ["status", "--porcelain", "--untracked-files=all"]);
@@ -176,6 +222,15 @@ export async function sweepWorktree(path, { exec, protectedEntries = [], fetched
     if (marker && (await exec("test", ["-e", marker], { cwd: path })).code === 0) {
       return { outcome: "kept", reason: `${state} in progress` };
     }
+  }
+
+  // A fresh worktree, `HEAD` never on another commit since `git worktree add`,
+  // sits on the default branch and so looks merged, yet an agent may be about to
+  // start in it. Distinct commits, `worktree add` itself logs `HEAD` twice. A
+  // missing reflog counts as fresh too.
+  if (idleMinutes !== null) {
+    const moves = await git(exec, path, ["reflog", "show", "--format=%H", "HEAD"]);
+    if (!moves || new Set(moves.split("\n")).size < 2) return { outcome: "kept", reason: "no commits made in it yet" };
   }
 
   const remove = async () => {
@@ -198,11 +253,11 @@ export async function sweepWorktree(path, { exec, protectedEntries = [], fetched
 
   // Merged, or pushed in full, either way no commit exists only here.
   const merged = await branchMerged(exec, mainCheckout, branch, fetched);
-  if (!merged.merged && (await branchPushed(exec, mainCheckout, branch))) {
+  if (!merged.merged && allowPushed && (await branchPushed(exec, mainCheckout, branch))) {
     merged.merged = true;
     merged.reason = "pushed to origin";
   }
-  if (!merged.merged) return { outcome: "kept", reason: `branch '${branch}' ${merged.reason}, not pushed` };
+  if (!merged.merged) return { outcome: "kept", reason: `branch '${branch}' ${merged.reason}${allowPushed ? ", not pushed" : ""}` };
 
   const failure = await remove();
   if (failure) return { outcome: "kept", reason: failure };
