@@ -30,6 +30,15 @@ export function isUnderAny(path, roots) {
   return roots.some((root) => path.startsWith(`${root}/`));
 }
 
+// A removal notice, the project in the title and the folder alone in the body,
+// the toast cuts a long body to one line and the full path never fit.
+export function removalNotice(path, roots) {
+  const root = roots.find((candidate) => path.startsWith(`${candidate}/`));
+  const parts = (root ? path.slice(root.length + 1) : path).split("/");
+  const folder = parts.pop();
+  return { title: root && parts.length ? `Worktree removed in ${parts.join("/")}` : "Worktree removed", body: folder };
+}
+
 // The worktree a terminal folder may be tracked as, or null. Both the folder as
 // spelled and the worktree root git reports are checked, a symlink under a root
 // can point at a worktree elsewhere, and only the root is what gets removed.

@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const logicUrl = new URL("../.config/herdr-app/mods/worktree-cleanup/logic.js", import.meta.url);
-const { discoverWorktrees, sweepWorktree, parseProtected, isProtected, isOccupiedBy, linkedWorktreeRoot, trackedWorktree } = await import(fileURLToPath(logicUrl));
+const { discoverWorktrees, sweepWorktree, parseProtected, isProtected, isOccupiedBy, linkedWorktreeRoot, removalNotice, trackedWorktree } = await import(fileURLToPath(logicUrl));
 
 const base = realpathSync(mkdtempSync(join(tmpdir(), "worktree-cleanup-")));
 let failures = 0;
@@ -146,6 +146,11 @@ const outside = join(base, "outside");
 git(checkout, "worktree", "add", "--quiet", "-b", "feature/outside", outside);
 symlinkSync(outside, join(base, "worktrees", "escape"));
 if ((await trackedWorktree(rootOf, join(base, "worktrees", "escape"), roots)) !== null) fail("a symlink inside the roots tracked a worktree outside them");
+
+// The toast cuts its body to one line, so the project goes in the title and only the folder in the body.
+const notice = (path) => JSON.stringify(removalNotice(path, ["/w", "/h"]));
+if (notice("/w/project/fix-typo") !== JSON.stringify({ title: "Worktree removed in project", body: "fix-typo" })) fail(`a project worktree's notice was ${notice("/w/project/fix-typo")}`);
+if (notice("/h/fix-typo") !== JSON.stringify({ title: "Worktree removed", body: "fix-typo" })) fail(`a worktree straight under a root got ${notice("/h/fix-typo")}`);
 
 // Merged but dirty or untracked: kept.
 const dirty = worktree("dirty", { commit: true, merge: true });
