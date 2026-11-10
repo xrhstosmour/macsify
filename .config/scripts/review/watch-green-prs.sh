@@ -16,7 +16,7 @@
 #   prepare   no comments, but a `fixup!`, `squash!` or `amend!` commit is left or the pull request conflicts with its base, keyed `<owner>/<repo>#<number>~<head sha>`, once per head
 #   checks    no comments and nothing to prepare, but a check failed on the head and none still runs, so one run sees every failure, keyed `<owner>/<repo>#<number>=<head sha>`, apart from `prepare` so a conflict after a handled failure at the same head still counts, the push of its own run is a new head, so a failure after it starts the next cycle
 #   One line per pull request and poll, the first reason not done yet, a reason marked done falls through to the next, so an approval nobody answers never hides a conflict or a failed check. A reason still claimed holds the pull request, its run handles the rest.
-#   capped    the pull request already started `CYCLE_LIMIT` cycles in a day, of any reason, a failed one included, it is reported once per head, keyed `<owner>/<repo>#<number>@<head sha>`, and not resolved again until the day passes, so a bot that reviews every push or a run that keeps failing cannot loop
+#   paused    the last `CYCLE_LIMIT` cycles of the pull request ran with nobody in between and this one would too, reported once per head, keyed `<owner>/<repo>#<number>@<head sha>`, so a bot that reviews every push or a check the watcher keeps breaking cannot loop. A cycle runs with nobody when no member or collaborator wrote any of its comments and its head is one `green-git.sh` pushed or one an earlier cycle already ran on, a bot answering the watcher's replies, or when its key was claimed before, a run that failed. A member's comment or a push of yours resumes it, nothing else does.
 # Outsiders never start an unattended change. Drafts, merged, closed, merge queue and cross repository pull requests are skipped, the push goes to `origin`.
 # A key is claimed at detection for two hours and recorded as done by `--mark`, same as `watch-review-requests.sh`. While any claim of a pull request is not done, the pull request is held, so a run still going is never started twice, not even for a reason its own push revealed. A run that failed without marking holds it until its claim expires, a newer comment waits too.
 # The newest 50 threads, 30 comments each, 50 comments and 50 reviews, 100 commits and 100 checks are read, a pull request with more is judged on those.
@@ -26,11 +26,11 @@ set -u
 STATE_DIRECTORY="${XDG_CACHE_HOME:-$HOME/.cache}/green-github-prs-watcher"
 SEEN_FILE="$STATE_DIRECTORY/seen"
 CLAIMED_FILE="$STATE_DIRECTORY/claimed"
+PUSHED_FILE="$STATE_DIRECTORY/pushed"
 CLAIM_SECONDS=7200
 CYCLE_LIMIT=3
-CYCLE_SECONDS=86400
 
-# Both files hold `<epoch> <key>`, the epochs of the claimed file count the cycles of a day.
+# Both files hold `<epoch> <key>`, the claimed file adds `auto` for a cycle that ran with nobody in between and `person` otherwise, then the head it ran on. `pushed` holds `<epoch> <head sha>`, written by `green-git.sh`.
 if [ "${1:-}" = "--mark" ]; then
   if ! [[ ${2:-} =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9._-]{1,100}#[0-9]+([@=~][0-9a-f]{40}|\+[0-9]+)$ ]]; then
     echo "usage: watch-green-prs.sh --mark <owner/repo#number+epoch|owner/repo#number=head sha|owner/repo#number~head sha|owner/repo#number@head sha>" >&2
@@ -84,7 +84,7 @@ if [ "$scope" != "me" ] && ! [[ $scope =~ ^[A-Za-z0-9]([A-Za-z0-9-]{0,38})$ ]]; 
 fi
 
 mkdir -p "$STATE_DIRECTORY"
-touch "$SEEN_FILE" "$CLAIMED_FILE"
+touch "$SEEN_FILE" "$CLAIMED_FILE" "$PUSHED_FILE"
 
 # One search per poll returns everything the decision needs. A failure shows on standard error, otherwise an expired token would look like no comments.
 # Search returns `null` nodes for items the token cannot read, such as repositories behind SAML single sign-on, they are skipped below.
@@ -111,6 +111,7 @@ query($search: String!) {
 
 # A comment counts when a bot or a person of the organization or a collaborator wrote it, never you, never a deleted author.
 # In an unresolved thread it counts after your last comment there, on the pull request and in a review body after your last comment on the pull request. A review with an empty body is the wrapper of inline comments, the threads carry those.
+# Each reason carries who started it, `person` when a member or collaborator wrote any of its comments, `machine` for a bot's comments, a fixup, a conflict or failed checks.
 # Every reason that applies, one line each, comments before prepare before checks, the loop below reports the first not done yet. A `mergeable` still `UNKNOWN` while GitHub computes it is left for the next poll.
 # A head with more than 100 checks is left alone, a pending one could hide past the page.
 # shellcheck disable=SC2016
@@ -118,31 +119,33 @@ JQ_FILTER='
 .data.viewer.login as $me
 | def counts: .author != null and .author.login != $me
     and (.author.__typename == "Bot" or (.author.__typename == "User" and (.authorAssociation | IN("OWNER", "MEMBER", "COLLABORATOR"))));
-  def after($time): [.[] | select(counts and .time > $time) | .time] | max;
+  def after($time): .[] | select(counts and .time > $time);
   .data.search.nodes[]
   | select(. != null and .number != null and .isCrossRepository == false)
   | ([.comments.nodes[] | select(.author.login == $me) | .createdAt] | max // "") as $mine
-  | ([
+  | [
       (.reviewThreads.nodes[] | select(.isResolved == false) | [.comments.nodes[] | . + {time: .createdAt}]
         | ([.[] | select(.author.login == $me) | .time] | max // "") as $last | after($last)),
       ([.comments.nodes[] | . + {time: .createdAt}] + [.reviews.nodes[] | select(.body != "") | . + {time: .submittedAt}]
         | map(select(.author.__typename == "User")) | after($mine))
-    ] | map(select(. != null)) | max) as $newest
+    ] as $new
+  | ($new | map(.time) | max) as $newest
+  | (if any($new[]; .author.__typename == "User") then "person" else "machine" end) as $by
   | .latest.nodes[0].commit.statusCheckRollup as $rollup
-  | ((if $newest != null then "comments \($newest | fromdateiso8601)" else empty end),
-     (if any(.commits.nodes[]; .commit.messageHeadline | test("^(fixup|squash|amend)! ")) or .mergeable == "CONFLICTING" then "prepare 0" else empty end),
+  | ((if $newest != null then "comments \($newest | fromdateiso8601) \($by)" else empty end),
+     (if any(.commits.nodes[]; .commit.messageHeadline | test("^(fixup|squash|amend)! ")) or .mergeable == "CONFLICTING" then "prepare 0 machine" else empty end),
      (if ($rollup.state // "" | IN("FAILURE", "ERROR")) and ($rollup.contexts.pageInfo.hasNextPage // false | not)
-       and all($rollup.contexts.nodes[]; (.status // "COMPLETED") == "COMPLETED" and (.state // "" | IN("PENDING", "EXPECTED") | not)) then "checks 0" else empty end)) as $reason
+       and all($rollup.contexts.nodes[]; (.status // "COMPLETED") == "COMPLETED" and (.state // "" | IN("PENDING", "EXPECTED") | not)) then "checks 0 machine" else empty end)) as $reason
   | "\(.repository.nameWithOwner) \(.number) \(.headRefOid) \($reason) \(.url) \(.headRefName)"'
 
-# Whether a key is marked done.
+# Whether a key is marked done, after an optional epoch.
 done_key() {
-  awk -v key="$1" '$2 == key { found = 1 } END { exit !found }' "$SEEN_FILE"
+  awk -v key="$1" -v since="${2:-0}" '$2 == key && $1 > since { found = 1 } END { exit !found }' "$SEEN_FILE"
 }
 
-# Whether a key is claimed by a run that started less than two hours ago.
+# Whether a key is claimed by a run that started less than two hours ago, after an optional epoch.
 running() {
-  awk -v key="$1" -v now="$(date +%s)" -v limit="$CLAIM_SECONDS" '$2 == key && now - $1 < limit { found = 1 } END { exit !found }' "$CLAIMED_FILE"
+  awk -v key="$1" -v since="${2:-0}" -v now="$(date +%s)" -v limit="$CLAIM_SECONDS" '$2 == key && $1 > since && now - $1 < limit { found = 1 } END { exit !found }' "$CLAIMED_FILE"
 }
 
 # Whether any run of the pull request is claimed and not done yet. A run that answers its comments and pushes a fixup before the autosquash shows a new reason mid-run, it must not start a second cycle.
@@ -153,15 +156,35 @@ busy() {
     END { exit !found }' "$SEEN_FILE" "$CLAIMED_FILE"
 }
 
-# How many cycles of the pull request started in the last day, of any reason but `capped`. Every claim counts, so a run that fails and is claimed again counts each time.
-cycles() {
-  awk -v pull_request="$1" -v now="$(date +%s)" -v limit="$CYCLE_SECONDS" 'index($2, pull_request) == 1 && index("+=~", substr($2, length(pull_request) + 1, 1)) > 0 && now - $1 < limit { count++ } END { print count + 0 }' "$CLAIMED_FILE"
+# Whether a key was claimed before, a run that failed and comes back.
+reclaimed() {
+  awk -v key="$1" '$2 == key { found = 1 } END { exit !found }' "$CLAIMED_FILE"
+}
+
+# Whether `green-git.sh` pushed the head, so a bot or a check reacting to it reacts to the watcher, not to you.
+pushed() {
+  awk -v head="$1" '$2 == head { found = 1 } END { exit !found }' "$PUSHED_FILE"
+}
+
+# Whether a cycle of the pull request already ran on the head, so a bot answering the watcher's replies with no push in between reacts to the watcher, not to you.
+revisited() {
+  awk -v pull_request="$1" -v head="$2" 'index($2, pull_request) == 1 && index("+=~", substr($2, length(pull_request) + 1, 1)) > 0 && $4 == head { found = 1 } END { exit !found }' "$CLAIMED_FILE"
+}
+
+# Whether the last `CYCLE_LIMIT` cycles of the pull request all ran with nobody in between. A claim from before the third column counts as a person's, so an upgrade pauses nothing.
+paused() {
+  awk -v pull_request="$1" -v limit="$CYCLE_LIMIT" 'index($2, pull_request) == 1 && index("+=~", substr($2, length(pull_request) + 1, 1)) > 0 { streak = ($3 == "auto") ? streak + 1 : 0 } END { exit !(streak >= limit) }' "$CLAIMED_FILE"
+}
+
+# When a person last started a cycle of the pull request, 0 when never, a paused head before it is reported again.
+resumed() {
+  awk -v pull_request="$1" 'index($2, pull_request) == 1 && index("+=~", substr($2, length(pull_request) + 1, 1)) > 0 && $3 != "auto" { latest = $1 } END { print latest + 0 }' "$CLAIMED_FILE"
 }
 
 poll() {
-  # Both files only matter while a pull request is open, keep the latest entries.
+  # The state files only matter while a pull request is open, keep the latest entries.
   local file
-  for file in "$SEEN_FILE" "$CLAIMED_FILE"; do
+  for file in "$SEEN_FILE" "$CLAIMED_FILE" "$PUSHED_FILE"; do
     if [ "$(wc -l <"$file")" -gt 2000 ]; then
       tail -n 1000 "$file" >"$file.tmp" && mv "$file.tmp" "$file"
     fi
@@ -169,7 +192,7 @@ poll() {
 
   local held=""
   gh api graphql -f query="$GRAPHQL_QUERY" -f "search=$search" --jq "$JQ_FILTER" |
-    while read -r repository number head reason epoch url branch; do
+    while read -r repository number head reason epoch by url branch; do
       [ -n "$repository" ] || continue
 
       pull_request="$repository#$number"
@@ -186,21 +209,26 @@ poll() {
         continue
       fi
       held="$pull_request"
-      # A cycle still going holds the pull request and is skipped before the cap, its own claim would count it as capped otherwise.
+      # A cycle still going holds the pull request and is skipped before the pause, its own claim would count otherwise.
       if busy "$pull_request"; then
         continue
       fi
-      if [ "$(cycles "$pull_request")" -ge "$CYCLE_LIMIT" ]; then
+      kind=person
+      if reclaimed "$key" || { [ "$by" = machine ] && { pushed "$head" || revisited "$pull_request" "$head"; }; }; then
+        kind=auto
+      fi
+      if [ "$kind" = auto ] && paused "$pull_request"; then
         key="$pull_request@$head"
-        reason=capped
-        if done_key "$key" || running "$key"; then
+        reason=paused
+        since="$(resumed "$pull_request")"
+        if done_key "$key" "$since" || running "$key" "$since"; then
           continue
         fi
       fi
 
       echo "$key $head $url $branch $reason"
       if [ "$dry_run" = false ]; then
-        echo "$(date +%s) $key" >>"$CLAIMED_FILE"
+        echo "$(date +%s) $key $kind $head" >>"$CLAIMED_FILE"
       fi
     done
 }
