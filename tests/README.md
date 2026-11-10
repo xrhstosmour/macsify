@@ -22,5 +22,6 @@ Plain `bash` tests, all run by `.github/workflows/lint.yml` next to the `shellch
 - `herdr-agent-resume-fish.sh`: only the terminal's own `fish` resumes the recorded agent with its flags, a record naming a flag as session resumes nothing, and an agent typed by hand forgets its record when it ends. It needs `fish`.
 - `antivirus.sh`: `antivirus/scan.sh` moves an infected file into quarantine with a note and without execute bits, leaves clean files, dependency folders and, with `--recent`, old files alone, and never deletes anything.
 - `arrange-displays.sh`: `displays/arrange_displays.sh` runs the compiled placer only when no external keyboard is connected, and does nothing before it is compiled. The placer's geometry is checked by hand.
+- `speed-log.sh`: the `audit-home-network` weekly speed log writes no address, logs a failed measurement as failed, and notifies only after three measured weeks below half the contracted download.
 - `syncthing.sh`: `settings/syncthing.sh` reads the API key and a loopback GUI URL out of `config.xml`, and sends the hardening with the key in a header and the body on standard input.
 - `dock.sh`: which `Dock` is Apple's default and where missing applications go. It needs macOS and skips on the `Linux` runner, so run it locally after a `Dock` change.
