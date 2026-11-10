@@ -1,7 +1,8 @@
 ---
 name: audit-tailscale
 description: >
-  Audit and lock down the user's own Tailscale network, replacing allow-all access with tags and per-port grants, rolled out one device at a time. Use for "/audit-tailscale", "audit my tailscale", "lock down my tailnet", "tailscale acl", "who can reach what on my tailnet".
+  Audit and lock down the user's own Tailscale network, replacing allow-all access with tags and per-port grants, rolled out one device at a time. Manual only, run with "/audit-tailscale".
+disable-model-invocation: true
 ---
 
 # Audit Tailscale
@@ -31,6 +32,18 @@ A bad policy can lock the user out of their own devices. These rules override sp
 - Keep a second way in to every device before tagging it, the machine console, a phone on mobile data, or the cloud provider's console.
 - One approval covers one change, never a batch and never a later run.
 - If a device stops working, the fastest way back is restoring the saved policy, which acts at once for every device. Removing the device's tag is the second way, and the device may need to sign in again to become a user-owned device. Confirm access is back before moving on.
+
+## Recheck
+
+A tailnet already locked down, or a run from `secure-me`, gets a recheck instead of steps 2 to 5. Read-only, same rules:
+
+- Devices: new or unknown devices since the policy the user pastes in, devices not seen for 60 days, devices of other users and shared nodes.
+- Keys: devices with key expiry disabled, keys expiring within 30 days, old client versions against the latest release.
+- Tailnet Lock: on or off, and the trusted signing nodes still the user's own devices.
+- Settings: device approval, user approval, admins, Funnel, exit nodes and subnet routes advertised or approved, compared with the pasted policy or listed as they stand without one.
+- Policy: the live policy against the pasted copy, every difference reported, the `tests` block still passing through the validate endpoint.
+
+A finding that needs a policy change goes back to step 4 and Change safety. Without a pasted copy, say there is nothing to compare and audit the live policy as in step 1.
 
 ## 1. Inventory
 
