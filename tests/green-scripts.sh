@@ -6,8 +6,10 @@
 # viewer, once while its run goes and until it is marked done, never for an
 # outsider, the viewer, a deleted author, a bot outside a review thread, a
 # resolved thread or a pull request from a fork, keys a cycle without the head so
-# its own push does not start it again, caps a pull request after three cycles
-# started in a day, failed ones included, claims nothing on a dry run, and
+# its own push does not start it again, holds a pull request while any of its
+# runs goes, pauses it after three cycles in a row with nobody in between, on
+# heads the watcher pushed or already ran on, or of a failed run claimed again, until a member
+# comments or you push, claims nothing on a dry run, and
 # rejects a scope that could carry a search qualifier. The responder posts only
 # on an open pull request of the viewer that is not a draft, only to a comment
 # or a thread of that pull request, a reply to the first comment of its thread,
@@ -183,19 +185,77 @@ nodes "$(node '[[false, [["author","2026-11-05T11:00:00Z"]]]]' '[]' '[]' true)"
 nodes ""
 [ -z "$(detect)" ] || fail "the detector reported a pull request in the merge queue"
 
-# Three cycles started in a day cap the pull request, failed ones included, reported once per head, an old cycle does not count, and a third cycle still going is not capped.
+# Three cycles in a row on heads the watcher pushed, with nobody in between, pause the pull request on the fourth, reported once per head.
+PAUSED="owner/repo#5@$HEAD_SHA $HEAD_SHA https://github.com/owner/repo/pull/5 fix/thing paused"
+# Three finished cycles of its own, the claims are those of a run done with them.
+automatic() {
+  local cycle
+  mkdir -p "$STATE"
+  echo "$(date +%s) $HEAD_SHA" >>"$STATE/pushed"
+  for cycle in "$@"; do
+    echo "$(date +%s) owner/repo#5$cycle" >>"$STATE/claimed"
+    echo "$(date +%s) owner/repo#5${cycle% *}" >>"$STATE/seen"
+  done
+}
 nodes "$(node '[[false, [["copilot","2026-11-05T11:00:00Z","Bot","NONE"]]]]')"
-mkdir -p "$STATE"
-for cycle in 1 2 3; do
-  echo "$(date +%s) owner/repo#5+$cycle" >>"$STATE/claimed"
+automatic "+1 auto" "+2 auto" "+3 auto"
+[ "$(detect)" = "$PAUSED" ] || fail "the detector did not pause a pull request after three cycles of its own in a row"
+[ -z "$(detect)" ] || fail "the detector reported a paused head twice"
+"$WATCHER" --mark "owner/repo#5@$HEAD_SHA"
+grep -v '@' "$STATE/claimed" >"$STATE/claimed.kept"
+mv "$STATE/claimed.kept" "$STATE/claimed"
+echo "$(($(date +%s) - 7300)) owner/repo#5@$HEAD_SHA auto" >>"$STATE/claimed"
+[ -z "$(detect)" ] || fail "the detector reported a paused head again once marked"
+# A member's comment resumes it, and a later pause of the same head is reported again.
+STUB_NODES="[$(node '[[false, [["copilot","2026-11-05T11:00:00Z","Bot","NONE"],["author","2026-11-05T12:00:00Z"]]]]')]"
+[ "$(detect)" = "owner/repo#5+$(epoch 2026-11-05T12:00:00Z) $HEAD_SHA https://github.com/owner/repo/pull/5 fix/thing comments" ] || fail "the detector kept a pull request paused after a member commented"
+"$WATCHER" --mark "owner/repo#5+$(epoch 2026-11-05T12:00:00Z)"
+for cycle in 4 5 6; do
+  echo "$(($(date +%s) + cycle)) owner/repo#5+$cycle auto" >>"$STATE/claimed"
+  echo "$(($(date +%s) + cycle)) owner/repo#5+$cycle" >>"$STATE/seen"
 done
-[ "$(detect)" = "owner/repo#5@$HEAD_SHA $HEAD_SHA https://github.com/owner/repo/pull/5 fix/thing capped" ] || fail "the detector did not cap a pull request after three cycles"
-[ -z "$(detect)" ] || fail "the detector reported a capped head twice"
-echo "$(($(date +%s) - 90000)) owner/repo#5+1" >"$STATE/claimed"
-[ "$(detect)" = "$LINE" ] || fail "the detector counted a cycle older than a day"
-echo "$(date +%s) owner/repo#5+1" >>"$STATE/claimed"
-echo "$(date +%s) owner/repo#5+2" >>"$STATE/claimed"
-[ -z "$(detect)" ] || fail "the detector capped a third cycle that is still going"
+STUB_NODES="[$(node '[[false, [["copilot","2026-11-05T13:00:00Z","Bot","NONE"]]]]')]"
+[ "$(detect)" = "$PAUSED" ] || fail "the detector did not report a head paused again after it resumed"
+# A push of yours resumes it, a bot reacting to it reacts to you.
+nodes "$(node '[[false, [["copilot","2026-11-05T11:00:00Z","Bot","NONE"]]]]')"
+automatic "+1 auto" "+2 auto" "+3 auto"
+: >"$STATE/pushed"
+[ "$(detect)" = "$LINE" ] || fail "the detector paused a pull request at a head you pushed"
+# A cycle a person started in between, or a claim from before the third column, breaks the streak.
+nodes "$(node '[[false, [["copilot","2026-11-05T11:00:00Z","Bot","NONE"]]]]')"
+automatic "+1 auto" "+2 person" "+3 auto"
+[ "$(detect)" = "$LINE" ] || fail "the detector paused a pull request across a cycle a person started"
+nodes "$(node '[[false, [["copilot","2026-11-05T11:00:00Z","Bot","NONE"]]]]')"
+automatic "+1" "+2" "+3"
+[ "$(detect)" = "$LINE" ] || fail "the detector paused a pull request on claims from before the third column"
+
+# A bot's comments or failed checks on a head the watcher pushed run with nobody, on your own head or with a member's comment they do not, a failed run claimed again always does.
+claimed_kind() {
+  tail -n 1 "$STATE/claimed" | cut -d ' ' -f 3
+}
+nodes "$(node '[[false, [["copilot","2026-11-05T11:00:00Z","Bot","NONE"]]]]')"
+detect >/dev/null
+[ "$(claimed_kind)" = person ] || fail "the detector counted a bot's comments on your own head as a cycle of its own"
+# A bot answering the run's replies on that head, with no push in between, answers the watcher.
+"$WATCHER" --mark "$KEY"
+STUB_NODES="[$(node '[[false, [["copilot","2026-11-05T12:00:00Z","Bot","NONE"]]]]')]"
+detect >/dev/null
+[ "$(claimed_kind)" = auto ] || fail "the detector did not count a bot answering its replies on the same head as a cycle of its own"
+nodes "$(node '[[false, [["copilot","2026-11-05T11:00:00Z","Bot","NONE"]]]]')"
+automatic
+detect >/dev/null
+[ "$(claimed_kind)" = auto ] || fail "the detector did not count a bot's comments on its own head as a cycle of its own"
+nodes "$(node '[[false, [["copilot","2026-11-05T10:00:00Z","Bot","NONE"],["author","2026-11-05T11:00:00Z"]]]]')"
+automatic
+detect >/dev/null
+[ "$(claimed_kind)" = person ] || fail "the detector counted a member's comments as a cycle of its own"
+echo "$(($(date +%s) - 7300)) $KEY person" >"$STATE/claimed"
+detect >/dev/null
+[ "$(claimed_kind)" = auto ] || fail "the detector did not count a failed run claimed again as a cycle of its own"
+nodes "$(ROLLUP='{"state":"FAILURE","contexts":{"nodes":[{"state":"FAILURE"}]}}' node)"
+automatic
+detect >/dev/null
+[ "$(claimed_kind)" = auto ] || fail "the detector did not count failed checks on its own head as a cycle of its own"
 
 # Without comments, a leftover fixup or a conflict is reported to prepare, keyed on the head, once.
 PREPARE="owner/repo#5~$HEAD_SHA $HEAD_SHA https://github.com/owner/repo/pull/5 fix/thing prepare"
@@ -231,7 +291,7 @@ nodes "$(ROLLUP='{"state":"FAILURE","contexts":{"nodes":[{"state":"FAILURE"},{"s
 nodes "$(ROLLUP='{"state":"SUCCESS","contexts":{"nodes":[{"status":"COMPLETED"}]}}' node)"
 [ -z "$(detect)" ] || fail "the detector reported a green pull request"
 
-# Comments come first, the run handles the rest, and the cap counts every reason.
+# Comments come first, the run handles the rest, and the pause counts every reason.
 nodes "$(COMMITS='["fixup! Add the thing"]' ROLLUP="$FAILED" node '[[false, [["author","2026-11-05T11:00:00Z"]]]]')"
 [ "$(detect)" = "$LINE" ] || fail "the detector did not report comments before the rest"
 # A run still going holds the pull request, comments marked done fall through to a conflict or a failed check, an approval nobody answers never hides them.
@@ -240,6 +300,16 @@ nodes "$(MERGEABLE=CONFLICTING node '[]' '[]' '[["author","2026-11-05T11:00:00Z"
 [ -z "$(detect)" ] || fail "the detector started a second run on a pull request whose comments run is going"
 "$WATCHER" --mark "$KEY"
 [ "$(detect)" = "$PREPARE" ] || fail "the detector hid a conflict behind handled comments"
+# A comments run that answered its threads and pushed a fixup, or that gets a newer comment, still holds the pull request until it is marked.
+nodes "$(COMMITS='["Add the thing","fixup! Add the thing"]' node)"
+mkdir -p "$STATE"
+echo "$(date +%s) $KEY" >"$STATE/claimed"
+[ -z "$(detect)" ] || fail "the detector started a prepare cycle on the fixup of a comments run still going"
+STUB_NODES="[$(node '[[false, [["author","2026-11-05T12:00:00Z"]]]]')]"
+[ -z "$(detect)" ] || fail "the detector started a second comments run while one is going"
+"$WATCHER" --mark "$KEY"
+STUB_NODES="[$(COMMITS='["Add the thing","fixup! Add the thing"]' node)]"
+[ "$(detect)" = "$PREPARE" ] || fail "the detector kept holding a pull request whose run was marked done"
 nodes "$(ROLLUP="$FAILED" node '[]' '[]' '[["author","2026-11-05T11:00:00Z"]]')"
 "$WATCHER" --mark "$KEY"
 [ "$(detect)" = "$CHECKS" ] || fail "the detector hid a failed check behind handled comments"
@@ -247,11 +317,8 @@ nodes "$(COMMITS='["fixup! Add the thing"]' ROLLUP="$FAILED" node)"
 "$WATCHER" --mark "owner/repo#5~$HEAD_SHA"
 [ "$(detect)" = "$CHECKS" ] || fail "the detector hid a failed check behind a prepared head"
 nodes "$(ROLLUP="$FAILED" node)"
-mkdir -p "$STATE"
-echo "$(date +%s) owner/repo#5+1" >>"$STATE/claimed"
-echo "$(date +%s) owner/repo#5=2222222222222222222222222222222222222222" >>"$STATE/claimed"
-echo "$(date +%s) owner/repo#5~3333333333333333333333333333333333333333" >>"$STATE/claimed"
-[ "$(detect)" = "owner/repo#5@$HEAD_SHA $HEAD_SHA https://github.com/owner/repo/pull/5 fix/thing capped" ] || fail "the detector did not count prepare and checks cycles for the cap"
+automatic "+1 auto" "=2222222222222222222222222222222222222222 auto" "~3333333333333333333333333333333333333333 auto"
+[ "$(detect)" = "$PAUSED" ] || fail "the detector did not count prepare and checks cycles for the pause"
 unset STUB_NODES
 
 "$WATCHER" --mark 'owner/repo#5@abc' >/dev/null 2>&1 && fail "the detector marked a malformed key"

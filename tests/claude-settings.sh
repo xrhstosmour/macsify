@@ -61,6 +61,13 @@ expect_rule ask 'Bash(*green-trust.sh*)' present
 expect_rule allow 'Bash(~/.config/scripts/review/green-trust.sh *)' absent
 expect_rule deny 'Edit(~/.config/green-github-prs-watcher/**)' present
 expect_rule deny 'Bash(*trusted-workflows*)' present
+# Nor writes the state that tells its own cycles from yours, a deleted line would resume a paused pull request, `seen` stays editable for a recheck.
+expect_rule deny 'Edit(~/.cache/green-github-prs-watcher/claimed)' present
+expect_rule deny 'Edit(~/.cache/green-github-prs-watcher/pushed)' present
+expect_rule deny 'Bash(*green-github-prs-watcher/claimed*)' present
+expect_rule deny 'Bash(*green-github-prs-watcher/pushed*)' present
+# A command run with another cache would push without a record or detect from empty state. The rules match command text only, defense in depth next to the skill's rule.
+expect_rule deny 'Bash(*XDG_CACHE_HOME=*)' present
 # `rg --pre` runs any command, so `rg` stays prompted.
 expect_rule allow 'Bash(rg *)' absent
 

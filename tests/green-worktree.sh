@@ -37,6 +37,8 @@ export GIT_CONFIG_GLOBAL="$TEST_DIRECTORY/gitconfig"
 # The trust file lives under `HOME`, your own must never approve a test tree.
 export HOME="$TEST_DIRECTORY/home"
 TRUST_FILE="$HOME/.config/green-github-prs-watcher/trusted-workflows"
+export XDG_CACHE_HOME="$TEST_DIRECTORY/cache"
+PUSHED_FILE="$XDG_CACHE_HOME/green-github-prs-watcher/pushed"
 export REVIEW_DEVELOPER_DIRECTORY="$TEST_DIRECTORY/developer"
 UPSTREAM="$TEST_DIRECTORY/upstream.git"
 SOURCE="$TEST_DIRECTORY/source"
@@ -170,16 +172,26 @@ printf 'three\n' >"$WORKTREE/a.txt"
 rm "$WORKTREE/sub/.git"
 git -c core.hooksPath=/dev/null -C "$WORKTREE" checkout --quiet -- a.txt
 
-# A push needs the lease of the head on the remote.
+# A push needs the lease of the head on the remote, records the head it pushes, and pushes nothing when the record cannot be written.
 "$GIT_SCRIPT" push "$WORKTREE" "$CHANGE_SHA" >/dev/null 2>&1 && fail "the git script pushed with a stale lease"
+mkdir -p "$XDG_CACHE_HOME/green-github-prs-watcher"
+: >"$XDG_CACHE_HOME/green-github-prs-watcher.blocked"
+mv "$XDG_CACHE_HOME/green-github-prs-watcher" "$TEST_DIRECTORY/state-kept"
+mv "$XDG_CACHE_HOME/green-github-prs-watcher.blocked" "$XDG_CACHE_HOME/green-github-prs-watcher"
+"$GIT_SCRIPT" push "$WORKTREE" "$HEAD_SHA" >/dev/null 2>&1 && fail "the git script pushed a head it could not record"
+[ "$(git -C "$UPSTREAM" rev-parse fix/thing)" = "$HEAD_SHA" ] || fail "the git script pushed while its record failed"
+rm "$XDG_CACHE_HOME/green-github-prs-watcher"
+mv "$TEST_DIRECTORY/state-kept" "$XDG_CACHE_HOME/green-github-prs-watcher"
 "$GIT_SCRIPT" push "$WORKTREE" "$HEAD_SHA" >/dev/null 2>&1 || fail "the git script refused to push with the right lease"
 [ "$(git -C "$UPSTREAM" rev-parse fix/thing)" = "$FIXUP_SHA" ] || fail "the git script did not push the head to the branch"
+[ "$(tail -n 1 "$PUSHED_FILE" | cut -d ' ' -f 2)" = "$FIXUP_SHA" ] || fail "the git script did not record the head it pushed"
 [ ! -e "$TEST_DIRECTORY/hook-ran" ] || fail "a hook ran on a push"
 
 # The autosquash leaves no fixup, pushes, and keeps the viewer's own branch where it was.
 SQUASHED_SHA="$("$GIT_SCRIPT" autosquash "$WORKTREE" "$FIXUP_SHA" 2>/dev/null)" || fail "the git script failed to autosquash"
 [ "$(git -C "$UPSTREAM" log --format=%s main..fix/thing | tr '\n' ' ')" = "add b change a " ] || fail "the autosquash left a fixup on the branch"
 [ "$(git -C "$UPSTREAM" rev-parse fix/thing)" = "$SQUASHED_SHA" ] || fail "the git script did not push the squashed head"
+[ "$(tail -n 1 "$PUSHED_FILE" | cut -d ' ' -f 2)" = "$SQUASHED_SHA" ] || fail "the git script did not record the squashed head"
 [ "$(git -C "$UPSTREAM" show fix/thing:a.txt)" = three ] || fail "the autosquash lost the fix"
 [ "$(git -C "$REVIEW_DEVELOPER_DIRECTORY/service" rev-parse fix/thing)" = "$HEAD_SHA" ] || fail "the autosquash moved the viewer's own branch"
 

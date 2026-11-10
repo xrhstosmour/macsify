@@ -21,6 +21,7 @@
 # A workflow on `push` runs the workflow files of the pushed commit with the repository's secrets, so `tests` refuses a pull request that changes `.github`, a fixup from a comment could have put a workflow there.
 # On a conflict `autosquash` and `continue` leave the rebase in progress, print the stopped commit as `<sha> <subject>` and then one conflicted file per line, and exit 3.
 # Every other command prints the worktree head when it is done.
+# Every head pushed to the pull request branch is recorded in `pushed` of the watcher's cache, `watch-green-prs.sh` tells the watcher's own cycles from yours by it.
 # The developer directory is `~/Developer`, `REVIEW_DEVELOPER_DIRECTORY` replaces it for the tests.
 
 set -e
@@ -85,6 +86,7 @@ if [ ! -s "$git_directory/resolve-base" ] || [ ! -s "$git_directory/resolve-bran
   echo "$worktree was not prepared by green-worktree.sh" >&2
   exit 2
 fi
+STATE_DIRECTORY="${XDG_CACHE_HOME:-$HOME/.cache}/green-github-prs-watcher"
 base="$(cat "$git_directory/resolve-base")"
 branch="$(cat "$git_directory/resolve-branch")"
 require_branch base "$base"
@@ -132,7 +134,10 @@ require_plain_file() {
   fi
 }
 
+# Records the head before it pushes, a record that cannot be written stops the push instead of passing the watcher's head off as yours.
 push() {
+  mkdir -p "$STATE_DIRECTORY"
+  echo "$(date +%s) $(git -C "$worktree" rev-parse HEAD)" >>"$STATE_DIRECTORY/pushed"
   git_without_hooks push --quiet origin "HEAD:refs/heads/$branch" "--force-with-lease=refs/heads/$branch:$sha" >&2
 }
 
