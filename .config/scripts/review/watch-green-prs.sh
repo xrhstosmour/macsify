@@ -18,7 +18,7 @@
 #   One line per pull request and poll, the first reason not done yet, a reason marked done falls through to the next, so an approval nobody answers never hides a conflict or a failed check. A reason still claimed holds the pull request, its run handles the rest.
 #   capped    the pull request already started `CYCLE_LIMIT` cycles in a day, of any reason, a failed one included, it is reported once per head, keyed `<owner>/<repo>#<number>@<head sha>`, and not resolved again until the day passes, so a bot that reviews every push or a run that keeps failing cannot loop
 # Outsiders never start an unattended change. Drafts, merged, closed, merge queue and cross repository pull requests are skipped, the push goes to `origin`.
-# A key is claimed at detection for two hours, so a run still going is not started twice, and recorded as done by `--mark`. Same as `watch-review-requests.sh`.
+# A key is claimed at detection for two hours and recorded as done by `--mark`, same as `watch-review-requests.sh`. While any claim of a pull request is not done, the pull request is held, so a run still going is never started twice, not even for a reason its own push revealed. A run that failed without marking holds it until its claim expires, a newer comment waits too.
 # The newest 50 threads, 30 comments each, 50 comments and 50 reviews, 100 commits and 100 checks are read, a pull request with more is judged on those.
 
 set -u
@@ -145,6 +145,14 @@ running() {
   awk -v key="$1" -v now="$(date +%s)" -v limit="$CLAIM_SECONDS" '$2 == key && now - $1 < limit { found = 1 } END { exit !found }' "$CLAIMED_FILE"
 }
 
+# Whether any run of the pull request is claimed and not done yet. A run that answers its comments and pushes a fixup before the autosquash shows a new reason mid-run, it must not start a second cycle.
+busy() {
+  awk -v seen="$SEEN_FILE" -v pull_request="$1" -v now="$(date +%s)" -v limit="$CLAIM_SECONDS" '
+    FILENAME == seen { done[$2] = 1; next }
+    index($2, pull_request) == 1 && index("+=~", substr($2, length(pull_request) + 1, 1)) > 0 && now - $1 < limit && !($2 in done) { found = 1 }
+    END { exit !found }' "$SEEN_FILE" "$CLAIMED_FILE"
+}
+
 # How many cycles of the pull request started in the last day, of any reason but `capped`. Every claim counts, so a run that fails and is claimed again counts each time.
 cycles() {
   awk -v pull_request="$1" -v now="$(date +%s)" -v limit="$CYCLE_SECONDS" 'index($2, pull_request) == 1 && index("+=~", substr($2, length(pull_request) + 1, 1)) > 0 && now - $1 < limit { count++ } END { print count + 0 }' "$CLAIMED_FILE"
@@ -178,8 +186,8 @@ poll() {
         continue
       fi
       held="$pull_request"
-      # A cycle still going is skipped before the cap, its own claim would count it as capped otherwise.
-      if running "$key"; then
+      # A cycle still going holds the pull request and is skipped before the cap, its own claim would count it as capped otherwise.
+      if busy "$pull_request"; then
         continue
       fi
       if [ "$(cycles "$pull_request")" -ge "$CYCLE_LIMIT" ]; then

@@ -6,7 +6,8 @@
 # viewer, once while its run goes and until it is marked done, never for an
 # outsider, the viewer, a deleted author, a bot outside a review thread, a
 # resolved thread or a pull request from a fork, keys a cycle without the head so
-# its own push does not start it again, caps a pull request after three cycles
+# its own push does not start it again, holds a pull request while any of its
+# runs goes, caps it after three cycles
 # started in a day, failed ones included, claims nothing on a dry run, and
 # rejects a scope that could carry a search qualifier. The responder posts only
 # on an open pull request of the viewer that is not a draft, only to a comment
@@ -186,9 +187,12 @@ nodes ""
 # Three cycles started in a day cap the pull request, failed ones included, reported once per head, an old cycle does not count, and a third cycle still going is not capped.
 nodes "$(node '[[false, [["copilot","2026-11-05T11:00:00Z","Bot","NONE"]]]]')"
 mkdir -p "$STATE"
-for cycle in 1 2 3; do
+# Two finished cycles and a third that failed, its claim expired without a mark.
+for cycle in 1 2; do
   echo "$(date +%s) owner/repo#5+$cycle" >>"$STATE/claimed"
+  echo "$(date +%s) owner/repo#5+$cycle" >>"$STATE/seen"
 done
+echo "$(($(date +%s) - 7300)) owner/repo#5+3" >>"$STATE/claimed"
 [ "$(detect)" = "owner/repo#5@$HEAD_SHA $HEAD_SHA https://github.com/owner/repo/pull/5 fix/thing capped" ] || fail "the detector did not cap a pull request after three cycles"
 [ -z "$(detect)" ] || fail "the detector reported a capped head twice"
 echo "$(($(date +%s) - 90000)) owner/repo#5+1" >"$STATE/claimed"
@@ -240,6 +244,16 @@ nodes "$(MERGEABLE=CONFLICTING node '[]' '[]' '[["author","2026-11-05T11:00:00Z"
 [ -z "$(detect)" ] || fail "the detector started a second run on a pull request whose comments run is going"
 "$WATCHER" --mark "$KEY"
 [ "$(detect)" = "$PREPARE" ] || fail "the detector hid a conflict behind handled comments"
+# A comments run that answered its threads and pushed a fixup, or that gets a newer comment, still holds the pull request until it is marked.
+nodes "$(COMMITS='["Add the thing","fixup! Add the thing"]' node)"
+mkdir -p "$STATE"
+echo "$(date +%s) $KEY" >"$STATE/claimed"
+[ -z "$(detect)" ] || fail "the detector started a prepare cycle on the fixup of a comments run still going"
+STUB_NODES="[$(node '[[false, [["author","2026-11-05T12:00:00Z"]]]]')]"
+[ -z "$(detect)" ] || fail "the detector started a second comments run while one is going"
+"$WATCHER" --mark "$KEY"
+STUB_NODES="[$(COMMITS='["Add the thing","fixup! Add the thing"]' node)]"
+[ "$(detect)" = "$PREPARE" ] || fail "the detector kept holding a pull request whose run was marked done"
 nodes "$(ROLLUP="$FAILED" node '[]' '[]' '[["author","2026-11-05T11:00:00Z"]]')"
 "$WATCHER" --mark "$KEY"
 [ "$(detect)" = "$CHECKS" ] || fail "the detector hid a failed check behind handled comments"
@@ -251,6 +265,7 @@ mkdir -p "$STATE"
 echo "$(date +%s) owner/repo#5+1" >>"$STATE/claimed"
 echo "$(date +%s) owner/repo#5=2222222222222222222222222222222222222222" >>"$STATE/claimed"
 echo "$(date +%s) owner/repo#5~3333333333333333333333333333333333333333" >>"$STATE/claimed"
+cp "$STATE/claimed" "$STATE/seen"
 [ "$(detect)" = "owner/repo#5@$HEAD_SHA $HEAD_SHA https://github.com/owner/repo/pull/5 fix/thing capped" ] || fail "the detector did not count prepare and checks cycles for the cap"
 unset STUB_NODES
 
