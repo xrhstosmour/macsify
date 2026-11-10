@@ -14,7 +14,7 @@ A report first, changes second. Every scan and read is read-only. A change to th
 - Own network only. Before any active scan, confirm in chat that the network is the user's own and that scanning is approved, per `security.md`. No approval means passive discovery only, the ARP table and the Bonjour browse from step 4.
 - Scan only the user's own subnet, the interface from `route -n get default`, then its address and netmask from `ifconfig <interface>`, the route output alone gives only the gateway. Host discovery and service detection only, no exploit scripts, no brute force, no credential guessing.
 - Never type, store, or repeat passwords. The user logs in to the router themselves, the agent reads the pages only. Never click Apply, Save, New, Delete, or Start WPS on the router.
-- Privacy: no public IP, MAC address, serial number, SSID, Wi-Fi key, or device hostname goes into a file, memory, PR, or shared message. Report devices by role and port. The report stays in chat.
+- Privacy: no public IP, MAC address, serial number, SSID, Wi-Fi key, or device hostname goes into a file, memory, PR, or shared message. Report devices by role and port. The report stays in chat, the S7 speed log and its error log are the only files kept, and only when the user asks for it.
 - Run single-purpose commands, no compound one-liners, no `nc`, `tcpdump`, tunnels, or `sed -i`. If a command is blocked or flagged, stop and ask.
 - Never use `sudo` or ask for an admin password. A check that needs root, such as `profiles list`, `nmap -sU`, or an OS setting read that fails without admin, is reported as unchecked, or the user runs it with the `! <command>` prefix and pastes the output.
 - Stop on a blocker, such as a missing tool, a Cloudflare challenge, or a login wall. Name it, wait, never bypass bot detection.
@@ -35,6 +35,47 @@ A change can cut the network or lock the user out. These rules apply to every ch
 - Making a change in a graphical settings app or the router page through computer use or the browser needs the user's permission for that one change, and only where the agent's own rules allow changes to system or security settings, otherwise the user does it. Never enter passwords, never click Apply or Save on the router.
 - The router has a factory reset and an ISP-managed configuration. Never touch reset, firmware upload, WAN, or TR-069 settings.
 - If connectivity drops, stop, say what was last changed, and give the undo.
+
+## Speed mode
+
+A slow or dropping connection gets this section instead of steps 3 to 7, or after the report when the user asks for both. Read-only until the user approves a change, the Hard rules and Change safety still hold. Run S1 first, then only the parts the user's problem needs.
+
+S1. Diagnosis. Ask for the contracted download and upload speed, keep it in the session only. With the user's approval, open a speed test in a new Chrome tab group, `speed.cloudflare.com` or `fast.com`, read download, upload and latency from the page, close the tab. `networkQuality -v` is the second opinion. Then split the cause:
+
+- Wi-Fi link: `system_profiler SPAirPortDataType`, current network PHY mode, channel, signal and noise, transmit rate. Signal weaker than about -70 dBm, a signal to noise gap under about 25 dB, or a transmit rate below the contracted speed means the Wi-Fi caps the line.
+- `ping -c 20 <gateway>`, then `ping -c 20 1.1.1.1`. Loss or jitter to the router points to the Wi-Fi or the computer, a clean router and a slow or lossy public address points to the provider.
+- The tiebreaker is a test on Ethernet, ask whether the user can plug in. Explain the verdict in plain words, computer, Wi-Fi, or provider, with the numbers behind it. Change nothing in this step.
+
+S2. Bandwidth use. `nettop -P -d -L 2 -s 5 -n -x -J bytes_in,bytes_out` and read the second sample only, the first is the total since each process started. Rank the processes by bytes in the 5 seconds, name what each is, a download, a sync client, a backup, a system update, and say which slow the line. Pause only what the user names, with the app's own pause or by quitting it, each after approval. Never stop a system process, give the setting instead, such as pausing a system update in System Settings.
+
+S3. Connection drops. macOS keeps no Wi-Fi disconnect history that is readable without admin, a 7-day `log show` search for Wi-Fi link events came back empty on macOS 26, so say so instead of guessing. Use what is there:
+
+- The router log from step 5, many routers list client connects and disconnects with times, the user logs in themselves.
+- `pmset -g log`, the `Sleep`, `Wake` and `DarkWake` lines, a drop at sleep is expected, a drop while awake is not.
+- `softwareupdate --history` for updates that line up with the drops.
+- Look for a pattern in time, device, or update, and give the most likely cause with the evidence. With no history, offer the weekly log of S7, or a background `ping -i 5 <gateway>` for the rest of the session, stopped and removed at the end.
+
+S4. Signal and channel. From `system_profiler SPAirPortDataType`, count the neighbour networks per channel and band from Other Local Wi-Fi Networks, and their signal where shown. Never print a neighbour's network name. Say whether a change is worth it: a 2.4 GHz network on a crowded channel, or not on 1, 6 or 11, moves to one of those or to 5 GHz, a 5 GHz channel shared with strong neighbours moves to a free one, a 160 MHz width on a crowded band drops to 80. 5 GHz is faster and reaches less far, say which rooms it may not reach. Give the step-by-step for the user's router from its own menu in step 5, the user applies it, per Change safety.
+
+S5. Devices on the network. Step 4 discovery and the router client list from step 5, the user types the router password themselves. Show each device by role with a name and manufacturer where possible, from the router's name, the Bonjour name, and the vendor of the MAC prefix only. Point out any device the user cannot name, per step 4.8.
+
+S6. Computer settings, on top of the DNS and VPN checks of step 2:
+
+- DNS: which resolver answers, and whether it is slow, time a few lookups with `dig` when installed, or compare the provider's DNS with the router's.
+- Wi-Fi card and firmware: card type and firmware version from `system_profiler SPAirPortDataType`. macOS ships the driver with the OS, an old OS version is the old driver, say so.
+- Power saving: `pmset -g` for `lowpowermode` and the power settings that affect the network on battery.
+- Private Relay and Limit IP Address Tracking, read from System Settings with the user, both route traffic through relays.
+- VPN: `scutil --nc list`, and a `tailscale` exit node in use from step 2, every byte goes through the exit node's own line.
+- Name the setting that slows the line, the suggested change and its undo. Apply nothing without the user's approval, per Change safety and step 9.
+
+S7. Weekly speed log against the provider. Set up only when the user asks, it is the one exception to storing nothing:
+
+- It must be local, a cloud schedule measures the cloud's line and a session schedule dies with the session. The bundled `scripts/speed-log.sh` runs `networkQuality`, a browser cannot run unattended, and appends one row to a CSV: date, download, upload, latency, contracted speeds, percent of the contracted download, interface type, Wi-Fi transmit rate, status. No address, SSID, or hostname.
+- Ask for the CSV path, outside any repository, a spreadsheet opens it. After approval, write a launch agent `com.local.speed-log` in `~/Library/LaunchAgents` running `/bin/bash $HOME/.config/agentic/skills/audit-home-network/scripts/speed-log.sh <csv> <download> <upload>` with `StartCalendarInterval` Weekday 1, Hour 9, Minute 0, `StandardErrorPath` set to `speed-log.error.log` beside the CSV, and load it with `launchctl load -w`. `launchd` expands neither `~` nor `$HOME`, so write both paths in the plist as absolute paths, `$HOME` resolved, or every run fails. A Mac asleep at that time runs it on wake. Show the plist before writing it, and give the undo, `launchctl unload -w` and removing the plist and the error log. When the user comes back, a missing week or a non-empty error log means a run failed, say so.
+- Three measured weeks in a row below 50% of the contracted download post a notification asking the user to run this skill. A failed measurement is logged and breaks the streak. The script drafts nothing.
+- When the user comes back for the complaint, read the CSV and draft the email in chat for the user to send, never send it. Give the dates, the measured and contracted speeds, the latency, and the interface. Over Wi-Fi, a slow week can be the Wi-Fi, say so, and ask for an Ethernet measurement first when the transmit rate was near the measured speed.
+- In the EU, Regulation (EU) 2015/2120 Art. 4(4) ties the consumer's remedies to a significant, continuous or regularly recurring, discrepancy established by a monitoring mechanism certified by the national regulator. A home log is indicative only. Search for the user's national regulator's certified measurement tool, cite it, and suggest backing the complaint with its results.
+- The speed log never reaches a work machine, only this skill installs it, and the skill is personal profile only.
 
 ## 1. Previous run
 
@@ -173,3 +214,4 @@ Name current options neutrally, such as Eero, Ubiquiti, or a router running a ma
 - Close every tab the audit opened.
 - Remind the user to log out of the router admin page.
 - Remove the temporary scan output files from the scratchpad if they hold addresses.
+- Remind the user to resume anything paused in S2, and stop any background `ping` from S3.
