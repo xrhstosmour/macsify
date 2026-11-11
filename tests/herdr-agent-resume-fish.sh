@@ -6,7 +6,9 @@
 # record naming a flag as session resume nothing, and an agent typed by hand and
 # ended forgets its record while other commands do not. `hc`, `claude` and
 # `opencode` are stubs, the first keeps the label in a file, the others print the
-# arguments they got and whether the record was still there. Needs `fish`.
+# arguments they got and whether the record was still there. `fish -c` has no
+# line editor, so a `commandline` stub keeps the buffer the hook sets and, on
+# `execute`, runs it and emits `fish_postexec` like the editor. Needs `fish`.
 
 TESTS_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPOSITORY="$TESTS_SCRIPT_DIRECTORY/.."
@@ -59,8 +61,20 @@ fail() {
 shell() {
   own="$1"
   HOME="$TEST_DIRECTORY/home" PATH="$TEST_DIRECTORY/bin:$PATH" HC_TERMINAL_ID=t1f \
-    fish -N -i -C "set -gx HC_STUB_PID (test $own = yes; and echo \$fish_pid; or echo 1); source $REPOSITORY/.config/fish/conf.d/herdr-agent-resume.fish" -c "$2" >/dev/null 2>&1
+    fish -N -i -C "set -gx HC_STUB_PID (test $own = yes; and echo \$fish_pid; or echo 1); source $TEST_DIRECTORY/commandline.fish; source $REPOSITORY/.config/fish/conf.d/herdr-agent-resume.fish" -c "$2" >/dev/null 2>&1
 }
+
+cat >"$TEST_DIRECTORY/commandline.fish" <<'STUB'
+function commandline
+    switch $argv[1]
+        case -r
+            set -g __commandline_buffer $argv[-1]
+        case -f
+            eval $__commandline_buffer
+            emit fish_postexec $__commandline_buffer
+    end
+end
+STUB
 
 save() {
   printf '%s' "$1" >"$TEST_DIRECTORY/label"

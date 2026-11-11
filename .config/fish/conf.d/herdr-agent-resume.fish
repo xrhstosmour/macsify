@@ -20,15 +20,26 @@ function __herdr_agent_resume --on-event fish_prompt
     test (count $fields) -ge 3; or return
     set -l flags $fields[4..-1]
 
-    echo "Resuming $fields[1] session $fields[2]."
-    cd $fields[3]; or return
+    set -l agent
     switch $fields[1]
         case claude
-            command -q claude; and claude --resume $fields[2] $flags
+            set agent claude --resume $fields[2] $flags
         case opencode
-            command -q opencode; and opencode --session $fields[2] $flags
+            set agent opencode --session $fields[2] $flags
     end
-    bash ~/.config/agentic/hooks/herdr-application-resume.sh forget
+    if test -z "$agent"; or not command -q $agent[1]
+        bash ~/.config/agentic/hooks/herdr-application-resume.sh forget
+        return
+    end
+
+    echo "Resuming $fields[1] session $fields[2]."
+    cd $fields[3]; or return
+    # Run from the command line, not from this handler, fish gives a command an
+    # event handler runs no process group of its own, so the terminal's
+    # foreground program stays `fish` and `Herdr` sees no agent. The
+    # `fish_postexec` handler below forgets the record once it exits.
+    commandline -r -- (string join ' ' -- (string escape -- $agent))
+    commandline -f execute
 end
 
 # An agent started by hand and ended by the person is not to come back.
