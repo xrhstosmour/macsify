@@ -73,8 +73,9 @@ Some workflows track planning status only by workboard column. This is separate 
 
 - The board is itself a Phabricator project, ask which if unclear and resolve it with `pha_project_search`. A task usually needs the board's project tag before it can sit in a column.
 - Column names are whatever the user's board uses, never assume "In Progress".
-- To move a task: get the board PHID, call `pha_workboard_search_columns` with `project_phids=[<PHID>]` for the live names and PHIDs (cache for the conversation), match the user's wording (ask if ambiguous), show "Moving T1234 to column '<name>'", get confirmation, then `pha_workboard_move_task(task_id=<ID or PHID>, column_phid=<PHID>)`.
-- Offer the column as an optional field in creation (step 2) and in updates.
+- Adding the board's project tag already puts the task in the board's default column, and the API does not say which column that is. Leave it there unless the user names a column or says work has started.
+- To move a task: get the board PHID, call `pha_workboard_search_columns` with `project_phids=[<PHID>]` and `include_hidden=false` for the live names and PHIDs (cache for the conversation), a long-lived board carries many hidden retired columns that flood the result. Order them by `sequence`, not response order. Match the user's wording (ask if ambiguous), show "Moving T1234 to column '<name>'", get confirmation, then `pha_workboard_move_task(task_id=<ID or PHID>, column_phid=<PHID>)`, after the tag is set.
+- Offer the column as an optional field in creation (step 2) whenever the chosen tag is a board with more than one visible column, and in updates.
 
 ## Status update comment
 
@@ -108,7 +109,7 @@ Ask all at once in a single message. Priority and status are not asked, they def
 - Due date: default today's date when the user gives none, any format, normalize to `YYYY-MM-DD`.
 - Parent task: TID.
 - Reference links.
-- Committed-board column: only when "Workboard columns" applies.
+- Board column: when the tag is a board with more than one visible column, see "Workboard columns", default stays in the board's default column.
 
 ### 3. Description generation
 
@@ -148,7 +149,7 @@ Assignee:    <username>, default self, required when the umbrella tag is set
 Subscribers: <usernames>, or none
 Status:      <status>, default inprogress
 Due date:    <date>, default today
-Column:      <board column>, or none
+Column:      <board column>, or the board's default
 Parent:      T<id>
 
 <description>
@@ -162,7 +163,7 @@ Ask "Ready to create?" and do not execute without explicit confirmation.
 2. Due date: with a real field, set it in step 5 below. Without one, append `**Due:** <YYYY-MM-DD>` after a blank line at the bottom.
 3. Reference value: the bare `<pr_url>` if a PR exists, otherwise Branch `` `<branch-name>` ``. With a real `reference` field it goes there in step 5, with any extra links still in the description. Without one, it goes in the description with any extra links. Whatever lands in the description goes in a `## References` section at the very bottom, below the `**Due:**` line.
 4. `pha_task_create(title=..., description=..., owner_phid=<assignee PHID>)`. It returns `id` and `phid`, report the task as `$PHAB/T<id>`. New tasks default to "Needs Triage", status open, and no project tag.
-5. Follow up with `pha_task_update(task_id=<phid>, ...)` for tag, priority (default `normal`), status (default `inprogress`), reference, and a real due-date field, a task without this call stays "Needs Triage" and open. Two cases use other tools: a parent via `pha_task_update_relationships` (see "Umbrella tasks" for the call and verification) and a board column via `pha_workboard_move_task`, without it the task is left off the board.
+5. Follow up with `pha_task_update(task_id=<phid>, ...)` for tag, priority (default `normal`), status (default `inprogress`), reference, and a real due-date field, a task without this call stays "Needs Triage" and open. Two cases use other tools: a parent via `pha_task_update_relationships` (see "Umbrella tasks" for the call and verification) and a board column via `pha_workboard_move_task`, without it the task stays in the board's default column.
 
 | Field | `pha_task_update` param |
 |-------|-------------------------|
