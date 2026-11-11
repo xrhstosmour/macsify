@@ -5,7 +5,8 @@
 // `worktree-developer` dialog for a new worktree, and a space named like its
 // folder showing its branch instead of repeating the folder, and the spaces in a
 // folder drawn as a symbol (terminal for the checkout, branch for a worktree) on
-// one level. A folder stays plain grey until a color is chosen. Changes made
+// one level. A folder's + puts a repository on its default branch, fetched and
+// rebased. A folder stays plain grey until a color is chosen. Changes made
 // outside Herdr are looked for every five minutes, not every minute. It also writes
 // `~/.config/herdr-space-folders.json`.
 // Recheck the diff against upstream before bumping the commit.
@@ -57,11 +58,16 @@ async function expand(machine, path) {
 
 // A new space for a folder, in its start folder. Herdr names no id back, so the
 // sidebar puts the first space that appears on that machine in it (see adopt).
+// On this computer a repository's checkout first goes to its default branch,
+// fetched and rebased, through `git_switch_to_default_branch` from our `git.fish`,
+// which another machine lacks. The app runs argv with `command`, which finds no
+// fish function, so a `fish -c` runs it, then the app opens the usual shell.
 async function newSpaceIn(machine, id) {
   setShared("space-folders.new", { machine, id, before: spaces().map((s) => s.id), until: Date.now() + 60000 });
   const path = folders(machine).list.find((f) => f.id === id)?.path;
   const folder = path ? await expand(machine, path).catch(() => null) : null;
-  run("space.new", { ...(machine ? { machine } : {}), ...(folder ? { folder } : {}) });
+  const argv = !machine && folder ? ["fish", "-c", "git_switch_to_default_branch"] : null;
+  run("space.new", { ...(machine ? { machine } : {}), ...(folder ? { folder } : {}), ...(argv ? { argv } : {}) });
 }
 
 // A new worktree for a folder that is a repository, so a parallel session never
