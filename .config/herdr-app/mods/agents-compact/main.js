@@ -2,7 +2,8 @@
 // shipped one on every start), under another name so it is never replaced. The
 // only changes are the program name under an agent hidden when the tab already
 // says it, the popup naming this mod, and an agent row showing only the agent's
-// own title, the space name only when there is none. Cloned from `Herdr` app
+// own title, the space name only when there is none, and a pinned terminal
+// staying in Pinned while its recorded agent runs unreported. Cloned from `Herdr` app
 // 0.1.12, the version is also in `mod.json`. Recheck against the shipped mod
 // after an app update.
 //
@@ -125,6 +126,35 @@ export default class Agents extends View {
     else localStorage.removeItem("pins");
   }
 
+  // A pin is a label on the terminal, not on the agent, so agents() drops a
+  // pinned terminal whose agent runs but is not reported. An agent resumed by a
+  // shell that loaded `herdr-agent-resume.fish` before it ran the agent from the
+  // command line sits in the shell's process group, so Herdr reads the terminal
+  // as `fish`. The resume hook's record still names the agent, so such a
+  // terminal keeps its place in Pinned, shaped like an agent without a status.
+  // The record is cleared when the agent exits, a plain shell is left out.
+  offlinePins(all, list) {
+    const allPanes = panes();
+    const allSpaces = spaces();
+    const programs = new Map(list.map((a) => [a.program?.key, a.program]));
+    return all.flatMap((terminal) => {
+      if (terminal.state !== "live" || !terminal.labels?.["herdr.pinned"] || this.listed.has(terminal.address)) return [];
+      let resumed = null;
+      // A cleared record is an empty label. The catch only keeps a corrupt one
+      // from breaking the whole panel, the terminal is then left out.
+      try {
+        resumed = JSON.parse(terminal.labels["resume.record"] || "null")?.agent;
+      } catch {}
+      if (!resumed) return [];
+      const pane = allPanes.find((p) => p.terminal === terminal.address);
+      if (!pane) return [];
+      const space = allSpaces.find((s) => s.tabs.some((tab) => tab.id === pane.tab));
+      // The icon comes from a listed agent of the same program, the shell icon
+      // when none is listed.
+      return [{ address: terminal.address, pane: pane.pane, space: space?.id, space_name: space?.name ?? "", tab: pane.tab, title: pane.title, program: programs.get(resumed) ?? pane.program, status: null, pinned: true, focused: pane.focused, seq: 0 }];
+    });
+  }
+
   since(a) {
     return this.changed[a.address]?.at ?? 0;
   }
@@ -241,8 +271,10 @@ export default class Agents extends View {
     if (byPriority) list = [...list].sort((x, y) => rankOf(y) - rankOf(x) || this.since(y) - this.since(x) || y.seq - x.seq);
     const pinned = list.filter((a) => a.pinned);
     const rest = list.filter((a) => !a.pinned);
+    setAgentOrder([...pinned, ...rest].map((a) => a.address));
+    // Added after the order, agent.next and agent.prev only move between agents.
+    pinned.push(...this.offlinePins(all, list));
     list = [...pinned, ...rest];
-    setAgentOrder(list.map((a) => a.address));
 
     const withKids = (a, i) => {
       const subs = collapsed ? [] : this.tree(all, a.address);
@@ -321,7 +353,7 @@ export default class Agents extends View {
           .child(h_flex().w(14).flex_none().items_center().justify_center().child(this.status(t, a, true)));
       }
       const when = this.since(a);
-      const idle = a.status === "idle" && !a.focused;
+      const idle = (a.status === "idle" || a.status === null) && !a.focused;
       const isPinned = a.pinned;
       const pin = div()
         .id(`pin-${a.address}`)
