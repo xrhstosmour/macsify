@@ -2,8 +2,9 @@
 // shipped one on every start), under another name so it is never replaced. The
 // only changes are the program name under an agent hidden when the tab already
 // says it, the popup naming this mod, and an agent row showing only the agent's
-// own title, the space name only when there is none, and a pinned terminal
-// staying in Pinned while its recorded agent runs unreported. Cloned from `Herdr` app
+// own title, the space name only when there is none, a pinned terminal
+// staying in Pinned while its recorded agent runs unreported, and pinned agents
+// kept in the order they are dragged into, saved per mod. Cloned from `Herdr` app
 // 0.1.12, the version is also in `mod.json`. Recheck against the shipped mod
 // after an app update.
 //
@@ -86,6 +87,10 @@ export default class Agents extends View {
     this.pendingPins = JSON.parse(localStorage.getItem("pins") ?? "[]");
     if (!this.pendingPins.length) localStorage.removeItem("pins");
     this.migratingPins = new Set();
+    // Pinned addresses in the order they were dragged into, and a drag in progress.
+    this.pinOrder = JSON.parse(localStorage.getItem("pins.order") ?? "[]");
+    this.moving = null;
+    this.overMove = null;
     cx.timer.every(30000, (cx) => cx.notify());
   }
 
@@ -153,6 +158,38 @@ export default class Agents extends View {
       // when none is listed.
       return [{ address: terminal.address, pane: pane.pane, space: space?.id, space_name: space?.name ?? "", tab: pane.tab, title: pane.title, program: programs.get(resumed) ?? pane.program, status: null, pinned: true, focused: pane.focused, seq: 0 }];
     });
+  }
+
+  // Saves only the pinned ones shown now, so unpinned and gone terminals drop out.
+  reorder(from, to, pinned) {
+    const order = pinned.map((a) => a.address);
+    const source = order.indexOf(from);
+    const target = order.indexOf(to);
+    // Either one unpinned or gone while dragging.
+    if (source === -1 || target === -1) return;
+    // Taking it out first lands it after `to` moving down and before it moving up.
+    order.splice(source, 1);
+    order.splice(target, 0, from);
+    this.savePinOrder(order);
+  }
+
+  savePinOrder(order) {
+    this.pinOrder = order;
+    localStorage.setItem("pins.order", JSON.stringify(order));
+  }
+
+  // No mouse up comes when the release is outside this mod, so a later press ends it.
+  endDrag(cx) {
+    if (!this.moving) return;
+    this.moving = null;
+    this.overMove = null;
+    cx.notify();
+  }
+
+  // A press on a row's button is the button's, it never starts or finishes a drag.
+  ownPress(cx) {
+    cx.stop_propagation();
+    this.endDrag(cx);
   }
 
   since(a) {
@@ -269,11 +306,18 @@ export default class Agents extends View {
     const urgency = new Map(list.map((a) => [a.address, Math.max(this.rank(a), ...this.tree(all, a.address).map((s) => RANK[kidStatus(s.t, this.listed)] ?? 0))]));
     const rankOf = (a) => urgency.get(a.address);
     if (byPriority) list = [...list].sort((x, y) => rankOf(y) - rankOf(x) || this.since(y) - this.since(x) || y.seq - x.seq);
-    const pinned = list.filter((a) => a.pinned);
+    // Newly pinned ones go after the dragged ones, in the sort's order.
+    const placeOf = (a) => {
+      const index = this.pinOrder.indexOf(a.address);
+      return index === -1 ? this.pinOrder.length : index;
+    };
+    const pinned = list.filter((a) => a.pinned).sort((x, y) => placeOf(x) - placeOf(y));
     const rest = list.filter((a) => !a.pinned);
     setAgentOrder([...pinned, ...rest].map((a) => a.address));
     // Added after the order, agent.next and agent.prev only move between agents.
+    // Sorted again so an unreported one keeps its dragged place too.
     pinned.push(...this.offlinePins(all, list));
+    pinned.sort((x, y) => placeOf(x) - placeOf(y));
     list = [...pinned, ...rest];
 
     const withKids = (a, i) => {
@@ -290,6 +334,7 @@ export default class Agents extends View {
       const open = !this.folded.has(a.address);
       return div()
         .id(`fold-${a.address}`)
+        .on_mouse_down("left", (_e, cx) => this.ownPress(cx))
         .h(18)
         .px(3)
         .gap(3)
@@ -364,9 +409,12 @@ export default class Agents extends View {
         .cursor_pointer()
         .hover((s) => s.bg(t.hover).text_color(t.foreground))
         .tooltip(isPinned ? "Unpin" : "Pin to the top")
+        .on_mouse_down("left", (_e, cx) => this.ownPress(cx))
         .on_click((_e, cx) => {
           cx.stop_propagation();
           run("terminal.pin", { terminal: a.address, pinned: !isPinned });
+          // Pinned again later, it goes after the dragged ones, not back to its old place.
+          if (isPinned && this.pinOrder.includes(a.address)) this.savePinOrder(this.pinOrder.filter((address) => address !== a.address));
           // The row moves away from under the pointer, and no hover-out comes.
           this.hovered = null;
           cx.notify();
@@ -376,6 +424,9 @@ export default class Agents extends View {
       // Without a space header above (priority, pinned) the row still shows only the
       // conversation's name, the space only when it has none, the sidebar already lists it.
       const full = byPriority || isPinned;
+      // A pinned agent dragged over this one: a line where it would go, as for space folders.
+      const moving = this.moving;
+      const aimed = isPinned && moving && moving.address !== a.address && this.overMove === a.address;
       // A bare tab number only tells two agents of one space apart, so it keeps the space beside it.
       const name = full && /^\d+$/.test(more ?? "") ? `${a.space_name} · ${more}`
         : more || (full ? a.space_name || label(a) : /^\d+$/.test(label(a)) ? a.program?.name || label(a) : label(a));
@@ -398,8 +449,21 @@ export default class Agents extends View {
           cx.notify();
         })
         .on_click(() => run("pane.focus", { pane: a.pane }))
+        .when(isPinned, (el) => el
+          .relative()
+          .when(Boolean(moving) && moving.address === a.address && this.overMove !== a.address, (el) => el.opacity(0.5))
+          .when(Boolean(aimed), (el) => el.child(div().absolute().left(0).right(0).h(2).bg(t.accent)
+            .when(moving.index < i, (line) => line.bottom(0)).when(moving.index > i, (line) => line.top(0))))
+          .on_mouse_down("left", () => { this.moving = { address: a.address, index: i }; this.overMove = a.address; })
+          .on_mouse_move((_e, cx) => {
+            if (this.moving && this.overMove !== a.address) { this.overMove = a.address; cx.notify(); }
+          })
+          .on_mouse_up("left", (_e, cx) => {
+            if (this.moving && this.moving.address !== a.address && this.overMove === a.address) this.reorder(this.moving.address, a.address, pinned);
+            this.endDrag(cx);
+          }))
         .when(Boolean(pic), el => el.child(div().id(`agent-fold-${a.address}`)
-          .when(subs.length > 0, el => el.on_click((_e, cx) => {
+          .when(subs.length > 0, el => el.on_mouse_down("left", (_e, cx) => this.ownPress(cx)).on_click((_e, cx) => {
             cx.stop_propagation();
             this.folded.has(a.address) ? this.folded.delete(a.address) : this.folded.add(a.address);
             cx.notify();
@@ -463,6 +527,10 @@ export default class Agents extends View {
       .border_t(1)
       .border_color(t.border)
       .text_size(13)
+      // Released anywhere but on a pinned agent, or a press elsewhere after a
+      // release outside this mod: the drag is dropped.
+      .on_mouse_up("left", (_e, cx) => this.endDrag(cx))
+      .on_mouse_down_out((_e, cx) => this.endDrag(cx))
       .when(!collapsed, (el) =>
         el.child(
           h_flex()
