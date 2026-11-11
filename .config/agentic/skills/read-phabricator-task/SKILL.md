@@ -91,7 +91,7 @@ Call the MCP "who am I" tool to get the current authenticated user's PHID and us
 
 Read-only counterparts to `manage-phabricator-task`'s "Workboard columns" section, ask the user which board/project and, if needed, which column, rather than assuming either:
 
-- `pha_workboard_search_columns`: list a board's columns, pass `project_phids=[<board project PHID>]`.
+- `pha_workboard_search_columns`: list a board's columns, pass `project_phids=[<board project PHID>]` and `include_hidden=false`, a long-lived board carries many hidden retired columns that flood the result. Order them by `sequence`, not response order. A task in a hidden column is effectively off the board.
 - `pha_workboard_search_tasks_by_column`: list the tasks currently sitting in a given column, pass `column_phid=<column PHID>`.
 
 ## Due date / reference fields
