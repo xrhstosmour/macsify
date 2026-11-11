@@ -36,6 +36,8 @@ expect_rule ask 'Bash(git push*refs/heads/main*)' present
 # The slot agents of both watchers read their steps unprompted.
 expect_rule allow 'Read(~/.config/agentic/skills/green-github-prs-watcher/references/slot-run.md)' present
 expect_rule allow 'Read(~/.config/agentic/skills/review-github-prs-watcher/references/slot-run.md)' present
+# Both dispatchers take and free their agent slots unprompted.
+expect_rule allow 'Bash(~/.config/scripts/review/agent-slots.sh *)' present
 # The review watcher reads its slot worktrees unprompted.
 expect_rule allow 'Read(~/Developer/worktrees/*/reviews-2/**)' present
 expect_rule allow 'Read(~/Developer/worktrees/*/reviews-*/**)' absent
