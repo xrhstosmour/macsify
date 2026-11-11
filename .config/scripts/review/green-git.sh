@@ -137,8 +137,10 @@ require_plain_file() {
 
 # Records the head before it pushes, a record that cannot be written stops the push instead of passing the watcher's head off as yours.
 push() {
-  mkdir -p "$STATE_DIRECTORY"
-  echo "$(date +%s) $(git -C "$worktree" rev-parse HEAD)" >>"$STATE_DIRECTORY/pushed"
+  (
+    lock_state "$STATE_DIRECTORY"
+    echo "$(date +%s) $(git -C "$worktree" rev-parse HEAD)" >>"$STATE_DIRECTORY/pushed"
+  )
   git_without_hooks push --quiet origin "HEAD:refs/heads/$branch" "--force-with-lease=refs/heads/$branch:$sha" >&2
 }
 
