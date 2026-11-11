@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Checks `green-search.sh`, the read-only searches of the green watcher. It
-# searches only a `resolves` worktree and the `Claude Code` and `OpenCode`
+# searches only a `resolves-<slot>` worktree and the `Claude Code` and `OpenCode`
 # sessions of that worktree's checkout, never those of another checkout, takes
 # a pattern and never an option, runs no command through a `rg` or `sqlite3`
 # configuration, and caps what it prints.
@@ -18,9 +18,9 @@ fail() {
   failures=$((failures + 1))
 }
 
-mkdir -p "$TEST_DIRECTORY/developer/worktrees/service/resolves" "$TEST_DIRECTORY/home"
+mkdir -p "$TEST_DIRECTORY/developer/worktrees/service/resolves-2" "$TEST_DIRECTORY/home"
 DEVELOPER="$(cd "$TEST_DIRECTORY/developer" && pwd -P)"
-WORKTREE="$DEVELOPER/worktrees/service/resolves"
+WORKTREE="$DEVELOPER/worktrees/service/resolves-2"
 export REVIEW_DEVELOPER_DIRECTORY="$DEVELOPER"
 export HOME="$TEST_DIRECTORY/home"
 export CLAUDE_CONFIG_DIR="$TEST_DIRECTORY/claude"
@@ -49,6 +49,10 @@ RIPGREP_CONFIG_PATH="$TEST_DIRECTORY/ripgreprc" "$SEARCH_SCRIPT" code "$WORKTREE
 "$SEARCH_SCRIPT" code "$WORKTREE" limit extra >/dev/null 2>&1 && fail "the search script accepted an extra argument"
 mkdir -p "$DEVELOPER/worktrees/service/other" "$DEVELOPER/service"
 "$SEARCH_SCRIPT" code "$DEVELOPER/worktrees/service/other" limit >/dev/null 2>&1 && fail "the search script searched a worktree that is not resolves"
+for name in resolves resolves-4; do
+  mkdir -p "$DEVELOPER/worktrees/service/$name"
+  "$SEARCH_SCRIPT" code "$DEVELOPER/worktrees/service/$name" limit >/dev/null 2>&1 && fail "the search script searched $name, not a slot"
+done
 "$SEARCH_SCRIPT" code "$DEVELOPER/service" limit >/dev/null 2>&1 && fail "the search script searched a checkout"
 ln -s "$WORKTREE" "$TEST_DIRECTORY/link"
 "$SEARCH_SCRIPT" code "$TEST_DIRECTORY/link" limit >/dev/null 2>&1 && fail "the search script followed a symlinked worktree"
@@ -90,12 +94,12 @@ awk 'length > 600 { found = 1 } END { exit !found }' "$TEST_DIRECTORY/sessions" 
 [ ! -e "$TEST_DIRECTORY/sqliterc-ran" ] || fail "the search script ran a command of ~/.sqliterc"
 
 # A `_` in the checkout is a plain character, not a wildcard that would take in `myxapp`.
-mkdir -p "$DEVELOPER/worktrees/my_app/resolves"
+mkdir -p "$DEVELOPER/worktrees/my_app/resolves-1"
 sqlite3 "$XDG_DATA_HOME/opencode/opencode.db" <<EOF
 INSERT INTO session VALUES ('ses_my_app', '$DEVELOPER/worktrees/my_app/fix'), ('ses_lookalike', '$DEVELOPER/worktrees/myxapp/fix');
 INSERT INTO part VALUES ('three', 'ses_my_app', 3, '{"text":"my app figure 17"}'), ('four', 'ses_lookalike', 4, '{"text":"lookalike figure 17"}');
 EOF
-"$SEARCH_SCRIPT" sessions "$DEVELOPER/worktrees/my_app/resolves" 'figure 17' >"$TEST_DIRECTORY/underscore" 2>&1
+"$SEARCH_SCRIPT" sessions "$DEVELOPER/worktrees/my_app/resolves-1" 'figure 17' >"$TEST_DIRECTORY/underscore" 2>&1
 grep -q 'opencode:ses_my_app:' "$TEST_DIRECTORY/underscore" || fail "the search script missed an OpenCode session of a checkout with a _"
 grep -q ses_lookalike "$TEST_DIRECTORY/underscore" && fail "the search script read a _ of the checkout as a wildcard"
 

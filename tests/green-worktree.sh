@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # Checks `green-worktree.sh` and `green-git.sh` against local repositories
-# and a stub `gh`, never the real GitHub. The worktree script puts one detached
-# `resolves` worktree at the head of a pull request of the viewer, throws away a
+# and a stub `gh`, never the real GitHub. The worktree script puts the detached
+# `resolves-<slot>` worktree of one of three slots at the head of a pull request
+# of the viewer, throws away a
 # leftover of an earlier run, and refuses a pull request of someone else, a
 # draft, one from a fork or another branch, one that moved, and `main`. The git
 # script commits a fixup only of a commit of the pull request and only of
@@ -15,8 +16,8 @@
 # never one named after a deploy target, at the head of the pull request, never
 # next to a deploying workflow or local action the push starts or chains, at the
 # head or on the default branch, or for a change to `.github`, never over a tests
-# branch it did not push and the head does not contain, and refuses any
-# folder that is not a `resolves` worktree.
+# branch it did not push and the head does not contain, waits for the fetch
+# lock another slot holds, and refuses any folder that is not a slot worktree.
 
 TESTS_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 WORKTREE_SCRIPT="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/review/green-worktree.sh"
@@ -96,10 +97,10 @@ pull_request() {
   export STUB_PULL_REQUEST="${1:-open} ${2:-false} ${3:-me} ${4:-owner/service} ${5:-fix/thing} ${6:-$HEAD_SHA} main"
 }
 prepare() {
-  "$WORKTREE_SCRIPT" owner/service 7 "${1:-$HEAD_SHA}" "${2:-fix/thing}" 2>/dev/null
+  "$WORKTREE_SCRIPT" owner/service 7 "${1:-$HEAD_SHA}" "${2:-fix/thing}" "${3:-1}" 2>/dev/null
 }
 
-WORKTREE="$REVIEW_DEVELOPER_DIRECTORY/worktrees/service/resolves"
+WORKTREE="$REVIEW_DEVELOPER_DIRECTORY/worktrees/service/resolves-1"
 pull_request
 [ "$(prepare)" = "$WORKTREE" ] || fail "the worktree script did not print the resolves worktree"
 [ "$(git -C "$WORKTREE" rev-parse HEAD)" = "$HEAD_SHA" ] || fail "the worktree is not at the pull request head"
@@ -129,9 +130,18 @@ pull_request open false me owner/service main
 prepare "$HEAD_SHA" main >/dev/null && fail "the worktree script accepted main"
 prepare "$HEAD_SHA" -x >/dev/null && fail "the worktree script accepted a branch that reads as an option"
 prepare "$HEAD_SHA" '@{-1}' >/dev/null && fail "the worktree script accepted a branch shorthand"
-"$WORKTREE_SCRIPT" owner/service 7 abc fix/thing >/dev/null 2>&1 && fail "the worktree script accepted a short commit"
+"$WORKTREE_SCRIPT" owner/service 7 abc fix/thing 1 >/dev/null 2>&1 && fail "the worktree script accepted a short commit"
 pull_request
+for slot in 0 4 x ../1; do
+  prepare "$HEAD_SHA" fix/thing "$slot" >/dev/null && fail "the worktree script accepted the slot $slot"
+done
+"$WORKTREE_SCRIPT" owner/service 7 "$HEAD_SHA" fix/thing >/dev/null 2>&1 && fail "the worktree script ran without a slot"
 prepare >/dev/null || fail "the worktree script failed to prepare the pull request again"
+
+# Each slot is its own worktree, so pull requests of one repository are handled at once.
+[ "$(prepare "$HEAD_SHA" fix/thing 2)" = "$REVIEW_DEVELOPER_DIRECTORY/worktrees/service/resolves-2" ] || fail "the worktree script did not print the second slot"
+[ "$(git -C "$REVIEW_DEVELOPER_DIRECTORY/worktrees/service/resolves-2" rev-parse HEAD)" = "$HEAD_SHA" ] || fail "the second slot is not at the pull request head"
+[ -d "$WORKTREE" ] || fail "preparing the second slot removed the first"
 
 # A fixup only of a commit of the pull request, only of a changed file inside the worktree.
 "$GIT_SCRIPT" fixup "$WORKTREE" "$CHANGE_SHA" a.txt >/dev/null 2>&1 && fail "the git script committed a file with no change"
@@ -187,11 +197,19 @@ mv "$TEST_DIRECTORY/state-kept" "$XDG_CACHE_HOME/green-github-prs-watcher"
 [ "$(tail -n 1 "$PUSHED_FILE" | cut -d ' ' -f 2)" = "$FIXUP_SHA" ] || fail "the git script did not record the head it pushed"
 [ ! -e "$TEST_DIRECTORY/hook-ran" ] || fail "a hook ran on a push"
 
+# Slots fetch into the same `refs/remotes`, an autosquash and a worktree of another slot wait while one fetches.
+mkdir "$REVIEW_DEVELOPER_DIRECTORY/service/.git/fetch.lock"
+REVIEW_LOCK_ATTEMPTS=1 "$GIT_SCRIPT" autosquash "$WORKTREE" "$FIXUP_SHA" >/dev/null 2>&1 && fail "the git script rebased while another slot held the fetch lock"
+REVIEW_LOCK_ATTEMPTS=1 prepare "" "" 2 >/dev/null && fail "the worktree script fetched while another slot held the fetch lock"
+rmdir "$REVIEW_DEVELOPER_DIRECTORY/service/.git/fetch.lock"
+[ "$(git -C "$UPSTREAM" rev-parse fix/thing)" = "$FIXUP_SHA" ] || fail "the git script pushed while another slot held the fetch lock"
+
 # The autosquash leaves no fixup, pushes, and keeps the viewer's own branch where it was.
 SQUASHED_SHA="$("$GIT_SCRIPT" autosquash "$WORKTREE" "$FIXUP_SHA" 2>/dev/null)" || fail "the git script failed to autosquash"
 [ "$(git -C "$UPSTREAM" log --format=%s main..fix/thing | tr '\n' ' ')" = "add b change a " ] || fail "the autosquash left a fixup on the branch"
 [ "$(git -C "$UPSTREAM" rev-parse fix/thing)" = "$SQUASHED_SHA" ] || fail "the git script did not push the squashed head"
 [ "$(tail -n 1 "$PUSHED_FILE" | cut -d ' ' -f 2)" = "$SQUASHED_SHA" ] || fail "the git script did not record the squashed head"
+[ ! -e "$REVIEW_DEVELOPER_DIRECTORY/service/.git/fetch.lock" ] || fail "the git script kept the fetch lock after the autosquash"
 [ "$(git -C "$UPSTREAM" show fix/thing:a.txt)" = three ] || fail "the autosquash lost the fix"
 [ "$(git -C "$REVIEW_DEVELOPER_DIRECTORY/service" rev-parse fix/thing)" = "$HEAD_SHA" ] || fail "the autosquash moved the viewer's own branch"
 
@@ -491,6 +509,10 @@ git -C "$REVIEW_DEVELOPER_DIRECTORY/service" worktree add --quiet --detach "$REV
 "$GIT_SCRIPT" push "$REVIEW_DEVELOPER_DIRECTORY/worktrees/service/other" "$SQUASHED_SHA" >/dev/null 2>&1 && fail "the git script pushed from a worktree that is not resolves"
 ln -s "$REVIEW_DEVELOPER_DIRECTORY/worktrees/service/other" "$TEST_DIRECTORY/resolves"
 "$GIT_SCRIPT" push "$TEST_DIRECTORY/resolves" "$SQUASHED_SHA" >/dev/null 2>&1 && fail "the git script followed a symlink named resolves"
+for name in resolves resolves-4; do
+  git -C "$REVIEW_DEVELOPER_DIRECTORY/service" worktree add --quiet --detach "$REVIEW_DEVELOPER_DIRECTORY/worktrees/service/$name" HEAD
+  "$GIT_SCRIPT" push "$REVIEW_DEVELOPER_DIRECTORY/worktrees/service/$name" "$SQUASHED_SHA" >/dev/null 2>&1 && fail "the git script pushed from $name, not a slot"
+done
 "$GIT_SCRIPT" push "$WORKTREE/b" "$SQUASHED_SHA" >/dev/null 2>&1 && fail "the git script accepted a folder inside the worktree"
 "$GIT_SCRIPT" push "$WORKTREE" abc >/dev/null 2>&1 && fail "the git script accepted a short lease"
 "$GIT_SCRIPT" rebase "$WORKTREE" "$SQUASHED_SHA" >/dev/null 2>&1 && fail "the git script accepted an unknown command"
@@ -507,7 +529,7 @@ printf 'three\n' >"$WORKTREE/b.txt"
 "$GIT_SCRIPT" push "$WORKTREE" "$SQUASHED_SHA" >/dev/null 2>&1 && fail "the git script pushed from a worktree whose .git points elsewhere"
 "$GIT_SCRIPT" autosquash "$WORKTREE" "$SQUASHED_SHA" >/dev/null 2>&1 && fail "the git script rebased a worktree whose .git points elsewhere"
 # At the head of the pull request, so the refusal comes from the worktree check and not from a moved head.
-"$WORKTREE_SCRIPT" owner/service 7 "$HEAD_SHA" fix/thing 2>"$TEST_DIRECTORY/stderr" >/dev/null && fail "the worktree script moved a worktree whose .git points elsewhere"
+"$WORKTREE_SCRIPT" owner/service 7 "$HEAD_SHA" fix/thing 1 2>"$TEST_DIRECTORY/stderr" >/dev/null && fail "the worktree script moved a worktree whose .git points elsewhere"
 grep -q 'is not a worktree of' "$TEST_DIRECTORY/stderr" || fail "the worktree script refused a .git pointing elsewhere for another reason"
 printf 'gitdir: %s/service/.git/worktrees\n' "$REVIEW_DEVELOPER_DIRECTORY" >"$WORKTREE/.git"
 "$GIT_SCRIPT" push "$WORKTREE" "$SQUASHED_SHA" >/dev/null 2>&1 && fail "the git script accepted a .git pointing at the worktrees folder itself"

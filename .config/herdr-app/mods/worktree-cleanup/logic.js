@@ -6,7 +6,7 @@
 
 // Worktrees kept on purpose, whatever their state. More go in the
 // `worktree-cleanup-protected` file under `~/.config/herdr-app`.
-export const PROTECTED_NAMES = ["review", "reviews", "playground", "trivial", "trivials", "resolves"];
+export const PROTECTED_NAMES = ["review", "reviews", "playground", "trivial", "trivials", "resolves", "resolves-1", "resolves-2", "resolves-3"];
 
 // Git's own markers of an unfinished operation.
 const IN_PROGRESS_STATES = ["rebase-merge", "rebase-apply", "MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "BISECT_LOG"];
