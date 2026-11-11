@@ -83,6 +83,58 @@ function git_fetch_and_rebase
     end
 end
 
+# Function to switch a clean checkout to the default branch, then fetch and rebase it like `gfrb`.
+# Run by the `Herdr` app's sidebar + in every new space, so outside a repository with an `origin` it does nothing.
+# Uncommitted changes or a rebase, merge or cherry-pick in progress stop it, a checkout would carry them onto the default branch, and an agent may be editing them.
+# The fetch and rebase are the `Herdr` app's `repository-sync.sh`, which never prompts, times out a stalled fetch and aborts a conflicting rebase.
+# Usage:
+#   git_switch_to_default_branch
+function git_switch_to_default_branch
+    if not git rev-parse --is-inside-work-tree >/dev/null 2>&1
+        return 0
+    end
+    if not git remote get-url origin >/dev/null 2>&1
+        return 0
+    end
+
+    for state in rebase-merge rebase-apply MERGE_HEAD CHERRY_PICK_HEAD
+        if test -e "$(git rev-parse --path-format=absolute --git-path $state)"
+            log_warning "A $state is in progress, leaving the checkout alone."
+            return 1
+        end
+    end
+
+    if test -n "$(git status --porcelain --untracked-files=no)"
+        log_warning "Uncommitted changes, staying on `$(git branch --show-current)`."
+        return 1
+    end
+
+    # Read locally, `git_get_default_branch` asks the remote and would hang an offline terminal.
+    set -l default_branch (git symbolic-ref --quiet --short refs/remotes/origin/HEAD)
+    if test -z "$default_branch"
+        log_warning "No default branch known for `origin`, run `git remote set-head origin --auto`."
+        return 1
+    end
+    set default_branch (string replace "origin/" "" -- $default_branch)
+
+    if test "$(git branch --show-current)" != "$default_branch"
+        git checkout --quiet "$default_branch"
+        or begin
+            log_error "Could not switch to `$default_branch`!"
+            return 1
+        end
+    end
+
+    set -l sync_script "$HOME/.config/herdr-app/mods/repository-sync/repository-sync.sh"
+    if not test -f "$sync_script"
+        log_warning "No `repository-sync.sh`, run `gfrb` by hand."
+        return 1
+    end
+    log_info "Fetching and rebasing `$default_branch`..."
+    # `--detached` runs it here instead of in the background, so the prompt only appears once `$default_branch` is current.
+    bash "$sync_script" sidebar --force --detached "$PWD"
+end
+
 # Function to delete the stale remote references of every remote one by one.
 # `git remote prune` deletes them in one transaction, so two names that differ only in case lock the same file on a case-insensitive file system and the whole prune fails.
 # Usage:

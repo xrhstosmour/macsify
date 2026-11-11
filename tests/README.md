@@ -19,6 +19,7 @@ Plain `bash` tests, all run by `.github/workflows/lint.yml` next to the `shellch
 - `git-editor.sh`: `git/editor.sh` opens `VS Code` only while it runs and its `code` command exists, `hx` otherwise, `vi` without `hx`.
 - `profile.sh`: how the work or personal profile is picked and saved, and which Brewfiles it reads.
 - `herdr-application-title.sh`: the title hook gives an automatic tab and space the session title, keeps the tab color, never overrides a hand rename, and does nothing outside an app terminal or without a title.
+- `git-switch-to-default-branch.sh`: the `Herdr` sidebar + moves a clean checkout to its default branch with what `origin` gained, leaves a checkout with uncommitted changes or a rebase in progress alone, and does nothing outside a repository or without `origin`. It needs `fish`.
 - `herdr-agent-resume-fish.sh`: only the terminal's own `fish` resumes the recorded agent with its flags, a record naming a flag as session resumes nothing, and an agent typed by hand forgets its record when it ends. It needs `fish`.
 - `antivirus.sh`: `antivirus/scan.sh` moves an infected file into quarantine with a note and without execute bits, leaves clean files, dependency folders and, with `--recent`, old files alone, and never deletes anything.
 - `arrange-displays.sh`: `displays/arrange_displays.sh` runs the compiled placer only when no external keyboard is connected, and does nothing before it is compiled. The placer's geometry is checked by hand.
