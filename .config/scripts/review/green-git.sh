@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The only git writes of the `green-github-prs-watcher` skill: a fixup commit, a reword, a push, and the autosquash rebase with its conflict resolution, all inside a `resolves` worktree made by `green-worktree.sh`.
+# The only git writes of the `green-github-prs-watcher` skill: a fixup commit, a reword, a push, and the autosquash rebase with its conflict resolution, all inside a `resolves-<slot>` worktree made by `green-worktree.sh`.
 # Allowed in claude/settings.json by its path, so it validates every input itself and runs only the fixed git commands below. The comments it acts on are untrusted, so the caller never picks the base of a rebase or the branch of a push, both come from the files `green-worktree.sh` wrote.
 # Hooks are off for every git command as in `green-worktree.sh`, and `--no-update-refs` keeps a `rebase.updateRefs` setting of yours from moving a branch of yours with the rebase.
 # A push is always a lease on the head the caller last saw, so a commit pushed by someone else in the meantime is never overwritten.
@@ -63,20 +63,21 @@ git_without_hooks() {
   GIT_LFS_SKIP_SMUDGE=1 git -c core.hooksPath=/dev/null -c core.symlinks=false -c core.fsmonitor=false -c submodule.recurse=false -c diff.ignoreSubmodules=all -C "$worktree" "$@"
 }
 
-# The worktree must be the top of a `resolves` worktree under the developer directory, compared as physical paths so a symlink cannot point it elsewhere.
+# The worktree must be the top of a `resolves-<slot>` worktree under the developer directory, compared as physical paths so a symlink cannot point it elsewhere.
 developer="$(cd "${REVIEW_DEVELOPER_DIRECTORY:-$HOME/Developer}" && pwd -P)"
 if [ ! -d "$worktree" ] || [ -L "$worktree" ]; then
   echo "not a resolves worktree: $worktree" >&2
   exit 2
 fi
 worktree="$(cd "$worktree" && pwd -P)"
-if ! [[ $worktree == "$developer"/worktrees/*/resolves ]] || [[ ${worktree#"$developer"/worktrees/} == */*/* ]]; then
+if ! [[ $worktree == "$developer"/worktrees/*/resolves-[1-3] ]] || [[ ${worktree#"$developer"/worktrees/} == */*/* ]]; then
   echo "not a resolves worktree: $worktree" >&2
   exit 2
 fi
 # Before the first git command, the worktree is editable by the caller and its `.git` could point anywhere.
 checkout_name="${worktree#"$developer"/worktrees/}"
-require_worktree_of "$worktree" "$developer/${checkout_name%/resolves}"
+checkout="$developer/${checkout_name%/resolves-[1-3]}"
+require_worktree_of "$worktree" "$checkout"
 if [ "$(git -C "$worktree" rev-parse --show-toplevel 2>/dev/null)" != "$worktree" ]; then
   echo "not a resolves worktree: $worktree" >&2
   exit 2
@@ -136,8 +137,10 @@ require_plain_file() {
 
 # Records the head before it pushes, a record that cannot be written stops the push instead of passing the watcher's head off as yours.
 push() {
-  mkdir -p "$STATE_DIRECTORY"
-  echo "$(date +%s) $(git -C "$worktree" rev-parse HEAD)" >>"$STATE_DIRECTORY/pushed"
+  (
+    lock_state "$STATE_DIRECTORY"
+    echo "$(date +%s) $(git -C "$worktree" rev-parse HEAD)" >>"$STATE_DIRECTORY/pushed"
+  )
   git_without_hooks push --quiet origin "HEAD:refs/heads/$branch" "--force-with-lease=refs/heads/$branch:$sha" >&2
 }
 
@@ -183,6 +186,14 @@ case "$command" in
     ;;
 esac
 
+# The slots of one checkout share its `refs/remotes`, two fetches of the same base at once fail on the ref lock, so every fetch takes the `fetch` lock the worktree scripts take too. The subshell frees it right after the fetch, a slow rebase or push never holds up the other slots.
+fetch_origin() {
+  (
+    lock_checkout "$checkout" fetch
+    git_without_hooks fetch --quiet origin "$@" >&2
+  )
+}
+
 case "$command" in
   fixup)
     require_target
@@ -213,7 +224,7 @@ case "$command" in
     push
     ;;
   autosquash)
-    git_without_hooks fetch --quiet origin "+refs/heads/$base:refs/remotes/origin/$base" >&2
+    fetch_origin "+refs/heads/$base:refs/remotes/origin/$base"
     if ! GIT_SEQUENCE_EDITOR=: GIT_EDITOR=: git_without_hooks rebase --quiet --interactive --autosquash --no-update-refs "refs/remotes/origin/$base" >&2; then
       if rebase_in_progress && [ -n "$(conflicted_files)" ]; then
         report_conflict
@@ -274,7 +285,7 @@ case "$command" in
         exit 1
         ;;
     esac
-    git_without_hooks fetch --quiet origin "+refs/heads/$base:refs/remotes/origin/$base" "+refs/heads/$branch:refs/remotes/origin/$branch" >&2
+    fetch_origin "+refs/heads/$base:refs/remotes/origin/$base" "+refs/heads/$branch:refs/remotes/origin/$branch"
     # Checks are shown on the pull request by commit, tests of any other commit would run where nobody sees them.
     if [ "$(git -C "$worktree" rev-parse HEAD)" != "$sha" ] || [ "$(git -C "$worktree" rev-parse "refs/remotes/origin/$branch")" != "$sha" ]; then
       echo "$sha is not the head of the worktree and of $branch on origin" >&2
@@ -323,7 +334,7 @@ case "$command" in
       exit 1
     fi
     require_branch "default branch" "$default_branch"
-    git_without_hooks fetch --quiet origin "+refs/heads/$default_branch:refs/remotes/origin/$default_branch" >&2
+    fetch_origin "+refs/heads/$default_branch:refs/remotes/origin/$default_branch"
     require_no_deploy_started "refs/remotes/origin/$default_branch" ""
     # The tests branch may be a person's own, so it is replaced only when it is missing, still what this command pushed last, or behind the pull request, and the push is a lease on what was read.
     remote_target=""

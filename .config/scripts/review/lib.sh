@@ -313,22 +313,35 @@ require_worktree_of() {
   fi
 }
 
-# Takes a lock named `<name>.lock` in the git directory of the checkout and frees it when the script exits, so two runs never fetch or move the same worktree at once.
+# Takes the lock directory and frees it when the script exits, a subshell frees it when the subshell ends.
 # A lock older than ten minutes is left over from a run that died. `REVIEW_LOCK_ATTEMPTS` replaces the 120 seconds it is waited for, for the tests.
-lock_checkout() {
+lock_directory() {
   local attempts=0
-  repository_lock="$(git -C "$1" rev-parse --path-format=absolute --git-common-dir)/$2.lock"
-  until mkdir "$repository_lock" 2>/dev/null; do
-    if [ -n "$(find "$repository_lock" -maxdepth 0 -mmin +10)" ]; then
-      rmdir "$repository_lock"
+  held_lock="$1"
+  until mkdir "$held_lock" 2>/dev/null; do
+    # The holder can free it between the `mkdir` and this check.
+    if [ -n "$(find "$held_lock" -maxdepth 0 -mmin +10 2>/dev/null)" ]; then
+      # Another waiter can remove it first.
+      rmdir "$held_lock" 2>/dev/null || true
       continue
     fi
     attempts=$((attempts + 1))
     if [ "$attempts" -gt "${REVIEW_LOCK_ATTEMPTS:-120}" ]; then
-      echo "another run holds $repository_lock" >&2
+      echo "another run holds $held_lock" >&2
       exit 1
     fi
     sleep 1
   done
-  trap 'rmdir "$repository_lock"' EXIT
+  trap 'rmdir "$held_lock"' EXIT
+}
+
+# Takes a lock named `<name>.lock` in the git directory of the checkout, so two runs never fetch or move the same worktree at once.
+lock_checkout() {
+  lock_directory "$(git -C "$1" rev-parse --path-format=absolute --git-common-dir)/$2.lock"
+}
+
+# Takes the lock of a watcher's state files. The detector rewrites a file to keep its latest entries while `--mark` and `green-git.sh` append to it from other processes, a line appended to the file it is replacing would be lost.
+lock_state() {
+  mkdir -p "$1"
+  lock_directory "$1/state.lock"
 }

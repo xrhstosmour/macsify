@@ -23,6 +23,9 @@
 
 set -u
 
+# shellcheck source=SCRIPTDIR/lib.sh
+. "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
 STATE_DIRECTORY="${XDG_CACHE_HOME:-$HOME/.cache}/green-github-prs-watcher"
 SEEN_FILE="$STATE_DIRECTORY/seen"
 CLAIMED_FILE="$STATE_DIRECTORY/claimed"
@@ -36,7 +39,7 @@ if [ "${1:-}" = "--mark" ]; then
     echo "usage: watch-green-prs.sh --mark <owner/repo#number+epoch|owner/repo#number=head sha|owner/repo#number~head sha|owner/repo#number@head sha>" >&2
     exit 2
   fi
-  mkdir -p "$STATE_DIRECTORY"
+  lock_state "$STATE_DIRECTORY"
   echo "$(date +%s) $2" >>"$SEEN_FILE"
   exit 0
 fi
@@ -183,12 +186,14 @@ resumed() {
 
 poll() {
   # The state files only matter while a pull request is open, keep the latest entries.
-  local file
-  for file in "$SEEN_FILE" "$CLAIMED_FILE" "$PUSHED_FILE"; do
-    if [ "$(wc -l <"$file")" -gt 2000 ]; then
-      tail -n 1000 "$file" >"$file.tmp" && mv "$file.tmp" "$file"
-    fi
-  done
+  (
+    lock_state "$STATE_DIRECTORY"
+    for file in "$SEEN_FILE" "$CLAIMED_FILE" "$PUSHED_FILE"; do
+      if [ "$(wc -l <"$file")" -gt 2000 ]; then
+        tail -n 1000 "$file" >"$file.tmp" && mv "$file.tmp" "$file"
+      fi
+    done
+  )
 
   local held=""
   gh api graphql -f query="$GRAPHQL_QUERY" -f "search=$search" --jq "$JQ_FILTER" |

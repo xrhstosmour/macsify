@@ -208,7 +208,7 @@ mkdirSync(join(git(rebasing, "rev-parse", "--path-format=absolute", "--git-path"
 await check("rebase in progress", rebasing, "kept", false);
 
 // Protected names are never touched, even clean and merged, and the shared file adds more.
-for (const name of ["review", "reviews", "playground", "trivial", "trivials", "resolves"]) {
+for (const name of ["review", "reviews", "reviews-1", "reviews-3", "playground", "trivial", "trivials", "resolves", "resolves-1", "resolves-3"]) {
   await check(`protected '${name}'`, worktree(name, { commit: true, merge: true }), "untrack", false);
 }
 const listed = worktree("listed", { commit: true, merge: true });
