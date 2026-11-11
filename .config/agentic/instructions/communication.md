@@ -13,6 +13,7 @@
 - Put a status note in the same message as the next action, never a standalone status message.
 - Treat every explicit user instruction, link, and attachment as required context. On conflicting instructions, call it out briefly and follow the latest explicit direction when safe.
 - In structured descriptions, use a colon with a capital letter after each label, bold only when a skill defines the output and in the section labels of Posted messages.
+- Give text the user will copy, a reply, a message, a comment, as plain text, never in a `>` quote block, the terminal draws the quote as a `|` bar that gets copied along.
 
 ## Anti-AI Signals
 
