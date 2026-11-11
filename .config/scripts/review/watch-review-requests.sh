@@ -20,6 +20,9 @@
 
 set -u
 
+# shellcheck source=SCRIPTDIR/lib.sh
+. "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
 STATE_DIRECTORY="${XDG_CACHE_HOME:-$HOME/.cache}/review-github-prs-watcher"
 SEEN_FILE="$STATE_DIRECTORY/seen"
 CLAIMED_FILE="$STATE_DIRECTORY/claimed"
@@ -30,7 +33,7 @@ if [ "${1:-}" = "--mark" ]; then
     echo "usage: watch-review-requests.sh --mark <owner/repo#number@head sha[+epoch]>" >&2
     exit 2
   fi
-  mkdir -p "$STATE_DIRECTORY"
+  lock_state "$STATE_DIRECTORY"
   echo "$2" >>"$SEEN_FILE"
   exit 0
 fi
@@ -141,12 +144,14 @@ claimed() {
 
 poll() {
   # Both files only matter while a pull request is open, keep the latest entries.
-  local file
-  for file in "$SEEN_FILE" "$CLAIMED_FILE"; do
-    if [ "$(wc -l <"$file")" -gt 2000 ]; then
-      tail -n 1000 "$file" >"$file.tmp" && mv "$file.tmp" "$file"
-    fi
-  done
+  (
+    lock_state "$STATE_DIRECTORY"
+    for file in "$SEEN_FILE" "$CLAIMED_FILE"; do
+      if [ "$(wc -l <"$file")" -gt 2000 ]; then
+        tail -n 1000 "$file" >"$file.tmp" && mv "$file.tmp" "$file"
+      fi
+    done
+  )
 
   gh api graphql -f query="$GRAPHQL_QUERY" -f "requested=$requested_query" -f "reviewed=$reviewed_query" --jq "$JQ_FILTER" |
     while read -r repository number identity url reason; do

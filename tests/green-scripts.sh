@@ -151,7 +151,12 @@ nodes "$(node '[[false, [["author","2026-11-05T11:00:00Z"]]]]')"
 [ -z "$(detect)" ] || fail "the detector started a run that is still going twice"
 echo "$(($(date +%s) - 7300)) $KEY" >"$STATE/claimed"
 [ -n "$(detect)" ] || fail "the detector dropped a pull request whose claim expired"
+# A mark waits while the detector rewrites the state files, an append to a file being replaced would be lost.
+mkdir "$STATE/state.lock"
+REVIEW_LOCK_ATTEMPTS=1 "$WATCHER" --mark "$KEY" 2>/dev/null && fail "the detector marked a pull request while its state files were locked"
+rmdir "$STATE/state.lock"
 "$WATCHER" --mark "$KEY" || fail "the detector refused to mark a pull request done"
+[ ! -e "$STATE/state.lock" ] || fail "the detector kept the state lock after a mark"
 [ -z "$(detect)" ] || fail "the detector reported a handled cycle again"
 # The push of the run moves the head, the same comments are still the same cycle.
 STUB_NODES="[$(HEAD_SHA=1111111111111111111111111111111111111111 node '[[false, [["author","2026-11-05T11:00:00Z"]]]]')]"
