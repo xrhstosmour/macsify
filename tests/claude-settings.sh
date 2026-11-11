@@ -33,8 +33,12 @@ expect_rule ask 'Bash(git reset --hard *)' present
 # The force-with-lease allow only holds while these ask rules cover the other spellings of the default branch.
 expect_rule ask 'Bash(git push*+*main*)' present
 expect_rule ask 'Bash(git push*refs/heads/main*)' present
-# The slot agents of the green watcher read their steps unprompted.
+# The slot agents of both watchers read their steps unprompted.
 expect_rule allow 'Read(~/.config/agentic/skills/green-github-prs-watcher/references/slot-run.md)' present
+expect_rule allow 'Read(~/.config/agentic/skills/review-github-prs-watcher/references/slot-run.md)' present
+# The review watcher reads its slot worktrees unprompted.
+expect_rule allow 'Read(~/Developer/worktrees/*/reviews-2/**)' present
+expect_rule allow 'Read(~/Developer/worktrees/*/reviews-*/**)' absent
 # Only the three slots are editable unprompted, not a worktree of yours whose name starts the same.
 expect_rule allow 'Edit(~/Developer/worktrees/*/resolves-3/**)' present
 expect_rule allow 'Edit(~/Developer/worktrees/*/resolves-*/**)' absent

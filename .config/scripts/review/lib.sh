@@ -271,7 +271,28 @@ read_body_file() {
 # Prints the checkout of the repository under the developer directory, found by its `origin` whatever its folder is called, and clones it only when none matches.
 # Never into a folder that belongs to another repository with the same name.
 find_checkout() {
-  local developer="$1" repository="$2" candidate url checkout
+  local developer="$1" repository="$2"
+  find_existing_checkout "$developer" "$repository" && return 0
+  # Two slots of a repository not cloned yet would both clone into one folder, the subshell holds the lock only for the clone.
+  (
+    take_lock "$developer/.clone-${repository%%/*}-${repository##*/}.lock"
+    # The slot that held the lock may have cloned it.
+    find_existing_checkout "$developer" "$repository" && exit 0
+    # A clone writes `.git` and its `origin` before the objects, so it goes into a hidden folder the search skips and moves in once complete, a slot that finds the checkout without the lock never works in half a clone.
+    partial="$developer/.clone-${repository%%/*}-${repository##*/}.partial"
+    rm -rf "$partial"
+    gh repo clone "$repository" "$partial" >&2 || exit 1
+    checkout="$developer/${repository##*/}"
+    if [ -e "$checkout" ]; then
+      checkout="$developer/${repository%%/*}-${repository##*/}"
+    fi
+    mv "$partial" "$checkout"
+    echo "$checkout"
+  )
+}
+
+find_existing_checkout() {
+  local developer="$1" repository="$2" candidate url
   for candidate in "$developer"/*/; do
     candidate="${candidate%/}"
     [ -e "$candidate/.git" ] || continue
@@ -283,12 +304,7 @@ find_checkout() {
         ;;
     esac
   done
-  checkout="$developer/${repository##*/}"
-  if [ -e "$checkout" ]; then
-    checkout="$developer/${repository%%/*}-${repository##*/}"
-  fi
-  gh repo clone "$repository" "$checkout" >&2
-  echo "$checkout"
+  return 1
 }
 
 # Fails unless the `.git` of the worktree is a plain file pointing into the `worktrees` folder of the checkout's git directory.
