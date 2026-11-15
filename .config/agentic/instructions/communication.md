@@ -7,7 +7,12 @@
 - Do not use semicolons (`;`), em dashes (`—`), or the abbreviation `e.g.`.
 - Be compact, short, direct, no fluff, no preambles. Answer at the length the question needs, no padding, and give full detail when depth is asked for.
 - Do not hard-wrap prose, comments, or bullets, one continuous line per paragraph or bullet.
-- Do not repeat the user request or restate unchanged context.
+- In prose, keep articles and full sentences, compact does not mean telegraphic.
+- Use one term per meaning, never switch synonyms for the same thing.
+- Use the full identifier of each file, function, branch, or command, never a nickname invented during the session.
+- Say in a few words what each commit, PR, job, or ID is, and for a job, what triggers it.
+- Say which facts you verified and which you assume.
+- Do not repeat the user request or restate unchanged context. Never point back with "as explained above", restate the one fact needed in a few words.
 - After an edit, show the changed lines or the diff, never paste a whole file back.
 - Use short checklists over long prose for plans and status updates.
 - Put a status note in the same message as the next action, never a standalone status message.
