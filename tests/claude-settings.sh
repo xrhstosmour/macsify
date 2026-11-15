@@ -70,6 +70,29 @@ expect_rule deny 'Bash(*green-github-prs-watcher/pushed*)' present
 expect_rule deny 'Bash(*XDG_CACHE_HOME=*)' present
 # `rg --pre` runs any command, so `rg` stays prompted.
 expect_rule allow 'Bash(rg *)' absent
+READ_TOOLS_FILE="$TESTS_SCRIPT_DIRECTORY/../claude/mcp-read-tools.json"
+# Raw SQL can return any row or write, and the other tools return customer data, rows, log lines or events, so they stay prompted on every MCP server setup allows the read tools under.
+for tool in metabase-mcp_execute_sql metabase-mcp_construct_native_query metabase-mcp_execute_query metabase-mcp_query metabase-mcp_execute_question metabase-mcp_construct_query grafana-mcp_query_loki_logs grafana-mcp_query_loki_patterns get_sentry_resource get_issue_details get_event_stacktrace get_event_attachment get_issue_breadcrumbs get_issue_tag_values get_issue_user_reports search_errors search_issue_events search_logs search_replays get_replay_details search_agent_conversations get_agent_conversation_details; do
+  if jq -e --arg tool "$tool" '[.trusted[], .hosts[][]] | index($tool) != null' "$READ_TOOLS_FILE" >/dev/null; then
+    echo "FAIL: '$tool' in claude/mcp-read-tools.json should be absent"
+    failures=$((failures + 1))
+  fi
+done
+# The `trusted` tools carry their upstream prefix, so a trusted server that bundles several upstreams never matches a bare name meant for another one.
+if jq -e '.trusted | any(contains("-mcp_") | not)' "$READ_TOOLS_FILE" >/dev/null; then
+  echo "FAIL: a tool under 'trusted' in claude/mcp-read-tools.json has no upstream prefix"
+  failures=$((failures + 1))
+fi
+# Only public hosts are committed, a private one belongs in the trusted hosts file on the machine. A new public host is added here on purpose.
+if ! jq -e '(.hosts | keys) == ["mcp.sentry.dev"]' "$READ_TOOLS_FILE" >/dev/null; then
+  echo "FAIL: claude/mcp-read-tools.json names a host other than mcp.sentry.dev"
+  failures=$((failures + 1))
+fi
+# The trusted hosts file holds a private host and stays on the machine, never in the repository.
+if git -C "$TESTS_SCRIPT_DIRECTORY/.." ls-files | grep -q 'mcp-trusted-hosts$'; then
+  echo "FAIL: a mcp-trusted-hosts file is tracked, it must stay outside the repository"
+  failures=$((failures + 1))
+fi
 
 # A skill hidden from the model in one tool must be hidden in all three, `Claude Code`, `OpenCode` and `Copilot CLI`, and `Codex`.
 for skill_file in "$TESTS_SCRIPT_DIRECTORY"/../.config/agentic/skills/*/SKILL.md; do
