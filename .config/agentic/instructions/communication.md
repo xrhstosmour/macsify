@@ -30,6 +30,15 @@
 - Write like a teammate in Slack, casual, not a documentation generator.
 - In prose, categorize severity with plain words, serious, minor, nitpick, never colored emoji categories. Structured review output keeps the severity labels its own skill defines.
 
+## Links to this computer
+
+The user works across several computers and a phone, so a link to something running on this computer, a preview, a review page, a dashboard, is a `Tailscale` link, never `localhost`.
+
+- Publish it with `tailscale serve --bg --https=<port> localhost:<port>`, read the URL from `tailscale serve status`, open it with `curl` to check it answers, then send that URL.
+- Tailnet only, never `tailscale funnel`, it makes the page public. Turn it off with `tailscale serve --https=<port> off` when the task is done.
+- With `Tailscale` stopped or not installed, say so and give the `localhost` link, never start it, that is the user's step.
+- Anything private, secrets and personal data included, stays out of a served page, every device on the tailnet can read it.
+
 ## Posted messages
 
 Comments and posts people read outside the terminal, on Phabricator, GitHub, and Slack, unless a skill gives that message its own format, like the review comments of `review-github-pr`, the SHA replies of `resolve-github-pr-comments`, and the `Status update comment` of `manage-phabricator-task`. Chat replies keep the rules above. Platform formatting, like Remarkup blank lines, stays in each skill.
