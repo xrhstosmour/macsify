@@ -181,7 +181,7 @@ All personal profile only and manual only, never loaded by the model on its own,
 
 | Skill | Command | Purpose |
 | ----- | ------ | ------- |
-| `web-app-design` | Loaded by the `designer` agent, no dedicated command | Craft-first UI design guidance: visual hierarchy, design tokens, states, component checklist |
+| `web-app-design` | Loaded by the `designer` agent, no dedicated command | Craft-first UI design guidance: visual hierarchy, design tokens, states, component checklist, modern CSS and HTML platform features before JavaScript |
 | `mobile-app-design` | Loaded by the `designer` agent, no dedicated command | Platform-native UI craft for SwiftUI/UIKit, Jetpack Compose, Flutter, and React Native apps: HIG/Material conventions, native controls, navigation, icons, safe areas, per-stack specifics, and a headless state and action architecture from Shopify's Reflex that an agent can test and drive without a simulator |
 
 ### Utility Skills
