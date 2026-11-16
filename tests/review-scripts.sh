@@ -203,6 +203,32 @@ rm "$TEST_DIRECTORY/hard.txt"
 post >/dev/null || fail "the poster refused a valid review"
 [ "$(jq -r '.event, .commit_id, .comments[0].path' "$STUB_POSTED_FILE" | tr '\n' ' ')" = "COMMENT $HEAD_SHA a.rb " ] || fail "the posted payload is wrong"
 
+# The banner names the pull request and the state, a click opens the review, and a missing app never fails the post.
+NOTIFIER_LOG="$TEST_DIRECTORY/notifier.log"
+cat >"$TEST_DIRECTORY/notifier" <<'STUB'
+#!/bin/bash
+printf '%s|' "$@" >>"$NOTIFIER_LOG"
+echo >>"$NOTIFIER_LOG"
+STUB
+chmod +x "$TEST_DIRECTORY/notifier"
+export NOTIFIER_LOG REVIEW_NOTIFIER="$TEST_DIRECTORY/notifier"
+: >"$NOTIFIER_LOG"
+[ "$(post owner/repo 5 "$HEAD_SHA" COMMENT)" = "https://github.com/owner/repo/pull/5#review" ] || fail "the poster stopped printing the review URL"
+grep -qxF 'PR #5 COMMENTED|owner/repo|https://github.com/owner/repo/pull/5#review|review-owner/repo#5|info|' "$NOTIFIER_LOG" || fail "the banner is wrong for a comment"
+: >"$NOTIFIER_LOG"
+NOTIFY="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/review/notify-review.sh"
+"$NOTIFY" owner/repo 7 REQUEST_CHANGES https://github.com/owner/repo/pull/7#review
+grep -qF 'PR #7 CHANGES REQUESTED|owner/repo|https://github.com/owner/repo/pull/7#review|review-owner/repo#7|bad|' "$NOTIFIER_LOG" || fail "the banner is wrong for requested changes"
+"$NOTIFY" owner/repo 8 APPROVE https://github.com/owner/repo/pull/8#review
+grep -qF 'PR #8 APPROVED|owner/repo|https://github.com/owner/repo/pull/8#review|review-owner/repo#8|ok|' "$NOTIFIER_LOG" || fail "the banner is wrong for an approval"
+: >"$NOTIFIER_LOG"
+"$NOTIFY" owner/repo 9 APPROVE 'https://evil.example/x' && [ ! -s "$NOTIFIER_LOG" ] || fail "the notifier opened a link that is not on GitHub"
+"$NOTIFY" owner/repo 9 DISMISS https://github.com/owner/repo/pull/9 && [ ! -s "$NOTIFIER_LOG" ] || fail "the notifier showed a banner for an unknown event"
+REVIEW_NOTIFIER="$TEST_DIRECTORY/missing" "$NOTIFY" owner/repo 9 APPROVE https://github.com/owner/repo/pull/9 || fail "a missing notifier app made the notifier fail"
+printf '#!/bin/bash\nexit 1\n' >"$TEST_DIRECTORY/failing-notifier"
+chmod +x "$TEST_DIRECTORY/failing-notifier"
+[ "$(REVIEW_NOTIFIER="$TEST_DIRECTORY/failing-notifier" post owner/repo 5 "$HEAD_SHA" COMMENT)" = "https://github.com/owner/repo/pull/5#review" ] || fail "a failing notifier app made the post fail"
+
 if [ "$failures" -gt 0 ]; then
   exit 1
 fi

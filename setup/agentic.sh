@@ -134,6 +134,9 @@ chmod +x "$HOME/.config/scripts/review/"*.sh
 remove_stale_scripts "$AGENTIC_SCRIPT_DIRECTORY/../.config/scripts/review" "$HOME/.config/scripts/review"
 move_green_watcher_cache "${XDG_CACHE_HOME:-$HOME/.cache}"
 
+# The watchers show a notification through this app, built here so no package is needed.
+build_review_notifier "$AGENTIC_SCRIPT_DIRECTORY/../settings/review-notifier" "$HOME/Applications/ReviewNotifier.app"
+
 RETIRED_SKILLS_FILE_PATH="$AGENTIC_SCRIPT_DIRECTORY/../packages/retired.skills.txt"
 if [ -f "$RETIRED_SKILLS_FILE_PATH" ]; then
     remove_listed_skills "$AGENTIC_DIRECTORY" "$RETIRED_SKILLS_FILE_PATH"

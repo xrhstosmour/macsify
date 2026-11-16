@@ -115,4 +115,8 @@ payload="$(jq -n \
   --argjson comments "$comments" \
   '{commit_id: $commit_id, event: $event, body: $body, comments: $comments}')"
 
-printf '%s' "$payload" | gh api "repos/$repository/pulls/$number/reviews" --method POST --input - --jq .html_url
+review_url="$(printf '%s' "$payload" | gh api "repos/$repository/pulls/$number/reviews" --method POST --input - --jq .html_url)"
+
+# The review is posted, the banner is best effort and never changes the exit status.
+"$(dirname "$0")/notify-review.sh" "$repository" "$number" "$event" "$review_url" || true
+echo "$review_url"
