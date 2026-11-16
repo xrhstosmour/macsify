@@ -271,7 +271,28 @@ read_body_file() {
 # Prints the checkout of the repository under the developer directory, found by its `origin` whatever its folder is called, and clones it only when none matches.
 # Never into a folder that belongs to another repository with the same name.
 find_checkout() {
-  local developer="$1" repository="$2" candidate url checkout
+  local developer="$1" repository="$2"
+  find_existing_checkout "$developer" "$repository" && return 0
+  # Two slots of a repository not cloned yet would both clone into one folder, the subshell holds the lock only for the clone.
+  (
+    take_lock "$developer/.clone-${repository%%/*}-${repository##*/}.lock"
+    # The slot that held the lock may have cloned it.
+    find_existing_checkout "$developer" "$repository" && exit 0
+    # A clone writes `.git` and its `origin` before the objects, so it goes into a hidden folder the search skips and moves in once complete, a slot that finds the checkout without the lock never works in half a clone.
+    partial="$developer/.clone-${repository%%/*}-${repository##*/}.partial"
+    rm -rf "$partial"
+    gh repo clone "$repository" "$partial" >&2 || exit 1
+    checkout="$developer/${repository##*/}"
+    if [ -e "$checkout" ]; then
+      checkout="$developer/${repository%%/*}-${repository##*/}"
+    fi
+    mv "$partial" "$checkout"
+    echo "$checkout"
+  )
+}
+
+find_existing_checkout() {
+  local developer="$1" repository="$2" candidate url
   for candidate in "$developer"/*/; do
     candidate="${candidate%/}"
     [ -e "$candidate/.git" ] || continue
@@ -283,12 +304,7 @@ find_checkout() {
         ;;
     esac
   done
-  checkout="$developer/${repository##*/}"
-  if [ -e "$checkout" ]; then
-    checkout="$developer/${repository%%/*}-${repository##*/}"
-  fi
-  gh repo clone "$repository" "$checkout" >&2
-  echo "$checkout"
+  return 1
 }
 
 # Fails unless the `.git` of the worktree is a plain file pointing into the `worktrees` folder of the checkout's git directory.
@@ -313,22 +329,36 @@ require_worktree_of() {
   fi
 }
 
-# Takes a lock named `<name>.lock` in the git directory of the checkout and frees it when the script exits, so two runs never fetch or move the same worktree at once.
+# Takes the lock file and frees it when the script exits, a subshell frees it when the subshell ends.
 # A lock older than ten minutes is left over from a run that died. `REVIEW_LOCK_ATTEMPTS` replaces the 120 seconds it is waited for, for the tests.
-lock_checkout() {
+take_lock() {
   local attempts=0
-  repository_lock="$(git -C "$1" rev-parse --path-format=absolute --git-common-dir)/$2.lock"
-  until mkdir "$repository_lock" 2>/dev/null; do
-    if [ -n "$(find "$repository_lock" -maxdepth 0 -mmin +10)" ]; then
-      rmdir "$repository_lock"
+  held_lock="$1"
+  # `noclobber` makes the shell create the file with `O_EXCL`, never `mkdir`, the uutils `mkdir` of Ubuntu 26.04 succeeds for both of two runs creating one folder at once.
+  until (set -o noclobber && : >"$held_lock") 2>/dev/null; do
+    # The holder can free it between the create and this check.
+    if [ -n "$(find "$held_lock" -maxdepth 0 -mmin +10 2>/dev/null)" ]; then
+      # Another waiter can remove it first.
+      rm -f "$held_lock"
       continue
     fi
     attempts=$((attempts + 1))
     if [ "$attempts" -gt "${REVIEW_LOCK_ATTEMPTS:-120}" ]; then
-      echo "another run holds $repository_lock" >&2
+      echo "another run holds $held_lock" >&2
       exit 1
     fi
     sleep 1
   done
-  trap 'rmdir "$repository_lock"' EXIT
+  trap 'rm "$held_lock"' EXIT
+}
+
+# Takes a lock named `<name>.lock` in the git directory of the checkout, so two runs never fetch or move the same worktree at once.
+lock_checkout() {
+  take_lock "$(git -C "$1" rev-parse --path-format=absolute --git-common-dir)/$2.lock"
+}
+
+# Takes the lock of a watcher's state files. The detector rewrites a file to keep its latest entries while `--mark` and `green-git.sh` append to it from other processes, a line appended to the file it is replacing would be lost.
+lock_state() {
+  mkdir -p "$1"
+  take_lock "$1/state.lock"
 }

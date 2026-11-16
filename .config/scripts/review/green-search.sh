@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The read-only searches of the `green-github-prs-watcher` investigation, scoped to the repository of one `resolves` worktree made by `green-worktree.sh`.
+# The read-only searches of the `green-github-prs-watcher` investigation, scoped to the repository of one `resolves-<slot>` worktree made by `green-worktree.sh`.
 # Allowed in claude/settings.json by its path, in place of `rg`, which runs any command through `--pre`, and of a `Read` of every past session, which a comment could steer into another repository's transcripts.
 # The caller gives only a pattern, never an option or a path, so `rg` runs with `--no-config` and the fixed paths below, and `sqlite3` with `-init /dev/null` so a `~/.sqliterc` runs nothing.
 # Output is capped, a session line is a whole transcript record, so only the text around a match is printed.
@@ -34,7 +34,7 @@ if [ "$command" != files ] && { [ -z "$pattern" ] || [[ $pattern == *$'\n'* ]] |
   exit 2
 fi
 
-# The worktree must be the top of a `resolves` worktree under the developer directory, compared as physical paths so a symlink cannot point it elsewhere.
+# The worktree must be the top of a `resolves-<slot>` worktree under the developer directory, compared as physical paths so a symlink cannot point it elsewhere.
 developer="$(cd "${REVIEW_DEVELOPER_DIRECTORY:-$HOME/Developer}" && pwd -P)"
 if [ ! -d "$worktree" ] || [ -L "$worktree" ]; then
   echo "not a resolves worktree: $worktree" >&2
@@ -42,8 +42,8 @@ if [ ! -d "$worktree" ] || [ -L "$worktree" ]; then
 fi
 worktree="$(cd "$worktree" && pwd -P)"
 checkout="${worktree#"$developer"/worktrees/}"
-checkout="${checkout%/resolves}"
-if [[ $worktree != "$developer/worktrees/$checkout/resolves" ]] || ! [[ $checkout =~ ^[A-Za-z0-9._-]+$ ]]; then
+checkout="${checkout%/resolves-[1-3]}"
+if ! [[ $worktree == "$developer/worktrees/$checkout"/resolves-[1-3] ]] || ! [[ $checkout =~ ^[A-Za-z0-9._-]+$ ]]; then
   echo "not a resolves worktree: $worktree" >&2
   exit 2
 fi

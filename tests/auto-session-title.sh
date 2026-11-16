@@ -21,7 +21,7 @@ failures=0
 #   run_hook <session ID> <transcript path>, prints `locked` or `open`
 run_hook() {
   jq -n --arg session "$1" --arg transcript "$2" '{session_id: $session, transcript_path: $transcript}' | bash "$HOOK_SCRIPT"
-  if [ -d "$TEST_DIRECTORY/agentic-auto-session-title-$1" ]; then
+  if [ -e "$TEST_DIRECTORY/agentic-auto-session-title-$1" ]; then
     echo locked
   else
     echo open
@@ -69,7 +69,7 @@ printf '%s\n%s\n' '{"type":"user","message":{"content":"Fix the login redirect l
 prompt_failed_session() {
   jq -n --arg transcript "$failed" '{session_id: "failed", transcript_path: $transcript}' | PATH="$TEST_DIRECTORY/bin:$PATH" bash "$HOOK_SCRIPT"
   for _ in $(seq 50); do
-    [ -d "$failed_lock" ] || break
+    [ -e "$failed_lock" ] || break
     [ "$(cat "$failed_lock.attempts" 2>/dev/null)" = 2 ] && [ "$(wc -l <"$calls" 2>/dev/null | tr -d ' ')" = 3 ] && break
     sleep 0.1
   done
@@ -77,14 +77,14 @@ prompt_failed_session() {
 }
 
 prompt_failed_session
-if [ "$(wc -l <"$calls" | tr -d ' ')" != 1 ] || [ -d "$failed_lock" ]; then
+if [ "$(wc -l <"$calls" | tr -d ' ')" != 1 ] || [ -e "$failed_lock" ]; then
   echo "FAIL: a failed title call kept the lock, the session is never titled"
   failures=$((failures + 1))
 fi
 prompt_failed_session
 prompt_failed_session
 prompt_failed_session
-if [ "$(wc -l <"$calls" | tr -d ' ')" != 3 ] || [ ! -d "$failed_lock" ]; then
+if [ "$(wc -l <"$calls" | tr -d ' ')" != 3 ] || [ ! -e "$failed_lock" ]; then
   echo "FAIL: title calls kept failing past three tries, got $(wc -l <"$calls" | tr -d ' ') calls"
   failures=$((failures + 1))
 fi

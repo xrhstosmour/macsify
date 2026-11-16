@@ -33,10 +33,21 @@ expect_rule ask 'Bash(git reset --hard *)' present
 # The force-with-lease allow only holds while these ask rules cover the other spellings of the default branch.
 expect_rule ask 'Bash(git push*+*main*)' present
 expect_rule ask 'Bash(git push*refs/heads/main*)' present
-# The resolves worktree is editable, its `.git` pointer must not be, `green-git.sh` checks it too.
-expect_rule deny 'Edit(~/Developer/worktrees/*/resolves/.git)' present
-# Nor a `.git` in a folder of it, which would turn that folder into a submodule with a configuration of the caller.
-expect_rule deny 'Edit(~/Developer/worktrees/*/resolves/**/.git)' present
+# The slot agents of both watchers read their steps unprompted.
+expect_rule allow 'Read(~/.config/agentic/skills/green-github-prs-watcher/references/slot-run.md)' present
+expect_rule allow 'Read(~/.config/agentic/skills/review-github-prs-watcher/references/slot-run.md)' present
+# Both dispatchers take and free their agent slots unprompted.
+expect_rule allow 'Bash(~/.config/scripts/review/agent-slots.sh *)' present
+# The review watcher reads its slot worktrees unprompted.
+expect_rule allow 'Read(~/Developer/worktrees/*/reviews-2/**)' present
+expect_rule allow 'Read(~/Developer/worktrees/*/reviews-*/**)' absent
+# Only the three slots are editable unprompted, not a worktree of yours whose name starts the same.
+expect_rule allow 'Edit(~/Developer/worktrees/*/resolves-3/**)' present
+expect_rule allow 'Edit(~/Developer/worktrees/*/resolves-*/**)' absent
+# The resolves slot worktrees are editable, their `.git` pointer must not be, `green-git.sh` checks it too.
+expect_rule deny 'Edit(~/Developer/worktrees/*/resolves-*/.git)' present
+# Nor a `.git` in a folder of one, which would turn that folder into a submodule with a configuration of the caller.
+expect_rule deny 'Edit(~/Developer/worktrees/*/resolves-*/**/.git)' present
 # The green watcher cuts a failed check log piped into `tail -n 200`, only that exact form is allowed, a file argument would read any file unprompted.
 expect_rule allow 'Bash(tail -n 200)' present
 expect_rule allow 'Bash(tail -n *)' absent
