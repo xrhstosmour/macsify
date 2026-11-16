@@ -390,11 +390,11 @@ CHANGED_ARGUMENTS="$(grep -oE 'green-trust\.sh owner/service \.github/workflows/
 "$GIT_SCRIPT" tests "$WORKTREE" "$REWORDED_SHA" tests.yaml "tests/**" >/dev/null 2>&1 || fail "the git script refused the trusted changed tree"
 # A lock left by another run stops the write, the two would drop each other's line.
 cp "$TRUST_FILE" "$TEST_DIRECTORY/trusted"
-mkdir "$TRUST_FILE.lock"
+: >"$TRUST_FILE.lock"
 # shellcheck disable=SC2086
 "$TRUST_SCRIPT" $TRUST_ARGUMENTS 2>&1 >/dev/null | grep -q 'another green-trust.sh is running' || fail "green-trust.sh wrote while another run held the lock"
 cmp -s "$TRUST_FILE" "$TEST_DIRECTORY/trusted" || fail "green-trust.sh changed the trust file while another run held the lock"
-rmdir "$TRUST_FILE.lock"
+rm "$TRUST_FILE.lock"
 # The named workflow chained by a `workflow_run` also runs the default branch's file, which passes as the tree approved at the head and is never offered as a second version.
 git -C "$SOURCE" checkout --quiet main
 {
