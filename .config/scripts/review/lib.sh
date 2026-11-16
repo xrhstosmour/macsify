@@ -198,9 +198,9 @@ push_branch_patterns() {
   done < <(trigger_block "$1")
 }
 
-# Whether the workflow text has a YAML anchor `&name`, alias `*name` or merge key `<<:`, which can move a trigger where the line readers below do not look, so such a workflow always counts as started. A shell glob like `*tmp` also matches, which errs the same way.
+# Whether the workflow text has a YAML anchor `&name` or alias `*name` in its `on:` block, a top level key that starts with one or a `?` complex key, or a merge key `<<:` anywhere, also spelled `<< :`, which can move a trigger where the line readers below do not look, so such a workflow always counts as started. Only those can reach the trigger, an alias elsewhere only fills a job. Read across the whole file, a markdown `*bold*` in a step text made a deploy that runs only on the default branch look started by every push. A shell glob like `*tmp` in the `on:` block still matches, which errs the same way.
 has_yaml_references() {
-  grep -qE '(^|[][[:space:]:,{-])[&*][A-Za-z0-9_-]|<<:' <<<"$1"
+  trigger_block "$1" | grep -qE '(^|[][[:space:]:,{-])[&*][A-Za-z0-9_-]' || grep -qE '^[&*?]|(^|[[:space:]{,])<<[[:space:]]*:' <<<"$1"
 }
 
 # Whether a push to the branch starts the workflow. A `push` trigger without `branches:` runs on every branch, and a `branches-ignore:` is read as no filter, so a doubt counts as a start. Bash patterns let `*` cross a slash, which also errs towards a start, and a pattern with `?`, `+`, `[` or a `!` negation, which GitHub reads differently, counts as a start.
