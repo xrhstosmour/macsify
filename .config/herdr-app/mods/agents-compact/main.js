@@ -4,7 +4,8 @@
 // says it, the popup naming this mod, and an agent row showing only the agent's
 // own title, the space name only when there is none, a pinned terminal
 // staying in Pinned while its recorded agent runs unreported, and pinned agents
-// kept in the order they are dragged into, saved per mod. Cloned from `Herdr` app
+// kept in the order they are dragged into, saved per mod, and a Hold group under
+// Pinned for agents waiting on someone's reply. Cloned from `Herdr` app
 // 0.1.12, the version is also in `mod.json`. Recheck against the shipped mod
 // after an app update.
 //
@@ -13,7 +14,13 @@
 
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
-import { agents, terminals, panes, focused, spaces, run, theme, shared, setShared, setAgentOrder, openOverlay, closeOverlay, props, window, layout } from "herdr";
+import { agents, terminals, panes, focused, spaces, run, hc, theme, shared, setShared, setAgentOrder, openOverlay, closeOverlay, props, window, layout } from "herdr";
+
+// A held agent waits on a reply from whoever owns its task, it stays under Hold
+// until released by hand. Kept as a label on the terminal like the pin, so it
+// survives a restart and ends with the terminal, written through `hc label`
+// since no `run` command sets a label. It takes a `machine/t7` address as is.
+const HOLD_LABEL = "agents.hold";
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -91,7 +98,33 @@ export default class Agents extends View {
     this.pinOrder = JSON.parse(localStorage.getItem("pins.order") ?? "[]");
     this.moving = null;
     this.overMove = null;
+    // Holds asked for but not yet echoed by core, address to wanted value.
+    this.holding = new Map();
     cx.timer.every(30000, (cx) => cx.notify());
+  }
+
+  // What was asked wins until core echoes the label, so the row moves at once.
+  isHeld(address, labels) {
+    if (this.holding.has(address)) return this.holding.get(address);
+    return Boolean(labels.get(address)?.[HOLD_LABEL]);
+  }
+
+  settleHolds(labels) {
+    for (const [address, wanted] of this.holding) {
+      if (Boolean(labels.get(address)?.[HOLD_LABEL]) === wanted) this.holding.delete(address);
+    }
+  }
+
+  // A failed write drops the asked hold, the row goes back to where core has it.
+  setHold(address, hold, cx) {
+    this.holding.set(address, hold);
+    cx.spawn(async (cx) => {
+      const result = await hc(["label", address, `${HOLD_LABEL}=${hold ? "1" : ""}`]).catch(() => null);
+      if (result?.code === 0) return;
+      console.log(`agents-compact: hc label ${address} failed: ${result?.stderr ?? "not run"}`);
+      this.holding.delete(address);
+      cx.notify();
+    });
   }
 
   // Stamps agents whose state changed. Done and idle count as one: looking at a
@@ -312,13 +345,17 @@ export default class Agents extends View {
       return index === -1 ? this.pinOrder.length : index;
     };
     const pinned = list.filter((a) => a.pinned).sort((x, y) => placeOf(x) - placeOf(y));
-    const rest = list.filter((a) => !a.pinned);
-    setAgentOrder([...pinned, ...rest].map((a) => a.address));
+    const labels = new Map(all.map((terminal) => [terminal.address, terminal.labels]));
+    this.settleHolds(labels);
+    // A pinned agent stays in Pinned, held or not, it is already in view.
+    const held = list.filter((a) => !a.pinned && this.isHeld(a.address, labels));
+    const rest = list.filter((a) => !a.pinned && !held.includes(a));
+    setAgentOrder([...pinned, ...held, ...rest].map((a) => a.address));
     // Added after the order, agent.next and agent.prev only move between agents.
     // Sorted again so an unreported one keeps its dragged place too.
     pinned.push(...this.offlinePins(all, list));
     pinned.sort((x, y) => placeOf(x) - placeOf(y));
-    list = [...pinned, ...rest];
+    list = [...pinned, ...held, ...rest];
 
     const withKids = (a, i) => {
       const subs = collapsed ? [] : this.tree(all, a.address);
@@ -420,10 +457,28 @@ export default class Agents extends View {
           cx.notify();
         })
         .child(svg(`mods/workspace-chrome/${isPinned ? "pin-off" : "pin"}.svg`).size(13));
+      const isHeld = held.includes(a);
+      const hold = div()
+        .id(`hold-${a.address}`)
+        .flex_none()
+        .p(2)
+        .rounded(4)
+        .text_color(isHeld ? t.foreground : t.dim)
+        .cursor_pointer()
+        .hover((s) => s.bg(t.hover).text_color(t.foreground))
+        .tooltip(isHeld ? "Release" : "Hold until further notice")
+        .on_mouse_down("left", (_e, cx) => this.ownPress(cx))
+        .on_click((_e, cx) => {
+          cx.stop_propagation();
+          this.setHold(a.address, !isHeld, cx);
+          this.hovered = null;
+          cx.notify();
+        })
+        .child(svg("mods/agents-compact/hand.svg").size(13));
       // Under a space header the space goes without saying; an automatic tab number says nothing.
       // Without a space header above (priority, pinned) the row still shows only the
       // conversation's name, the space only when it has none, the sidebar already lists it.
-      const full = byPriority || isPinned;
+      const full = byPriority || isPinned || isHeld;
       // A pinned agent dragged over this one: a line where it would go, as for space folders.
       const moving = this.moving;
       const aimed = isPinned && moving && moving.address !== a.address && this.overMove === a.address;
@@ -474,14 +529,16 @@ export default class Agents extends View {
           .child(div().min_w(0).whitespace_normal().text_color(idle ? t.muted : t.foreground).child(name)))
         .when(Boolean(machine), el => el.child(div().text_size(10).text_color(t.dim).child(machine)))
         .when(subs.length > 0, el => el.child(fold(a, subs)))
+        .when(this.hovered === a.address && !isPinned, el => el.child(hold))
         .when(this.hovered === a.address, el => el.child(pin))
         .when(this.hovered !== a.address && Boolean(when), el => el.child(div().flex_none().text_size(11).text_color(t.dim).child(duration(now - when))))
-        .child(this.status(t, a, byPriority && !isPinned));
+        .child(this.status(t, a, byPriority && !isPinned && !isHeld));
     };
 
     // Groups in list order: spaces (grouped) or priority sections. Agents of a
     // space are next to each other in agents(), so neighbours make a group.
     const groups = pinned.length ? [{ id: "pinned", label: "Pinned", status: null, members: pinned }] : [];
+    if (held.length) groups.push({ id: "hold", label: "Hold", status: null, members: held });
     for (const a of rest) {
       const r = rankOf(a) || RANK.idle;
       const id = byPriority ? `sec-${r}` : `sp-${a.space}`;
