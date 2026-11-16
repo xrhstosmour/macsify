@@ -266,8 +266,8 @@ git -C "$SOURCE" push --quiet "$UPSTREAM" main:refs/heads/main
 git -C "$SOURCE" rm --quiet .github/workflows/chained.yml
 git -C "$SOURCE" commit --quiet -m "remove chained workflow"
 git -C "$SOURCE" push --quiet "$UPSTREAM" main:refs/heads/main
-# A deploy that runs on a push to any branch, to a branch item with a comment, through a YAML alias, on a new branch or after another workflow would run next to the tests.
-for trigger in 'on: [push]' $'on:\n  push:\n    branches:\n      - main\n      - "tests/**" # the tests' $'triggers: &triggers\n  push:\n    branches: ["tests/**"]\non: *triggers' $'on:\n  create:' $'on:\n  workflow_run:\n    workflows: [tests]'; do
+# A deploy that runs on a push to any branch, to a branch item with a comment, through a YAML alias of the whole trigger, of a nested key or a merge key, on a new branch or after another workflow would run next to the tests.
+for trigger in 'on: [push]' $'on:\n  push:\n    branches:\n      - main\n      - "tests/**" # the tests' $'triggers: &triggers\n  push:\n    branches: ["tests/**"]\non: *triggers' $'pushes: &pushes\n  branches: ["tests/**"]\non:\n  push: *pushes' $'base: &base\n  on: [push]\n<<: *base' $'base: &base\n  on: [push]\n<< : *base' $'base: &base\n  on: [push]\n? <<\n: *base'$'on:\n  create:' $'on:\n  workflow_run:\n    workflows: [tests]'; do
   git -C "$SOURCE" checkout --quiet main
   printf '%s\njobs:\n  ship:\n    steps:\n      - run: ./deploy\n' "$trigger" >"$SOURCE/.github/workflows/ship.yml"
   git -C "$SOURCE" add .github
@@ -277,6 +277,14 @@ for trigger in 'on: [push]' $'on:\n  push:\n    branches:\n      - main\n      -
   "$GIT_SCRIPT" tests "$WORKTREE" "$REWORDED_SHA" tests.yaml "tests/**" 2>&1 >/dev/null | grep -q 'ship.yml mentions a deploy' || fail "the git script triggered tests next to a deploy on $trigger"
   [ "$(git -C "$UPSTREAM" rev-parse tests/fix/thing)" != "$REWORDED_SHA" ] || fail "the git script pushed tests next to a deploy on $trigger"
 done
+# A markdown `*bold*` in a step text is no YAML alias, a deploy that runs only on a push to the default branch does not block the tests.
+git -C "$SOURCE" checkout --quiet main
+printf 'on:\n  push:\n    branches:\n      - main\njobs:\n  ship:\n    steps:\n      - run: ./notify "*deployed*: &now"\n' >"$SOURCE/.github/workflows/ship.yml"
+git -C "$SOURCE" add .github
+git -C "$SOURCE" commit --quiet -m "notify on the default branch only"
+git -C "$SOURCE" push --quiet "$UPSTREAM" main:refs/heads/main
+REWORDED_SHA="$("$GIT_SCRIPT" autosquash "$WORKTREE" "$REWORDED_SHA" 2>/dev/null)" || fail "the git script failed to rebase onto the notify workflow"
+"$GIT_SCRIPT" tests "$WORKTREE" "$REWORDED_SHA" tests.yaml "tests/**" >/dev/null 2>&1 || fail "the git script read a bold step text as a YAML alias"
 # A local action the started workflow calls runs with it.
 git -C "$SOURCE" checkout --quiet main
 mkdir -p "$SOURCE/.github/actions/ship"
