@@ -537,8 +537,9 @@ export default class Agents extends View {
 
     // Groups in list order: spaces (grouped) or priority sections. Agents of a
     // space are next to each other in agents(), so neighbours make a group.
-    const groups = pinned.length ? [{ id: "pinned", label: "Pinned", status: null, members: pinned }] : [];
-    if (held.length) groups.push({ id: "hold", label: "Hold", status: null, members: held });
+    // Pinned and Hold get their own tone, so neither reads as the gray Idle section.
+    const groups = pinned.length ? [{ id: "pinned", label: "Pinned", status: null, tone: t.accent, members: pinned }] : [];
+    if (held.length) groups.push({ id: "hold", label: "Hold", status: null, tone: t.ansi6, members: held });
     for (const a of rest) {
       const r = rankOf(a) || RANK.idle;
       const id = byPriority ? `sec-${r}` : `sp-${a.space}`;
@@ -566,7 +567,7 @@ export default class Agents extends View {
           open ? this.folded.add(g.id) : this.folded.delete(g.id);
           cx.notify();
         })
-        .child(div().truncate().text_color(t[g.status] ?? t.dim).child(g.label))
+        .child(div().truncate().text_color(g.tone ?? t[g.status] ?? t.dim).child(g.label))
         .when(byPriority || !open, (el) => el.child(div().text_color(t.dim).child(String(g.members.length))))
         .child(div().flex_1())
         .when(!open, (el) => el
