@@ -17,12 +17,21 @@ session_id=$(echo "$input" | jq -r '.session_id // empty')
 # A title is already generated or being generated for this session, skip the
 # transcript scans below. Same lock as the one claimed further down.
 lock="${TMPDIR:-/tmp}/agentic-auto-session-title-${session_id}"
-[ -d "$lock" ] && exit 0
+[ -e "$lock" ] && exit 0
+
+# Usage:
+#   claim_lock, fails when another prompt holds the lock
+# `noclobber` makes the shell create the file with `O_EXCL`, never `mkdir`, the
+# uutils `mkdir` of Ubuntu 26.04 succeeds for both of two prompts creating one
+# folder at once, and both would call `claude`.
+claim_lock() {
+  (set -o noclobber && : >"$lock") 2>/dev/null
+}
 
 # Already named, by us before or by a manual /rename, never overwrite. Claim the
 # lock so later prompts skip this scan of the whole transcript.
 if grep -q '"type":"custom-title"' "$transcript_path" 2>/dev/null; then
-  mkdir "$lock" 2>/dev/null
+  claim_lock
   exit 0
 fi
 
@@ -35,7 +44,7 @@ early_window_full=false
 # Usage:
 #   give_up_when_window_full
 give_up_when_window_full() {
-  [ "$early_window_full" = true ] && mkdir "$lock" 2>/dev/null
+  [ "$early_window_full" = true ] && claim_lock
   exit 0
 }
 
@@ -77,7 +86,7 @@ first_message=$(printf '%s' "$early_transcript" | jq -rs '
 # Claim a lock only once there's real content worth summarizing, so an
 # empty/trivial-only session can still pick up a title from a later message
 # instead of being locked out permanently.
-mkdir "$lock" 2>/dev/null || exit 0
+claim_lock || exit 0
 
 nohup bash -c '
   first_message="$1"
@@ -97,7 +106,7 @@ nohup bash -c '
     attempts=$(( $(cat "$lock.attempts" 2>/dev/null || echo 0) + 1 ))
     if [ "$attempts" -lt 3 ]; then
       echo "$attempts" > "$lock.attempts"
-      rmdir "$lock"
+      rm "$lock"
     fi
     exit 0
   fi
