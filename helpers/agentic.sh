@@ -207,3 +207,34 @@ enable_claude_plugin() {
     log_warning "Could not enable ${plugin} in ${file}, run /plugin install ${plugin} by hand."
   fi
 }
+
+# Builds the app that shows the review and green pull request notifications from
+# `settings/review-notifier`, with the `swiftc` of Xcode or its command line tools.
+# Rebuilt only when the source changed, a new ad-hoc signature would make macOS ask
+# to allow its notifications again. Missing `swiftc` is a warning, the scripts that
+# call the app skip silently without it.
+# Usage:
+#   build_review_notifier <source directory> <app path>
+build_review_notifier() {
+  local source_directory="$1" app_path="$2" source_hash
+  if ! command -v swiftc >/dev/null 2>&1; then
+    log_warning "Skipping the review notifier, 'swiftc' not found, install the Xcode command line tools."
+    return 0
+  fi
+  source_hash=$(cat "$source_directory/main.swift" "$source_directory/Info.plist" | shasum -a 256 | cut -d' ' -f1)
+  if [ "$(cat "$app_path/Contents/Resources/source.sha256" 2>/dev/null)" = "$source_hash" ]; then
+    return 0
+  fi
+  log_info "Building the review notifier..."
+  # Built beside the app and swapped in last, so a failed build keeps the working one.
+  local build_path="$app_path.building"
+  rm -rf "$build_path"
+  mkdir -p "$build_path/Contents/MacOS" "$build_path/Contents/Resources"
+  swiftc -O "$source_directory/main.swift" -o "$build_path/Contents/MacOS/review-notifier" || { log_warning "Review notifier build failed."; rm -rf "$build_path"; return 0; }
+  cp "$source_directory/Info.plist" "$build_path/Contents/Info.plist"
+  # The hash goes in before signing, a file added afterwards breaks the seal, and only `Resources` takes one.
+  echo "$source_hash" >"$build_path/Contents/Resources/source.sha256"
+  codesign --force --sign - "$build_path" >/dev/null 2>&1 || { log_warning "Review notifier signing failed."; rm -rf "$build_path"; return 0; }
+  rm -rf "$app_path"
+  mv "$build_path" "$app_path"
+}

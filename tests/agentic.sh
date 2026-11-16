@@ -165,6 +165,23 @@ printf '{"plugins":{"claude-hud@claude-hud":[{"scope":"user"}]}}\n' >"$installed
 printf 'not json' >"$installed_plugins"
 [ "$(missing_claude_plugins "$installed" "$installed_plugins" | wc -l | tr -d ' ')" = 2 ] || fail "a broken installed list did not report every plugin"
 
+# The notifier is only rebuilt when its source changed, a failing compiler proves no build ran.
+notifier_source="$TEST_DIRECTORY/notifier-source"
+notifier_app="$TEST_DIRECTORY/ReviewNotifier.app"
+mkdir -p "$notifier_source" "$notifier_app/Contents/Resources" "$TEST_DIRECTORY/compiler"
+echo 'main' >"$notifier_source/main.swift"
+echo 'plist' >"$notifier_source/Info.plist"
+cat "$notifier_source/main.swift" "$notifier_source/Info.plist" | shasum -a 256 | cut -d' ' -f1 >"$notifier_app/Contents/Resources/source.sha256"
+printf '#!/bin/bash\ntouch "%s/compiled"\nexit 1\n' "$TEST_DIRECTORY" >"$TEST_DIRECTORY/compiler/swiftc"
+chmod +x "$TEST_DIRECTORY/compiler/swiftc"
+PATH="$TEST_DIRECTORY/compiler:$PATH" build_review_notifier "$notifier_source" "$notifier_app" >/dev/null 2>&1
+[ ! -e "$TEST_DIRECTORY/compiled" ] || fail "an unchanged review notifier was rebuilt"
+echo 'changed' >"$notifier_source/main.swift"
+PATH="$TEST_DIRECTORY/compiler:$PATH" build_review_notifier "$notifier_source" "$notifier_app" >/dev/null 2>&1
+[ -e "$TEST_DIRECTORY/compiled" ] || fail "a changed review notifier was not rebuilt"
+[ -d "$notifier_app/Contents" ] || fail "a failed review notifier build removed the working app"
+[ ! -e "$notifier_app.building" ] || fail "a failed review notifier build left its build directory behind"
+
 if [ "$failures" -gt 0 ]; then
   exit 1
 fi
