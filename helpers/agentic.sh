@@ -133,6 +133,50 @@ restore_claude_settings() {
   fi
 }
 
+# Allows the committed read-only MCP tools under the MCP servers of this
+# machine, appended to the settings file just copied. A rule names the server as
+# the machine registered it, which differs per laptop and can be a company name,
+# so the repository commits only the tool names and the rules are built here.
+# Every tool is allowed only under a server whose `url` has a trusted host,
+# whatever the machine named it, a server without a `url` gets none. The tools
+# under `hosts` belong to a public host committed with them. The tools under
+# `trusted` come from a private server, so its host stays on the machine, one per
+# line in the trusted hosts file, `~/.claude/mcp-trusted-hosts`, written by hand.
+# Never put that file in the repository, `.config/` or `claude/` included, git
+# would track it and push the host, `tests/claude-settings.sh` fails if it does.
+# Without the file the `trusted` tools stay prompted. Tools that return
+# customer data, rows, log lines or events, are not listed and stay prompted.
+# Only the servers in `~/.claude.json`, user-scope or added to one project, are
+# covered, not a `.mcp.json`, plugin or claude.ai server, and a server added
+# later stays prompted until setup runs again. A committed deny or ask still
+# wins over these allows. A missing `~/.claude.json` or one without servers
+# changes nothing, a broken input is reported and changes nothing.
+# Usage:
+#   allow_claude_mcp_read_tools <installed settings file> <read tools file> <~/.claude.json> <trusted hosts file>
+allow_claude_mcp_read_tools() {
+  local file="$1" tools="$2" state="$3" trusted_hosts="$4" merged
+  [ -f "$state" ] || return 0
+  [ -f "$trusted_hosts" ] || trusted_hosts=/dev/null
+  merged=$(mktemp)
+  if jq --slurpfile tools "$tools" --slurpfile state "$state" --rawfile trusted_hosts "$trusted_hosts" '
+    (.permissions.allow // []) as $committed
+    | [$trusted_hosts | split("\n")[] | gsub("^\\s+|\\s+$"; "") | ascii_downcase | select(. != "" and (startswith("#") | not))] as $trusted
+    | [$state[0].mcpServers // {}, ($state[0].projects // {})[].mcpServers // {}] as $scopes
+    | ([$scopes[] | to_entries[]
+      | .key as $server
+      | ((.value.url // "") | capture("^[A-Za-z][A-Za-z0-9+.-]*://(?<host>[^/:?#]+)").host // "" | ascii_downcase) as $host
+      | select($host != "")
+      | (if $trusted | index($host) then ($tools[0].trusted // [])[] else empty end), ($tools[0].hosts[$host] // [])[]
+      | "mcp__\($server)__\(.)"] | unique) as $rules
+    | if ($rules | length) == 0 then . else .permissions.allow = $committed + ($rules - $committed) end
+  ' "$file" >"$merged"; then
+    mv "$merged" "$file"
+  else
+    rm -f "$merged"
+    log_warning "Could not allow the MCP read tools in ${file}, check ${file}, ${tools} and ${state} are valid JSON."
+  fi
+}
+
 # Prints each plugin the settings file turns on that is not installed yet, one
 # `plugin@marketplace` per line. An `enabledPlugins` entry never downloads a
 # plugin, so a new machine has none of the committed ones until they are

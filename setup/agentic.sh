@@ -391,6 +391,9 @@ if (settings.statusLine && typeof settings.statusLine.command === "string") {
     else
         register_mcp_server claude metabase Metabase --transport http metabase "$METABASE_MCP_URL" -s user || true
     fi
+
+    # After the registrations above, so a new machine gets rules for the servers this run added.
+    allow_claude_mcp_read_tools "$HOME/.claude/settings.json" "$AGENTIC_SCRIPT_DIRECTORY/../claude/mcp-read-tools.json" "$HOME/.claude.json" "$HOME/.claude/mcp-trusted-hosts"
 fi
 
 if brewfile_declares codex; then

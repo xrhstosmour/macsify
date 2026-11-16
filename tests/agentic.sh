@@ -6,8 +6,10 @@
 # removed from the installed copy, the old watcher cache is moved once and never
 # over the new one, and the `opencode.json` template gets every
 # agent model from `models.txt`, also when its formatting changes, a plugin
-# enabled by setup keeps the committed ones, and only a committed plugin not
-# installed yet is installed. Runs against a
+# enabled by setup keeps the committed ones, only a committed plugin not
+# installed yet is installed, and the committed MCP read tools are allowed only
+# under a server whose `url` has their public host or a host of the trusted
+# hosts file. Runs against a
 # temporary directory, never the installed configuration.
 
 set -e
@@ -114,6 +116,37 @@ printf 'not json' >"$installed"
 printf '{"model":"new"}\n' >"$installed"
 restore_claude_settings "$installed" "{}"
 [ "$(jq -c . "$installed")" = '{"model":"new"}' ] || fail "an empty preserved object changed the settings"
+
+# The `trusted` read tools are allowed under every MCP server of the machine whose host is in the trusted hosts file, user-scope or added to one project, once each, after the committed rules and without duplicates, a missing or broken `~/.claude.json` changes nothing.
+tools="$TEST_DIRECTORY/read-tools.json"
+state="$TEST_DIRECTORY/claude.json"
+trusted_hosts="$TEST_DIRECTORY/mcp-trusted-hosts"
+printf '{"trusted":["read_a","read_b"],"hosts":{}}\n' >"$tools"
+printf '# Private portal.\n  Portal.Example \r\n\n' >"$trusted_hosts"
+printf '{"permissions":{"allow":["Bash(ls)","mcp__one__read_a"],"deny":["mcp__two__read_b"]},"model":"new"}\n' >"$installed"
+printf '{"mcpServers":{"one":{"url":"https://portal.example/a"}},"projects":{"/repository":{"mcpServers":{"one":{"url":"https://portal.example/a"},"two":{"url":"https://portal.example/b"},"stranger":{"url":"https://stranger.example"}}},"/other":{}}}\n' >"$state"
+allow_claude_mcp_read_tools "$installed" "$tools" "$state" "$trusted_hosts"
+[ "$(jq -c . "$installed")" = '{"permissions":{"allow":["Bash(ls)","mcp__one__read_a","mcp__one__read_b","mcp__two__read_a","mcp__two__read_b"],"deny":["mcp__two__read_b"]},"model":"new"}' ] || fail "allowed MCP read tools were $(jq -c . "$installed")"
+# Without the trusted hosts file the `trusted` tools stay prompted on every server.
+printf '{"model":"new"}\n' >"$installed"
+allow_claude_mcp_read_tools "$installed" "$tools" "$state" "$TEST_DIRECTORY/missing-hosts"
+[ "$(jq -c . "$installed")" = '{"model":"new"}' ] || fail "a machine without trusted hosts got $(jq -c . "$installed")"
+# The tools of a host go only to the servers with that host, whatever their name, path, port or case, never to another host or a server without a `url`.
+printf '{"trusted":["read_a"],"hosts":{"vendor.example":["whoami"]}}\n' >"$tools"
+printf '{"model":"new"}\n' >"$installed"
+printf '{"mcpServers":{"renamed":{"url":"https://vendor.example/mcp?skills=inspect"},"ported":{"url":"https://VENDOR.example:8443"},"other":{"url":"https://other.example/vendor.example"},"lookalike":{"url":"https://vendor.example.other.example"},"local":{"command":"server"}}}\n' >"$state"
+allow_claude_mcp_read_tools "$installed" "$tools" "$state" "$TEST_DIRECTORY/missing-hosts"
+[ "$(jq -c '.permissions.allow' "$installed")" = '["mcp__ported__whoami","mcp__renamed__whoami"]' ] || fail "host read tools were $(jq -c . "$installed")"
+printf '{"model":"new"}\n' >"$installed"
+printf '{"projects":{}}\n' >"$state"
+allow_claude_mcp_read_tools "$installed" "$tools" "$state" "$trusted_hosts"
+[ "$(jq -c . "$installed")" = '{"model":"new"}' ] || fail "a machine without MCP servers got $(jq -c . "$installed")"
+printf '{"model":"new"}\n' >"$installed"
+allow_claude_mcp_read_tools "$installed" "$tools" "$TEST_DIRECTORY/missing.json" "$trusted_hosts"
+[ "$(jq -c . "$installed")" = '{"model":"new"}' ] || fail "a missing ~/.claude.json changed the settings"
+printf 'not json' >"$state"
+allow_claude_mcp_read_tools "$installed" "$tools" "$state" "$trusted_hosts" 2>/dev/null
+[ "$(jq -c . "$installed")" = '{"model":"new"}' ] || fail "a broken ~/.claude.json changed the settings"
 
 # A plugin enabled by setup keeps the committed plugins, and a broken settings file stays as it was.
 printf '{"enabledPlugins":{"swift-lsp@claude-plugins-official":true},"model":"new"}\n' >"$installed"
