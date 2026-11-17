@@ -149,8 +149,11 @@ restore_claude_settings() {
 # Only the servers in `~/.claude.json`, user-scope or added to one project, are
 # covered, not a `.mcp.json`, plugin or claude.ai server, and a server added
 # later stays prompted until setup runs again. A committed deny or ask still
-# wins over these allows. A missing `~/.claude.json` or one without servers
-# changes nothing, a broken input is reported and changes nothing.
+# wins over these allows. Plan mode ignores them and prompts for each tool its
+# server does not mark read-only, only the server can change that, seen with
+# `claude -p` in `default`, `auto` and `plan` on Claude Code 2.1.311, 2026-11-17.
+# A missing `~/.claude.json` or one without servers changes nothing, a broken
+# input is reported and changes nothing.
 # Usage:
 #   allow_claude_mcp_read_tools <installed settings file> <read tools file> <~/.claude.json> <trusted hosts file>
 allow_claude_mcp_read_tools() {
