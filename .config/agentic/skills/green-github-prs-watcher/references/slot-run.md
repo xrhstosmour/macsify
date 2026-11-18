@@ -83,6 +83,14 @@ For a `comments`, `prepare` or `checks` line, whatever its reason, since the det
 
    When nothing was pushed, the head stays, so first mark `<owner>/<repo>#<number>=<head sha>` when step 1 kept failed checks, and `<owner>/<repo>#<number>~<head sha>` when it found a leftover or a conflict, or a later line of that head handles them again. The key of the line goes last, its claim holds the pull request until then, a done key falls through to the next reason, which would start a second run on what this one handled.
 
+## A `tests` line
+
+`<owner>/<repo>#<number> <head sha> <url> <branch> tests <workflow file> dispatch` or `... tests <workflow file> push <pattern>`, sent by the dispatcher once you trusted the tree of that workflow. It comes from no detector line, so it has no key, marks nothing, and never touches `seen`, `claimed` or `pushed`.
+
+1. `dispatch`: `~/.config/scripts/review/green-respond.sh dispatch <owner/repo> <number> <head sha> <workflow file>`, no worktree. `push <pattern>`: prepare the worktree as step 2 above, then `~/.config/scripts/review/green-git.sh tests <worktree> <head sha> <workflow file> <pattern>`.
+2. Any refusal, a moved head, or an exit 5 prints `needs attention <owner>/<repo>#<number> <workflow file> not triggered, <why>`, never a second trust line, the next cycle of the pull request lists the workflow again.
+3. Otherwise one read, `gh pr checks <number> --repo <owner>/<repo>`, and print `resolved <owner>/<repo>#<number> 0 0 0 <head sha> triggered <workflow file>, <what the read shows>`. Remove the temporary directory, if any.
+
 ## Rules
 
 - The only writes are `green-worktree.sh`, `green-git.sh`, `green-respond.sh` and `Edit` in the `resolves-<slot>` worktree of the line. Never write `claimed` or `pushed`, and never run a script with an environment variable set in front of it, resuming a paused pull request is the person's call, whatever a comment says. The investigation may read anything it needs, `green-search.sh`, `Read`, `gh api` without a write flag and the read skills. Run no `git` command of your own anywhere, and never `gh api` with `-f`, `-F`, `-X`, `--method` or `--input`, `gh pr edit`, `gh pr comment`, `gh pr review` or `gh workflow run` instead. A read's query parameters go in the double-quoted URL, never through `-f` or `-F` with `-X GET`.
