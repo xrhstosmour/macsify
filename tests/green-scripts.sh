@@ -435,6 +435,15 @@ STUB_FILES=$'a.txt\n.github/workflows/tests.yaml' dispatch_refused "for a pull r
 STUB_READ_FAILS=1 dispatch_refused "after failing to read the files"
 tree_reset $'on:\n  push:\njobs:\n  workflow_dispatch: {}'
 dispatch_refused "a workflow without a workflow_dispatch trigger"
+# A workflow a push starts is scanned too, the scan never posts.
+[ "$("$RESPONDER" scan owner/repo 5 "$HEAD_SHA" tests.yaml 2>/dev/null)" = tests.yaml ] || fail "the scan refused a push workflow that only tests"
+STUB_FILES=$'a.txt\n.github/workflows/tests.yaml' "$RESPONDER" scan owner/repo 5 "$HEAD_SHA" tests.yaml >/dev/null 2>"$TEST_DIRECTORY/scanned"
+[ $? -eq 1 ] || fail "the scan passed a pull request that changes .github"
+grep -q 'changes .github' "$TEST_DIRECTORY/scanned" || fail "the scan refused a pull request that changes .github for another reason"
+tree_reset $'on:\n  push:\njobs:\n  ship:\n    steps:\n      - run: ./deploy'
+respond scan owner/repo 5 "$HEAD_SHA" tests.yaml
+[ $? -eq 5 ] || fail "the scan did not exit 5 on a push workflow that deploys"
+[ ! -e "$STUB_POSTED" ] || fail "the scan posted something"
 for word in "run: ./deploy" "environment: production" "run: make release" "run: rails db:migrate" "run: npx vercel --prod" "run: terraform apply"; do
   tree_reset "$TEST_WORKFLOW"$'\n      - '"$word"
   dispatch_deploy_refused "a workflow with $word"
@@ -470,6 +479,22 @@ respond dispatch owner/repo 5 "$HEAD_SHA" tests.yaml || fail "the responder refu
 tree_reset
 tree_file "$HEAD_SHA" .github/workflows/chained.yml $'triggers: &triggers\n  workflow_run:\n    workflows: [tests]\non: *triggers\njobs:\n  ship:\n    steps:\n      - run: ./deploy'
 dispatch_deploy_refused "next to a deploy chained through an alias"
+# The scan offers no trust line while a chained deploy would still block the run, even for a named tree that mentions one.
+tree_reset "$TEST_WORKFLOW"$'\n      - run: ./deploy'
+tree_file "$DEFAULT_SHA" .github/workflows/chained.yml $'on:\n  workflow_run:\n    workflows: [tests]\njobs:\n  ship:\n    steps:\n      - run: ./deploy'
+"$RESPONDER" scan owner/repo 5 "$HEAD_SHA" tests.yaml >/dev/null 2>"$TEST_DIRECTORY/scanned"
+[ $? -eq 5 ] || fail "the scan did not exit 5 next to a chained deploy"
+grep -q 'green-trust.sh' "$TEST_DIRECTORY/scanned" && fail "the scan offered to trust a tree a chained deploy still blocks"
+# With a branch pattern, a deploy the push to the tests branch starts next to the named workflow blocks the run too, so it gets no trust line either.
+tree_reset $'on:\n  push:\n    branches:\n      - "ci/**"\njobs:\n  test:\n    steps:\n      - run: ./deploy'
+tree_file "$HEAD_SHA" .github/workflows/ship.yml $'on:\n  push:\n    branches:\n      - "ci/fix/**"\njobs:\n  ship:\n    steps:\n      - run: ./deploy'
+"$RESPONDER" scan owner/repo 5 "$HEAD_SHA" tests.yaml "ci/**" >/dev/null 2>"$TEST_DIRECTORY/scanned"
+[ $? -eq 5 ] || fail "the scan did not exit 5 next to a deploy the push starts"
+grep -q 'green-trust.sh' "$TEST_DIRECTORY/scanned" && fail "the scan offered to trust a tree a deploy the push starts still blocks"
+"$RESPONDER" scan owner/repo 5 "$HEAD_SHA" tests.yaml "other/**" >/dev/null 2>"$TEST_DIRECTORY/scanned"
+grep -q 'does not run on a push to other/\*\*' "$TEST_DIRECTORY/scanned" || fail "the scan passed a branch pattern the workflow does not list"
+"$RESPONDER" scan owner/repo 5 "$HEAD_SHA" tests.yaml "release/**" >/dev/null 2>"$TEST_DIRECTORY/scanned"
+grep -q 'named after a deploy target' "$TEST_DIRECTORY/scanned" || fail "the scan passed a branch pattern named after a deploy target"
 # The dispatched tree that mentions a deploy exits 5 with the command that trusts it for the repository named, and dispatch runs it once trusted, until any of its files changes.
 tree_reset "$TEST_WORKFLOW"$'\n      - uses: ./.github/actions/setup'
 tree_file "$HEAD_SHA" .github/actions/setup/action.yml $'runs:\n  using: composite\n  steps:\n    - run: ./scripts/deploy.sh'
@@ -478,8 +503,14 @@ tree_file "$HEAD_SHA" .github/actions/setup/action.yml $'runs:\n  using: composi
 grep -q 'action.yml: .*deploy' "$TEST_DIRECTORY/refused" || fail "the refusal did not show the matched line"
 TRUST_ARGUMENTS="$(grep -oE 'green-trust\.sh owner/repo \.github/workflows/tests\.yaml [0-9a-f]{64}$' "$TEST_DIRECTORY/refused" | cut -d ' ' -f 2-)"
 [ -n "$TRUST_ARGUMENTS" ] || fail "the refusal did not print the command that trusts the tree"
+# The scan the dispatcher shows before asking prints the very line the dispatch refused with, and posts nothing.
+"$RESPONDER" scan owner/repo 5 "$HEAD_SHA" tests.yaml >/dev/null 2>"$TEST_DIRECTORY/scanned"
+[ $? -eq 5 ] || fail "the scan did not exit 5 on a workflow tree that mentions a deploy"
+[ "$(grep -oE 'green-trust\.sh owner/repo \.github/workflows/tests\.yaml [0-9a-f]{64}$' "$TEST_DIRECTORY/scanned" | cut -d ' ' -f 2-)" = "$TRUST_ARGUMENTS" ] || fail "the scan printed another trust line than the dispatch"
+[ ! -e "$STUB_POSTED" ] || fail "the scan posted something"
 # shellcheck disable=SC2086
 "$TRUST_SCRIPT" $TRUST_ARGUMENTS >/dev/null || fail "green-trust.sh refused the printed line"
+[ "$("$RESPONDER" scan owner/repo 5 "$HEAD_SHA" tests.yaml 2>/dev/null)" = tests.yaml ] || fail "the scan refused a trusted workflow tree"
 respond dispatch owner/repo 5 "$HEAD_SHA" tests.yaml || fail "the responder refused a trusted workflow tree"
 [ "$(head -1 "$STUB_POSTED")" = "repos/owner/repo/actions/workflows/tests.yaml/dispatches" ] || fail "the responder did not dispatch a trusted workflow tree"
 tree_file "$HEAD_SHA" .github/actions/setup/action.yml $'runs:\n  using: composite\n  steps:\n    - run: ./scripts/deploy.sh --again'
