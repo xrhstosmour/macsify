@@ -6,6 +6,8 @@
 - Complex and multi-step tasks go through `/scope`, which owns discovery, approach, and sign-off.
 - When a skill matches the request or any step of it, invoke it first (Claude Code: `skill` tool, OpenCode: `SKILL.md`), even in Plan Mode or when a command or subagent chain drives. Do not hand-roll what a skill covers.
 - Tests required for behavior changes.
+- When the user says to ask first or to change nothing until they agree, show the plan or diff, end with one question, and change nothing until a later message says yes.
+- When the user says stop, make no further tool calls, reply with the uncommitted changes, open PRs, and the next step, one line each.
 - Prioritize security and performance risks.
 - Pick the option that improves user, developer, and agent experience together, without breaking anything. When they conflict, say which one loses and why.
 - Read a file before editing it, several in parallel.
