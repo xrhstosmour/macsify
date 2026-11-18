@@ -4,8 +4,8 @@
 // says it, the popup naming this mod, and an agent row showing only the agent's
 // own title, the space name only when there is none, a pinned terminal
 // staying in Pinned while its recorded agent runs unreported, and pinned agents
-// kept in the order they are dragged into, saved per mod, and a Hold group under
-// Pinned for agents waiting on someone's reply. Cloned from `Herdr` app
+// kept in the order they are dragged into, saved per mod, and a Hold group at the
+// bottom for agents waiting on someone's reply. Cloned from `Herdr` app
 // 0.1.12, the version is also in `mod.json`. Recheck against the shipped mod
 // after an app update.
 //
@@ -350,12 +350,12 @@ export default class Agents extends View {
     // A pinned agent stays in Pinned, held or not, it is already in view.
     const held = list.filter((a) => !a.pinned && this.isHeld(a.address, labels));
     const rest = list.filter((a) => !a.pinned && !held.includes(a));
-    setAgentOrder([...pinned, ...held, ...rest].map((a) => a.address));
+    setAgentOrder([...pinned, ...rest, ...held].map((a) => a.address));
     // Added after the order, agent.next and agent.prev only move between agents.
     // Sorted again so an unreported one keeps its dragged place too.
     pinned.push(...this.offlinePins(all, list));
     pinned.sort((x, y) => placeOf(x) - placeOf(y));
-    list = [...pinned, ...held, ...rest];
+    list = [...pinned, ...rest, ...held];
 
     const withKids = (a, i) => {
       const subs = collapsed ? [] : this.tree(all, a.address);
@@ -539,13 +539,14 @@ export default class Agents extends View {
     // space are next to each other in agents(), so neighbours make a group.
     // Pinned and Hold get their own tone, so neither reads as the gray Idle section.
     const groups = pinned.length ? [{ id: "pinned", label: "Pinned", status: null, tone: t.accent, members: pinned }] : [];
-    if (held.length) groups.push({ id: "hold", label: "Hold", status: null, tone: t.ansi6, members: held });
     for (const a of rest) {
       const r = rankOf(a) || RANK.idle;
       const id = byPriority ? `sec-${r}` : `sp-${a.space}`;
       if (groups.at(-1)?.id === id) groups.at(-1).members.push(a);
       else groups.push({ id, label: byPriority ? SECTION[r] : a.space_name || "", status: byPriority ? SECTION_STATUS[r] : null, members: [a] });
     }
+    // Last, a held agent waits on someone else, so it never pushes active ones down.
+    if (held.length) groups.push({ id: "hold", label: "Hold", status: null, tone: t.ansi6, members: held });
 
     // A group's header; it folds the group. Folded, it says how many and the most urgent state.
     const header = (g) => {
