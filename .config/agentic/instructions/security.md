@@ -7,4 +7,4 @@
 - Prefer a dedicated edit tool over in-place file rewriting one-liners (`sed -i`, rewriting through `awk`/`perl` pipelines) or code execution embedded inside a text processor. These read as obfuscation to automated monitoring even when the intent is harmless.
 - Don't chain unrelated operations into one compound command with `&&`, `;`, or command substitution to save a round trip. Single-purpose commands are independently reviewable and less likely to match a multi-stage attack signature.
 - Get explicit user approval before touching credential storage (`~/.ssh`, `~/.aws`, `~/.kube`), system configuration (`/etc/`), or security tooling, even for read access.
-- If a command gets blocked or flagged, stop. Don't retry with obfuscation or an encoding trick to get around the block. Surface the block to the user and ask how to proceed.
+- If a command or an edit gets blocked or flagged, stop. Don't retry with obfuscation or an encoding trick to get around the block. Surface the block to the user and ask how to proceed, for a blocked edit paste the diff so the user can apply it.

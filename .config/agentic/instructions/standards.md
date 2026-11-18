@@ -6,6 +6,8 @@
 - Complex and multi-step tasks go through `/scope`, which owns discovery, approach, and sign-off.
 - When a skill matches the request or any step of it, invoke it first (Claude Code: `skill` tool, OpenCode: `SKILL.md`), even in Plan Mode or when a command or subagent chain drives. Do not hand-roll what a skill covers.
 - Tests required for behavior changes.
+- When the user says to ask first or to change nothing until they agree, show the plan or diff, end with one question, and change nothing until a later message says yes.
+- When the user says stop, make no further tool calls, reply with the uncommitted changes, open PRs, and the next step, one line each.
 - Prioritize security and performance risks.
 - Pick the option that improves user, developer, and agent experience together, without breaking anything. When they conflict, say which one loses and why.
 - Read a file before editing it, several in parallel.
@@ -94,8 +96,7 @@ A project skill beats a same-topic plugin skill. When a skill defines a checklis
 
 ## Safety
 
-- Confirm before destructive operations (`rm`, `DROP TABLE`, `DELETE FROM`), never skip safety checks for speed, provide a rollback plan for risky changes, stop and ask if unsure about consequences.
-- Warn immediately if secrets or credentials are staged.
+- Confirm before destructive operations (`rm`, `DROP TABLE`, `DELETE FROM`, `git reset --hard`, `git clean -f`, `git branch -D`), never skip safety checks for speed, provide a rollback plan for risky changes, stop and ask if unsure about consequences.
 
 ## Error Handling and Stop the Line
 
@@ -120,7 +121,7 @@ PLAN:
 Cost is context size times turns. Autocompaction acts near the window limit and Claude Code also compacts after an idle gap, so cost keeps growing every turn until one of them fires.
 
 - Never run `/handoff` or `/compact` yourself, compaction is left to the host.
-- Split sessions at natural boundaries, after a PR merge or a phase change. Start fresh for unrelated work.
+- Split sessions at natural boundaries, after a PR merge, a phase change, or a second compaction, and tell the user when one is reached. Start fresh for unrelated work.
 - Switch `/model` at the start of a session, not mid-way, a switch rebuilds the whole prompt cache.
 - Use the explore subagent only for discovery that needs more than about 5 searches or reads, otherwise search and Read directly.
 - Delegate only what gains from isolation: a fresh subagent for verbose read-heavy work that returns a summary, a resumed agent or a fork, where the tool and the agent's prompt allow it, for work that needs the current context, see `leader.md`, its own session and worktree for independent long-lived work, none for a quick targeted change.
