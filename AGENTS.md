@@ -54,6 +54,7 @@ New shell scripts should match the existing pattern (see `install.sh`, `configur
 
 `install.sh` does `cp -R .config/* ~/.config/`.
 Anything added under `.config/` must be safe to drop onto a real home directory as-is, no machine-specific secrets or paths that only exist on this machine.
+The repository is public, nothing work-specific goes anywhere in it, see Public configuration in `.config/agentic/instructions/privacy.md`.
 
 ## `opencode.json` is a template
 
