@@ -39,11 +39,28 @@ function __herdr_agent_resume --on-event fish_prompt
     # foreground program stays `fish` and `Herdr` sees no agent. The
     # `fish_postexec` handler below forgets the record once it exits.
     commandline -r -- (string join ' ' -- (string escape -- $agent))
-    commandline -f execute
+    # This prompt must not query the terminal, the agent would start before the
+    # reply and swallow it, and the still pending query panics `fish` at the next
+    # prompt. The variable is an undocumented test hook of `Reader::query`, so a
+    # `fish` it is not verified on gets the command typed in for Enter instead,
+    # the reply then lands before the agent starts.
+    if __herdr_agent_resume_can_skip_query
+        set -g FISH_TEST_NO_RECURRENT_QUERIES 1
+        commandline -f execute
+    else
+        echo "Press Enter to resume it."
+    end
+end
+
+# Verified on `fish` 4.9.3, re-check `Reader::query` in `src/reader/reader.rs`
+# before widening it to a new major version.
+function __herdr_agent_resume_can_skip_query
+    string match -q '4.*' -- $version
 end
 
 # An agent started by hand and ended by the person is not to come back.
 function __herdr_agent_resume_forget --on-event fish_postexec
     string match -rq '^(claude|opencode)(\s|$)' -- $argv[1]; or return
+    set -e FISH_TEST_NO_RECURRENT_QUERIES
     bash ~/.config/agentic/hooks/herdr-application-resume.sh forget
 end
