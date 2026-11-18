@@ -13,7 +13,7 @@
 // A viewed done agent stays in Done until left.
 
 import { View, div, image, svg } from "gpui-kit";
-import { v_flex, h_flex } from "gpui-base";
+import { v_flex, h_flex, ScrollHandle } from "gpui-base";
 import { agents, terminals, panes, focused, spaces, run, hc, theme, shared, setShared, setAgentOrder, openOverlay, closeOverlay, props, window, layout } from "herdr";
 
 // A held agent waits on a reply from whoever owns its task, it stays under Hold
@@ -100,6 +100,9 @@ export default class Agents extends View {
     this.overMove = null;
     // Holds asked for but not yet echoed by core, address to wanted value.
     this.holding = new Map();
+    // The list's position, held here instead of under its `ag-list` id, which the
+    // shipped `agents` mod also uses, so its renders kept scrolling this one back.
+    this.scroll = ScrollHandle.new();
     cx.timer.every(30000, (cx) => cx.notify());
   }
 
@@ -616,7 +619,7 @@ export default class Agents extends View {
       .when(list.length === 0 && !collapsed, (el) =>
         el.child(div().px(12).text_size(12).text_color(t.dim).child("No agent status yet. Agents show up here when they report their status. Older versions and agents inside tmux may not.")),
       )
-      .child(v_flex().id("ag-list").flex_1().min_h(0).px(collapsed ? 0 : 8).overflow_y_scrollbar().mode("always").children(rows))
+      .child(v_flex().id("ag-list").flex_1().min_h(0).px(collapsed ? 0 : 8).overflow_y_scrollbar().mode("always").track_scroll(this.scroll).children(rows))
       .when(collapsed, (el) =>
         el.child(
           h_flex()
