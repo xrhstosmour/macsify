@@ -8,7 +8,11 @@
 # `opencode` are stubs, the first keeps the label in a file, the others print the
 # arguments they got and whether the record was still there. `fish -c` has no
 # line editor, so a `commandline` stub keeps the buffer the hook sets and, on
-# `execute`, runs it and emits `fish_postexec` like the editor. Needs `fish`.
+# `execute`, notes whether terminal queries are off, runs it and emits
+# `fish_postexec` like the editor. The resume prompt must not query, the agent
+# would swallow the reply and `fish` panics at the next prompt, a `fish` not
+# verified to skip it only types the command in. The version check is stubbed
+# both ways, CI installs another `fish` than the laptop. Needs `fish`.
 
 TESTS_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPOSITORY="$TESTS_SCRIPT_DIRECTORY/.."
@@ -70,6 +74,7 @@ function commandline
         case -r
             set -g __commandline_buffer $argv[-1]
         case -f
+            set -q FISH_TEST_NO_RECURRENT_QUERIES; and echo "queries off" >>$HC_STUB_DIRECTORY/queries
             eval $__commandline_buffer
             emit fish_postexec $__commandline_buffer
     end
@@ -79,17 +84,24 @@ STUB
 save() {
   printf '%s' "$1" >"$TEST_DIRECTORY/label"
   : >"$TEST_DIRECTORY/calls"
+  : >"$TEST_DIRECTORY/queries"
 }
 
 record='{"agent":"claude","session":"abc-123","folder":"'"$TEST_DIRECTORY"'/work","flags":["--permission-mode","plan"]}'
 
 save "$record"
-shell yes 'emit fish_prompt'
+# shellcheck disable=SC2016
+shell yes 'function __herdr_agent_resume_can_skip_query; true; end; emit fish_prompt; set -q FISH_TEST_NO_RECURRENT_QUERIES; and echo "queries still off" >>$HC_STUB_DIRECTORY/queries'
 [ "$(cat "$TEST_DIRECTORY/calls")" = "claude --resume abc-123 --permission-mode plan in $TEST_DIRECTORY/work, record kept" ] || fail "the own shell did not resume with folder and flags, or dropped the record early: $(cat "$TEST_DIRECTORY/calls")"
+[ "$(cat "$TEST_DIRECTORY/queries")" = "queries off" ] || fail "the resume prompt queried the terminal, or the next prompt did not: $(cat "$TEST_DIRECTORY/queries")"
 [ ! -f "$TEST_DIRECTORY/label" ] || fail "the record stayed after the agent returned"
 
+save "$record"
+shell yes 'function __herdr_agent_resume_can_skip_query; false; end; emit fish_prompt'
+[ ! -s "$TEST_DIRECTORY/calls" ] && [ ! -s "$TEST_DIRECTORY/queries" ] && [ -f "$TEST_DIRECTORY/label" ] || fail "a fish not verified to skip the query ran the agent or dropped the record"
+
 save '{"agent":"opencode","session":"ses_1","folder":"'"$TEST_DIRECTORY"'/work","flags":[]}'
-shell yes 'emit fish_prompt'
+shell yes 'function __herdr_agent_resume_can_skip_query; true; end; emit fish_prompt'
 grep -q '^opencode --session ses_1 in ' "$TEST_DIRECTORY/calls" || fail "opencode was not resumed with --session"
 
 save "$record"
