@@ -96,8 +96,7 @@ A project skill beats a same-topic plugin skill. When a skill defines a checklis
 
 ## Safety
 
-- Confirm before destructive operations (`rm`, `DROP TABLE`, `DELETE FROM`), never skip safety checks for speed, provide a rollback plan for risky changes, stop and ask if unsure about consequences.
-- Warn immediately if secrets or credentials are staged.
+- Confirm before destructive operations (`rm`, `DROP TABLE`, `DELETE FROM`, `git reset --hard`, `git clean -f`, `git branch -D`), never skip safety checks for speed, provide a rollback plan for risky changes, stop and ask if unsure about consequences.
 
 ## Error Handling and Stop the Line
 
