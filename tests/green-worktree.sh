@@ -231,10 +231,25 @@ git -C "$SOURCE" checkout --quiet main
 mkdir -p "$SOURCE/.github/workflows"
 printf 'on:\n  push:\n    paths:\n      - "paths/**"\n    branches:\n      - "tests/**"\n      - "main/**"\n      - "staging/*"\n    branches-ignore:\n      - "ignored/**"\n  pull_request:\n    branches:\n      - "requests/**"\njobs:\n  test:\n    push:\n      branches:\n        - "steps/**"\n' >"$SOURCE/.github/workflows/tests.yaml"
 printf 'on:\n  push:\n    branches:\n      - main\njobs:\n  deploy:\n    steps:\n      - run: ./deploy\n' >"$SOURCE/.github/workflows/deploy.yaml"
+printf 'on:\n  workflow_dispatch:\njobs:\n  test:\n    steps:\n      - run: make test\n' >"$SOURCE/.github/workflows/dispatch.yml"
+printf 'on:\n  push:\n    branches:\n      - "ci/**"\n      - "release/**"\n      - nightly\n  workflow_dispatch:\njobs:\n  test:\n    steps:\n      - run: make test\n' >"$SOURCE/.github/workflows/push.yml"
+printf 'on: &triggers\n  workflow_dispatch:\njobs:\n  test:\n    steps:\n      - run: make test\n' >"$SOURCE/.github/workflows/anchored.yml"
+printf 'not a workflow\n' >"$SOURCE/.github/workflows/README.md"
+printf 'on:\n  workflow_dispatch:\njobs:\n  test:\n    steps:\n      - run: make test\n' >"$SOURCE/.github/workflows/bad name.yml"
 git -C "$SOURCE" add .github
 git -C "$SOURCE" commit --quiet -m "add tests workflow"
 git -C "$SOURCE" push --quiet "$UPSTREAM" main:refs/heads/main
 REWORDED_SHA="$("$GIT_SCRIPT" autosquash "$WORKTREE" "$REWORDED_SHA" 2>/dev/null)" || fail "the git script failed to rebase onto the tests workflow"
+# The listing names each trigger a run could use, never a workflow that already runs on the pull request, a branch with no prefix pattern or named after a deploy target, a file that is not a workflow, or a name that could pass for a line of its own.
+EXPECTED_WORKFLOWS=$'anchored.yml unreadable\ndispatch.yml dispatch\npush.yml dispatch\npush.yml push ci/**'
+[ "$("$GIT_SCRIPT" workflows "$WORKTREE" "$REWORDED_SHA" 2>/dev/null)" = "$EXPECTED_WORKFLOWS" ] || fail "the git script listed other workflows than the ones a run could use"
+"$GIT_SCRIPT" workflows "$WORKTREE" "$CHANGE_SHA" >/dev/null 2>&1 && fail "the git script listed the workflows of a commit that is not the head"
+"$GIT_SCRIPT" workflows "$WORKTREE" "$REWORDED_SHA" extra >/dev/null 2>&1 && fail "the git script accepted an argument too many for the workflows"
+# The tests trigger refuses a repository with such a name, so it goes before the triggers below.
+git -C "$SOURCE" rm --quiet ".github/workflows/bad name.yml"
+git -C "$SOURCE" commit --quiet -m "remove the badly named workflow"
+git -C "$SOURCE" push --quiet "$UPSTREAM" main:refs/heads/main
+REWORDED_SHA="$("$GIT_SCRIPT" autosquash "$WORKTREE" "$REWORDED_SHA" 2>/dev/null)" || fail "the git script failed to rebase past the badly named workflow"
 for pattern in "paths/**" "ignored/**" "requests/**" "steps/**"; do
   "$GIT_SCRIPT" tests "$WORKTREE" "$REWORDED_SHA" tests.yaml "$pattern" 2>&1 >/dev/null | grep -q 'does not run on a push' || fail "the git script read $pattern as a push branch pattern"
 done
@@ -495,7 +510,7 @@ git -C "$SOURCE" push --quiet "$UPSTREAM" main:refs/heads/main
 [ $? -eq 3 ] || fail "the git script did not exit 3 on the first conflict"
 # The pattern argument must reach the script as it is, not as the files it matches.
 set -f
-for arguments in "fixup $CHANGE_SHA a.txt" "reword $CHANGE_SHA message.txt" "push $RESOLVED_SHA" "autosquash $RESOLVED_SHA" "tests $RESOLVED_SHA tests.yaml tests/**"; do
+for arguments in "fixup $CHANGE_SHA a.txt" "reword $CHANGE_SHA message.txt" "push $RESOLVED_SHA" "autosquash $RESOLVED_SHA" "tests $RESOLVED_SHA tests.yaml tests/**" "workflows $RESOLVED_SHA"; do
   # shellcheck disable=SC2086
   "$GIT_SCRIPT" ${arguments%% *} "$WORKTREE" ${arguments#* } 2>&1 >/dev/null | grep -q 'a rebase is in progress' || fail "the git script ran ${arguments%% *} in the middle of a rebase"
 done

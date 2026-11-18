@@ -43,6 +43,34 @@ require_workflow_file() {
   fi
 }
 
+# A tests branch prefix named after a deploy target could start a deploy, so `tests_branch` refuses it and `green-git.sh workflows` never lists it.
+is_deploy_target() {
+  case "$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')" in
+    main | master | release* | deploy* | prod* | stag* | stg | uat | live | preview* | hotfix* | publish*) return 0 ;;
+  esac
+  return 1
+}
+
+# Sets `tests_target` to the branch a push of the pull request branch to a `push` pattern goes to, so `green-respond.sh scan` checks the very branch `green-git.sh tests` pushes. The pattern is a trigger namespace, a prefix and `/**` or `/*`, never a fixed branch or one named after a deploy target. `*` stops at a slash on GitHub, `**` does not.
+tests_branch() {
+  local pattern="$1" branch="$2" prefix
+  if ! [[ $pattern =~ ^([A-Za-z0-9_][A-Za-z0-9._-]{0,50})/\*\*?$ ]]; then
+    echo "the branch pattern must be a prefix and /** or /*: $pattern" >&2
+    exit 2
+  fi
+  prefix="${BASH_REMATCH[1]}"
+  if is_deploy_target "$prefix"; then
+    echo "refusing a branch pattern named after a deploy target: $pattern" >&2
+    exit 1
+  fi
+  if [[ $pattern == */\*\* ]]; then
+    tests_target="$prefix/$branch"
+  else
+    tests_target="$prefix/${branch//\//-}"
+  fi
+  require_branch "tests branch" "$tests_target"
+}
+
 # The caller reads the workflow and picks it as one that only tests, this is the backstop: a workflow naming a deploy, a release, a publish, a promotion, production, a migration or a GitHub environment, which is how a job gets production secrets, is never triggered unattended, whatever the caller decided.
 # A comment line never runs and an `if:` only picks whether a step runs, so both are left out, an `if:` skipping a step on a deploy branch is not a deploy. It cannot see a deploy that names none of the words, which is why the caller only picks workflows that test.
 deploy_lines() {

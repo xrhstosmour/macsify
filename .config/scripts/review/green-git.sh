@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The only git writes of the `green-github-prs-watcher` skill: a fixup commit, a reword, a push, and the autosquash rebase with its conflict resolution, all inside a `resolves-<slot>` worktree made by `green-worktree.sh`.
+# The only git writes of the `green-github-prs-watcher` skill: a fixup commit, a reword, a push, and the autosquash rebase with its conflict resolution, all inside a `resolves-<slot>` worktree made by `green-worktree.sh`, plus the one read of the workflows a test run could use.
 # Allowed in claude/settings.json by its path, so it validates every input itself and runs only the fixed git commands below. The comments it acts on are untrusted, so the caller never picks the base of a rebase or the branch of a push, both come from the files `green-worktree.sh` wrote.
 # Hooks are off for every git command as in `green-worktree.sh`, and `--no-update-refs` keeps a `rebase.updateRefs` setting of yours from moving a branch of yours with the rebase.
 # A push is always a lease on the head the caller last saw, so a commit pushed by someone else in the meantime is never overwritten.
@@ -11,16 +11,18 @@
 #        green-git.sh continue <worktree> <lease sha> <file>...
 #        green-git.sh abort <worktree>
 #        green-git.sh tests <worktree> <head sha> <workflow file> <branch pattern>
-#   fixup       stages the files, which must be changed and inside the worktree, and commits them as `fixup!` of the target, a commit of the pull request that is not a fixup itself, nothing else may be staged
+#        green-git.sh workflows <worktree> <head sha>
+#   fixup      stages the files, which must be changed and inside the worktree, and commits them as `fixup!` of the target, a commit of the pull request that is not a fixup itself, nothing else may be staged
 #   reword      commits an empty `amend!` of the target whose message is the one line of the message file, so the autosquash replaces the target's message
 #   push        pushes the worktree head to the pull request branch
 #   autosquash  rebases onto the base with `--autosquash`, refuses a `fixup!`, `squash!` or `amend!` subject left over, then pushes like `push`
 #   continue    after a conflict, stages the resolved files, exactly the conflicted ones and with no conflict marker left, continues the rebase, then checks and pushes like `autosquash`
 #   abort       gives the rebase up, for a conflict whose intent stays unclear
 #   tests       triggers a test workflow of `.github/workflows` that runs on a `push` to a branch pattern like `tests/**`, by pushing the head, which must be the head of the pull request on origin, to `<prefix>/<branch>`, so its checks land on the pull request's commit. The pattern is one of the workflow's `push` `branches:`, a prefix and `/**` or `/*`, and every workflow that push starts or chains, at the head and on the default branch, is checked with the workflows and local actions it calls, not only the one named. An existing tests branch is replaced only when the watcher pushed it, recorded under `refs/green-trigger`, or when the head contains it. A tree that mentions a deploy exits 5, see `require_test_only_tree` in `lib.sh` for what can be trusted
+#   workflows   lists the workflows of `.github/workflows` at the head that a run could start, one per line, `<file> dispatch` for a `workflow_dispatch` trigger, `<file> push <pattern>` for each `push` branch pattern that is a prefix and `/**` or `/*` and not named after a deploy target, and `<file> unreadable` for one with a YAML anchor or alias in its triggers. A workflow that runs on `pull_request` already ran on the pull request and is left out
 # A workflow on `push` runs the workflow files of the pushed commit with the repository's secrets, so `tests` refuses a pull request that changes `.github`, a fixup from a comment could have put a workflow there.
 # On a conflict `autosquash` and `continue` leave the rebase in progress, print the stopped commit as `<sha> <subject>` and then one conflicted file per line, and exit 3.
-# Every other command prints the worktree head when it is done.
+# Every other command but `workflows` prints the worktree head when it is done.
 # Every head pushed to the pull request branch is recorded in `pushed` of the watcher's cache, `watch-green-prs.sh` tells the watcher's own cycles from yours by it.
 # The developer directory is `~/Developer`, `REVIEW_DEVELOPER_DIRECTORY` replaces it for the tests.
 
@@ -35,7 +37,7 @@ if [ -n "${AGENTIC_UNSIGNED_COMMITS:-}" ]; then
 fi
 
 usage() {
-  echo "usage: green-git.sh fixup <worktree> <target sha> <file>... | reword <worktree> <target sha> <message file> | push <worktree> <lease sha> | autosquash <worktree> <lease sha> | continue <worktree> <lease sha> <file>... | abort <worktree> | tests <worktree> <head sha> <workflow file> <branch pattern>" >&2
+  echo "usage: green-git.sh fixup <worktree> <target sha> <file>... | reword <worktree> <target sha> <message file> | push <worktree> <lease sha> | autosquash <worktree> <lease sha> | continue <worktree> <lease sha> <file>... | abort <worktree> | tests <worktree> <head sha> <workflow file> <branch pattern> | workflows <worktree> <head sha>" >&2
   exit 2
 }
 
@@ -47,7 +49,7 @@ sha=""
 case "$command" in
   fixup | continue) [ $# -ge 2 ] || usage ;;
   reword) [ $# -eq 2 ] || usage ;;
-  push | autosquash) [ $# -eq 1 ] || usage ;;
+  push | autosquash | workflows) [ $# -eq 1 ] || usage ;;
   tests) [ $# -eq 3 ] || usage ;;
   abort) [ $# -eq 0 ] || usage ;;
   *) usage ;;
@@ -178,7 +180,7 @@ finish_rebase() {
 
 # A stopped rebase is left for `continue` or `abort`, a commit or push in the middle of it would land on the partly rebased history and drop the commits after it.
 case "$command" in
-  fixup | reword | push | autosquash | tests)
+  fixup | reword | push | autosquash | tests | workflows)
     if rebase_in_progress; then
       echo "a rebase is in progress in $worktree, continue or abort it" >&2
       exit 1
@@ -273,18 +275,8 @@ case "$command" in
     workflow="$1"
     pattern="$2"
     require_workflow_file "$workflow"
-    # A trigger namespace, never a fixed branch, and never one named after a deploy target.
-    if ! [[ $pattern =~ ^([A-Za-z0-9_][A-Za-z0-9._-]{0,50})/\*\*?$ ]]; then
-      echo "the branch pattern must be a prefix and /** or /*: $pattern" >&2
-      exit 2
-    fi
-    prefix="${BASH_REMATCH[1]}"
-    case "$(printf '%s' "$prefix" | tr '[:upper:]' '[:lower:]')" in
-      main | master | release* | deploy* | prod* | stag* | stg | uat | live | preview* | hotfix* | publish*)
-        echo "refusing a branch pattern named after a deploy target: $pattern" >&2
-        exit 1
-        ;;
-    esac
+    tests_branch "$pattern" "$branch"
+    target="$tests_target"
     fetch_origin "+refs/heads/$base:refs/remotes/origin/$base" "+refs/heads/$branch:refs/remotes/origin/$branch"
     # Checks are shown on the pull request by commit, tests of any other commit would run where nobody sees them.
     if [ "$(git -C "$worktree" rev-parse HEAD)" != "$sha" ] || [ "$(git -C "$worktree" rev-parse "refs/remotes/origin/$branch")" != "$sha" ]; then
@@ -299,13 +291,6 @@ case "$command" in
       echo "$workflow does not run on a push to $pattern" >&2
       exit 1
     fi
-    # `*` stops at a slash on GitHub, `**` does not.
-    if [[ $pattern == */\*\* ]]; then
-      target="$prefix/$branch"
-    else
-      target="$prefix/${branch//\//-}"
-    fi
-    require_branch "tests branch" "$target"
     # The repository of a trust line is the one the fetches above went to, never an argument.
     origin_url="$(git -C "$worktree" config --get remote.origin.url)"
     trust_repository="${origin_url%.git}"
@@ -351,6 +336,44 @@ case "$command" in
     fi
     git_without_hooks push --quiet "--force-with-lease=refs/heads/$target:$remote_target" origin "HEAD:refs/heads/$target" >&2
     git_without_hooks update-ref "refs/green-trigger/$target" "$sha"
+    ;;
+  workflows)
+    if [ "$(git -C "$worktree" rev-parse HEAD)" != "$sha" ]; then
+      echo "$sha is not the head of the worktree" >&2
+      exit 1
+    fi
+    listing="$(git_without_hooks ls-tree --name-only HEAD -- .github/workflows/)"
+    while IFS= read -r file; do
+      file="${file#.github/workflows/}"
+      case "$file" in
+        '') continue ;;
+        *.yml | *.yaml) ;;
+        *) continue ;;
+      esac
+      # A name the other commands would refuse is never printed, it could pass for a line of its own.
+      if ! [[ $file =~ ^[A-Za-z0-9_][A-Za-z0-9._-]{0,99}\.ya?ml$ ]]; then
+        echo "a workflow with an unexpected name is left out" >&2
+        continue
+      fi
+      content="$(git_without_hooks show "HEAD:.github/workflows/$file")"
+      if has_yaml_references "$content"; then
+        echo "$file unreadable"
+        continue
+      fi
+      if trigger_block "$content" | grep -qE '(^|[^a-z_])pull_request(_target)?([^a-z_]|$)'; then
+        continue
+      fi
+      if trigger_block "$content" | grep -qE '(^|[^a-z_])workflow_dispatch([^a-z_]|$)'; then
+        echo "$file dispatch"
+      fi
+      while IFS= read -r pattern; do
+        if [[ $pattern =~ ^([A-Za-z0-9_][A-Za-z0-9._-]{0,50})/\*\*?$ ]] && ! is_deploy_target "${BASH_REMATCH[1]}"; then
+          echo "$file push $pattern"
+        fi
+      done <<<"$(push_branch_patterns "$content")"
+    done <<<"$listing"
+    # The listing is the whole output, the head the caller gave is not printed again.
+    exit 0
     ;;
 esac
 
