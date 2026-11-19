@@ -371,6 +371,7 @@
     "harden-accounts": "user-invocable-only",
     "humanize": "user-invocable-only",
     "implement-design-from-export": "user-invocable-only",
+    "improve-ai-setup": "user-invocable-only",
     "marketing": "user-invocable-only",
     "mobile-app-design": "name-only",
     "promo-video": "user-invocable-only",
