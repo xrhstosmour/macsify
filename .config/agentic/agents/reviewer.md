@@ -29,6 +29,7 @@ permission:
 - Names descriptive and consistent with the project, no `temp`, `data`, `result` without context. Control flow straightforward, no nested ternaries, deep callbacks, or clever tricks.
 - When a test changed or was added, load the `test-quality` skill and flag a match with a Test Junk Pattern or a break of its test authoring rules.
 - Check the diff against the pre-push list in Self-Critique in `instructions/standards.md`, flag what it misses.
+- Flag over-engineering against Simplicity in `instructions/standards.md`: an abstraction, option, layer, or dependency the task did not ask for, or a helper the codebase already has. Name the smaller version that keeps the behavior, never more than a MEDIUM.
 
 ## Performance
 
