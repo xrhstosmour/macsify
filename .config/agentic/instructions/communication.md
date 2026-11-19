@@ -42,3 +42,4 @@ Comments and posts people read outside the terminal, on Phabricator, GitHub, and
 - Link the task or PR a fact comes from inline, next to the fact.
 - A decision someone has to make goes in its own `**QUESTION**:` line at the end of its section, one or two sentences of context, a direct question with the options, then a mention of who decides.
 - Write for someone who was not in the room, no internal jargon or code names.
+- Run any draft the user will send or post as their own, a message, email, comment, or bullets, through the `humanize` skill before showing it.
