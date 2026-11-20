@@ -133,6 +133,35 @@ restore_claude_settings() {
   fi
 }
 
+# Adds this machine's own `deniedMcpServers` and `skillOverrides` to the
+# settings file just copied, from the machine settings file,
+# `~/.claude/machine-settings.json`, written by hand. Work servers and local
+# skills load their tool names and descriptions on every turn, but their names
+# can be a company name, so they stay on the machine. `skillOverrides` does not
+# reach plugin or claude.ai org skills, those are turned off in claude.ai. Never put that file in the
+# repository, `tests/claude-settings.sh` fails if it is tracked. Only these two
+# keys are read, so the file can hide more but never loosen a committed rule, a
+# committed skill override wins over the machine's. A missing file changes
+# nothing, a broken one is reported and changes nothing.
+# Usage:
+#   merge_machine_claude_settings <installed settings file> <machine settings file>
+merge_machine_claude_settings() {
+  local file="$1" machine="$2" merged
+  [ -f "$machine" ] || return 0
+  merged=$(mktemp)
+  if jq --slurpfile machine "$machine" '
+    ($machine[0].deniedMcpServers // [] | unique) as $denied
+    | ($machine[0].skillOverrides // {}) as $overrides
+    | (if ($denied | length) == 0 then . else .deniedMcpServers = (.deniedMcpServers // []) + ($denied - (.deniedMcpServers // [])) end)
+    | (if ($overrides | length) == 0 then . else .skillOverrides = $overrides + (.skillOverrides // {}) end)
+  ' "$file" >"$merged"; then
+    mv "$merged" "$file"
+  else
+    rm -f "$merged"
+    log_warning "Could not merge ${machine} into ${file}, check both are valid JSON."
+  fi
+}
+
 # Allows the committed read-only MCP tools under the MCP servers of this
 # machine, appended to the settings file just copied. A rule names the server as
 # the machine registered it, which differs per laptop and can be a company name,

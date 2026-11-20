@@ -265,6 +265,7 @@ effort: ${effort}" "$HOME/.claude/agents/${agent}.md"
     log_info "Copying Claude Code settings..."
     cp "$AGENTIC_SCRIPT_DIRECTORY/../claude/settings.json" "$HOME/.claude/"
     restore_claude_settings "$HOME/.claude/settings.json" "$preserved_settings"
+    merge_machine_claude_settings "$HOME/.claude/settings.json" "$HOME/.claude/machine-settings.json"
 
     # The committed plugins are only turned on by the file, so each missing one is installed. A
     # marketplace in `extraKnownMarketplaces` resolves from the settings just copied, the official
