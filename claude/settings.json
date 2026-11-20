@@ -333,16 +333,29 @@
     ]
   },
   "deniedMcpServers": [
+    { "serverName": "claude.ai Asana" },
+    { "serverName": "claude.ai Atlassian" },
+    { "serverName": "claude.ai Box" },
+    { "serverName": "claude.ai Canva" },
     { "serverName": "claude.ai Claude Docs" },
     { "serverName": "claude.ai Context7" },
     { "serverName": "claude.ai Datadog" },
     { "serverName": "claude.ai Datadog (2)" },
     { "serverName": "claude.ai Dovetail" },
     { "serverName": "claude.ai Figma" },
+    { "serverName": "claude.ai Fireflies" },
     { "serverName": "claude.ai Gmail" },
     { "serverName": "claude.ai Google Calendar" },
+    { "serverName": "claude.ai Google Docs" },
     { "serverName": "claude.ai Google Drive" },
-    { "serverName": "claude.ai Sentry" }
+    { "serverName": "claude.ai Google Slides" },
+    { "serverName": "claude.ai HubSpot" },
+    { "serverName": "claude.ai Intercom" },
+    { "serverName": "claude.ai Linear" },
+    { "serverName": "claude.ai monday.com" },
+    { "serverName": "claude.ai Notion" },
+    { "serverName": "claude.ai Sentry" },
+    { "serverName": "claude.ai Tableau Cloud" }
   ],
   "skillOverrides": {
     "agent-models": "user-invocable-only",
