@@ -85,7 +85,7 @@ Complexity for an unlikely race or security edge case outside that list needs th
 
 ### Comment and Test Hygiene
 
-Reread comments near the code you touched, one explaining a shape that moved is orphaned but reads as true. When two files explain the same fact, one carries it and the other points at it by name. Drop a test that only reproves what an earlier test in the same file guarantees.
+Reread comments and documents that describe the behaviour you changed, documentation comments, README sections, API documents, ticket references, one explaining a shape that moved is orphaned but reads as true. When two files explain the same fact, one carries it and the other points at it by name. Drop a test that only reproves what an earlier test in the same file guarantees.
 
 Before writing or flagging a test, apply the `test-quality` skill. Docs, tests, and PR descriptions follow `documentation.md`.
 
