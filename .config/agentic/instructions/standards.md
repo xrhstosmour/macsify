@@ -47,6 +47,8 @@ Before pushing, check the diff against this list:
 - A multi-step write sits in a transaction, a mid-way failure cannot leave half the change.
 - An existing helper does not already do it, search before adding one.
 - Null, empty, and ambiguous-match inputs are handled, an arbitrary pick among several matches has a tiebreak.
+- The change reaches every case it should and none it should not, list the variants first, both directions, every flag state, every caller, every region or tenant, and check each.
+- New log lines carry IDs, never personal data, and an expected outcome is not logged as an error.
 - A dependency outage on the new path is handled or surfaced, not swallowed.
 - A touched trust boundary, new input, endpoint, permission check, secret, outbound request, file path, dependency, CI step, or model or tool call, passes the Security section of `~/.config/agentic/agents/reviewer.md`.
 - A runtime boundary, input, endpoint, permission check, outbound request, file path, or model or tool call, also gets a test that the unauthorized or invalid case is rejected, a dependency, secret, or CI step gets the check only.
