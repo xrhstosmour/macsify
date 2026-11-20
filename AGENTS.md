@@ -60,7 +60,7 @@ Edits to this file must stay valid JSON, an `"agent"` key in it is replaced by t
 A 7 day log scan (2026-10-26) put the biggest usage on long sessions (about 33%), subagents (about 21%) and large tool output (about 10%), a rough weighted estimate.
 The rules for all three live in the global `standards.md` Context Management, this repo only enforces them where it can.
 In `Claude Code`, `bash-output-cap.sh` caps `Bash` output and idle compaction handles stale sessions, so session age and subagent use stay a written rule.
-A 31 day scan (2026-11-09) put cache reads at most of the cost, so the first-turn context is the floor every turn pays. It grew from about 60K tokens (2026-10-27) to about 81K (2026-11-05) from the account side, connectors and org skills, not this repo. `deniedMcpServers` and `skillOverrides` in `claude/settings.json` are the levers, check `/context` in a fresh session after adding a connector or org skill.
+A 31 day scan (2026-11-09) put cache reads at most of the cost, so the first-turn context is the floor every turn pays. It grew from about 60K tokens (2026-10-27) to about 81K (2026-11-05) from the account side, connectors and org skills, not this repo. `deniedMcpServers` and `skillOverrides` in `claude/settings.json` are the levers, check `/context` in a fresh session after adding a connector or org skill. A work server or local skill whose name must stay out of the repository goes in the same two keys of `~/.claude/machine-settings.json`, written by hand, which `setup/agentic.sh` merges in through `merge_machine_claude_settings` in `helpers/agentic.sh`.
 
 ## Testing changes
 
