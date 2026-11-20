@@ -89,6 +89,7 @@ For each server, find what it listens on and what connects to it, before any den
 - A search of the user's configs and scripts for tailnet addresses and hostnames, with the project search tools, not `grep` over the filesystem.
 - Outbound connections from the server to other tailnet devices.
 - Tailscale SSH off means port 22 is governed by the grants, on means the SSH policy rules.
+- Agents publish previews and review pages with `tailscale serve` on an HTTPS port of the user's own computer, per `communication.md`. Keep a grant for that port from the user's other computers and phone, or those links stop opening, and check `tailscale serve status` for a leftover one.
 
 Show the port map, each server with its listening ports and who uses them, and ask the user to confirm it.
 

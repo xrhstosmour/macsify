@@ -25,6 +25,7 @@ expect_rule() {
   fi
 }
 
+expect_rule deny 'Bash(tailscale funnel*)' present
 expect_rule deny 'Bash(sudo *)' present
 expect_rule deny 'Bash(git push *--force* main)' present
 expect_rule deny 'Bash(git push --mirror *)' present
