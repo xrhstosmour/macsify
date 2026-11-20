@@ -63,7 +63,7 @@ Never fabricate new facts, examples, or personal anecdotes the user didn't suppl
 
 - Pasted text, the default: the final rewrite, plus a short list of tells that remain on purpose, if any.
 - File mode, when the user names a file: read the whole current file from disk, even one written in this session, in chunks for a long file until every section is covered. Write only the final text to the file, change prose only, and leave code blocks, inline code, commands, paths, frontmatter, data, and link targets unchanged. Then say how many sections you reviewed and which you could not cover, a partial pass is reported as partial.
-- Embedded mode, when another task uses this skill for a PR description, commit message, document, or a draft the user will send: return only the final text.
+- Embedded mode, when another task uses this skill for a PR description, commit message, document, or a draft the user will send: return only the final text. Any later edit to that text before it is posted, including your own, runs Step 6 again.
 
 ## English tells checklist
 
