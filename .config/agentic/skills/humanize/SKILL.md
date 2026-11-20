@@ -55,7 +55,7 @@ Mix short and long sentences. A single fragment is fine where a person would use
 
 1. Compare against the original: did any fact, name, number, date, quote, citation, ranking, or claim that two things happen together get dropped or changed? Cutting triads, qualifiers, and bold labels loses facts most often. A lost claim is an error unless a tell called for cutting it.
 2. Read it aloud and ask what still sounds generated.
-3. Search again for the tells that survive a rewrite most: not-X-but-Y contrasts, one-line closers, triads, dashes, and bold labels. A rewrite that still opens with "Moreover" or "Επιπλέον" hasn't been humanized.
+3. Search again for the tells that survive a rewrite most: not-X-but-Y contrasts, one-line closers, triads, dashes, comma splices, and bold labels. A rewrite that still opens with "Moreover" or "Επιπλέον" hasn't been humanized.
 
 Never fabricate new facts, examples, or personal anecdotes the user didn't supply. Restructure and rephrase only.
 
@@ -78,7 +78,8 @@ Staging instead of stating, strong, act on one sighting:
 Rhythm by rule:
 
 - Rule-of-three overload, always exactly three examples, adjectives, or parallel short facts → use one, two, or four, whatever the content actually calls for. Keep three real items when the meaning has three.
-- Dashes as the universal connector: em dashes, en dashes, and ` -- ` joining clauses → replace each with a period, comma, colon, or parentheses, or rewrite the sentence. One dash is weak alone, a text full of them is not. Leave dashes inside code, commands, paths, and URLs.
+- Dashes as the universal connector: em dashes, en dashes, and ` -- ` joining clauses → replace each with a period, comma, colon, or parentheses, or rewrite the sentence. A dash between two full clauses becomes a period or a conjunction, never a bare comma. One dash is weak alone, a text full of them is not. Leave dashes inside code, commands, paths, and URLs.
+- Comma splices, two full clauses joined by a bare comma ("which is fine, X ships home anyway", "falls through to the rejection, this changes Y too"), often left behind when a dash or semicolon is swapped for a comma → split into two sentences or add a conjunction, and, but, since, so. A short run of parallel clauses in casual text can stay.
 - Paragraphs opening with `Moreover`, `Furthermore`, `Additionally`, `In conclusion`, `Overall` → cut the transition word, let the idea start the sentence. The same subject opening several sentences in a row → merge or vary them.
 - Uniform sentence length with no short sentences → vary it.
 - Stacked qualifiers: "could potentially", "might arguably", "it's also possible", "in some cases it may" piled on one claim → keep one qualifier when the source supports the doubt. Weak alone, ordinary "perhaps" is human.
