@@ -31,13 +31,7 @@ Since it skips the global instructions, its Rules carry the shell safety and pri
 
 ## Mobile development toolchain
 
-`setup/mobile.sh` owns everything `Flutter` needs to build for Android and iOS. It is opt-in, `configure.sh` asks for it in the developer tools section, only when the profile's Brewfile installs `flutter`, right after `utilities/development.sh`, which is why the `Mac App Store` step runs before that section, the iOS half needs `Xcode` already installed.
-It installs the Android SDK packages, accepts their licences, creates the emulator and simulator devices, and points the command line tools at `Xcode`. The `JDK` is not its business, `utilities/development.sh` owns the `Java` pin.
-The Android platform, build tools and `NDK` versions are read out of the installed `Flutter`'s `FlutterExtension.kt` instead of being hardcoded, so a `Flutter` upgrade does not leave the SDK behind. Every path is derived from `brew --prefix`.
-The emulator and simulator device names are the one thing duplicated, between the script's constants and the `open_android_emulator`/`open_ios_emulator` launchers in `.config/fish/functions/emulators.fish`. Change them in both.
-`Xcode` 27 has no `Simulator.app`, `DeviceHub` hosts the simulator window. Its sidebar is hidden through a preference written by `utilities/system.sh`, so `open_ios_emulator` opens on the device alone. The inspector panel and window floating have no preference behind them, set those once by hand and they stay. The simulator itself is switched to the dark appearance when the script creates it, matching `utilities/appearance.sh`.
-SDK packages go through the `android` CLI that replaces the deprecated `sdkmanager`. It accepts each package's licence and writes it under `licenses` as it installs, so there is no separate licence acceptance step. The CLI updates itself apart from the cask, so the script runs `android update` first, a no-op when current, and a later cask upgrade that rolls it back is updated again on the next run. `avdmanager` still creates the emulator, the `android` CLI cannot name an `AVD` or build one from a concrete device profile such as `pixel_10_pro`, only from generic categories.
-The standalone `android-platform-tools` cask is deliberately absent from the Brewfile. The `platform-tools` package installs the `adb` that Gradle and `Flutter` actually invoke inside the SDK, and a second, independently versioned `adb` in `Homebrew`'s binary directory means two `adb` servers fighting over port 5037. It also lets `Flutter` resolve the wrong SDK root, but only when `ANDROID_HOME` is unset, since `Flutter` prefers the environment and falls back to walking `adb` on the `PATH`.
+`setup/mobile.sh` owns everything `Flutter` needs to build for Android and iOS, read `setup/README.md` before changing it or the `adb`, `Xcode` and Android SDK pieces of the Brewfile.
 
 ## Script conventions
 
@@ -66,7 +60,7 @@ Edits to this file must stay valid JSON, an `"agent"` key in it is replaced by t
 A 7 day log scan (2026-10-26) put the biggest usage on long sessions (about 33%), subagents (about 21%) and large tool output (about 10%), a rough weighted estimate.
 The rules for all three live in the global `standards.md` Context Management, this repo only enforces them where it can.
 In `Claude Code`, `bash-output-cap.sh` caps `Bash` output and idle compaction handles stale sessions, so session age and subagent use stay a written rule.
-A 31 day scan (2026-11-09) put cache reads at most of the cost, so the first-turn context is the floor every turn pays. It grew from about 60K tokens (2026-10-27) to about 81K (2026-11-05) from the account side, connectors and org skills, not this repo. `deniedMcpServers` and `skillOverrides` in `claude/settings.json` are the levers, check `/context` in a fresh session after adding a connector or org skill.
+A 31 day scan (2026-11-09) put cache reads at most of the cost, so the first-turn context is the floor every turn pays. It grew from about 60K tokens (2026-10-27) to about 81K (2026-11-05) from the account side, connectors and org skills, not this repo. `deniedMcpServers` and `skillOverrides` in `claude/settings.json` are the levers, check `/context` in a fresh session after adding a connector or org skill. A work server or local skill whose name must stay out of the repository goes in the same two keys of `~/.claude/machine-settings.json`, written by hand, which `setup/agentic.sh` merges in through `merge_machine_claude_settings` in `helpers/agentic.sh`.
 
 ## Testing changes
 

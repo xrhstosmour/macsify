@@ -14,7 +14,9 @@
 - Run commands non-interactively, explain first only when a command is destructive or non-obvious.
 - Use absolute paths, or verify them, before destructive commands. Inform the user of long-running processes.
 - Never fabricate. If you don't know, say so. Answer only with evidence you can point to, a file you read, a command output you saw, a source you cited, and if the source doesn't support your answer, say so. If nothing is wrong, say so.
-- Never claim work is done without the command output that proves it.
+- Never claim work is done without the command output that proves it. For a fix, reproduce the reported symptom and show it gone, a green unrelated test is not proof.
+- Finish the whole request before reporting, never hand back a step you can run yourself, name only what is truly blocked.
+- Look up what the code, a connected tool, or a database can answer before asking the user, and report a tool that fails authentication instead of skipping it.
 - Add only essential code comments.
 
 ## Flagging Convention
@@ -45,6 +47,8 @@ Before pushing, check the diff against this list:
 - A multi-step write sits in a transaction, a mid-way failure cannot leave half the change.
 - An existing helper does not already do it, search before adding one.
 - Null, empty, and ambiguous-match inputs are handled, an arbitrary pick among several matches has a tiebreak.
+- The change reaches every case it should and none it should not, list the variants first, both directions, every flag state, every caller, every region or tenant, and check each.
+- New log lines carry IDs, never personal data, and an expected outcome is not logged as an error.
 - A dependency outage on the new path is handled or surfaced, not swallowed.
 - A touched trust boundary, new input, endpoint, permission check, secret, outbound request, file path, dependency, CI step, or model or tool call, passes the Security section of `~/.config/agentic/agents/reviewer.md`.
 - A runtime boundary, input, endpoint, permission check, outbound request, file path, or model or tool call, also gets a test that the unauthorized or invalid case is rejected, a dependency, secret, or CI step gets the check only.
@@ -81,7 +85,7 @@ Complexity for an unlikely race or security edge case outside that list needs th
 
 ### Comment and Test Hygiene
 
-Reread comments near the code you touched, one explaining a shape that moved is orphaned but reads as true. When two files explain the same fact, one carries it and the other points at it by name. Drop a test that only reproves what an earlier test in the same file guarantees.
+Reread comments and documents that describe the behaviour you changed, documentation comments, README sections, API documents, ticket references, one explaining a shape that moved is orphaned but reads as true. When two files explain the same fact, one carries it and the other points at it by name. Drop a test that only reproves what an earlier test in the same file guarantees.
 
 Before writing or flagging a test, apply the `test-quality` skill. Docs, tests, and PR descriptions follow `documentation.md`.
 

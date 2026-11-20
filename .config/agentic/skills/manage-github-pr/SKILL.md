@@ -31,7 +31,7 @@ gh pr edit <number> --base <branch>
 
 ### 1. Validate Intent
 
-Confirm with the user they want to create a PR. Ask for the change scope if the changes are unclear.
+Confirm with the user they want to create a PR. Ask for the change scope if the changes are unclear. If the user named an existing PR, or one of their open PRs already covers this work, commit to its branch instead of opening a new one, ask when unsure.
 
 ### 2. Safety Guardrails
 

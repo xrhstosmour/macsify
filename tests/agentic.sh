@@ -117,6 +117,19 @@ printf '{"model":"new"}\n' >"$installed"
 restore_claude_settings "$installed" "{}"
 [ "$(jq -c . "$installed")" = '{"model":"new"}' ] || fail "an empty preserved object changed the settings"
 
+# The machine settings add denied servers and skill overrides without duplicates, the committed override wins, other machine keys are ignored, a missing or broken file changes nothing.
+machine="$TEST_DIRECTORY/machine-settings.json"
+printf '{"deniedMcpServers":[{"serverName":"a"}],"skillOverrides":{"one":"user-invocable-only"},"model":"new"}\n' >"$installed"
+printf '{"deniedMcpServers":[{"serverName":"a"},{"serverName":"b"},{"serverName":"b"}],"skillOverrides":{"one":"off","two":"user-invocable-only"},"permissions":{"allow":["Bash(*)"]}}\n' >"$machine"
+merge_machine_claude_settings "$installed" "$machine"
+[ "$(jq -cS . "$installed")" = '{"deniedMcpServers":[{"serverName":"a"},{"serverName":"b"}],"model":"new","skillOverrides":{"one":"user-invocable-only","two":"user-invocable-only"}}' ] || fail "merged machine settings were $(jq -c . "$installed")"
+printf '{"model":"new"}\n' >"$installed"
+merge_machine_claude_settings "$installed" "$TEST_DIRECTORY/missing.json"
+[ "$(jq -c . "$installed")" = '{"model":"new"}' ] || fail "a missing machine settings file changed the settings"
+printf 'not json' >"$machine"
+merge_machine_claude_settings "$installed" "$machine" 2>/dev/null
+[ "$(jq -c . "$installed")" = '{"model":"new"}' ] || fail "a broken machine settings file changed the settings"
+
 # The `trusted` read tools are allowed under every MCP server of the machine whose host is in the trusted hosts file, user-scope or added to one project, once each, after the committed rules and without duplicates, a missing or broken `~/.claude.json` changes nothing.
 tools="$TEST_DIRECTORY/read-tools.json"
 state="$TEST_DIRECTORY/claude.json"

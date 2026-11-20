@@ -104,6 +104,11 @@ if git -C "$TESTS_SCRIPT_DIRECTORY/.." ls-files | grep -q 'mcp-trusted-hosts$'; 
   echo "FAIL: a mcp-trusted-hosts file is tracked, it must stay outside the repository"
   failures=$((failures + 1))
 fi
+# The machine settings file names work servers and skills and stays on the machine, never in the repository.
+if git -C "$TESTS_SCRIPT_DIRECTORY/.." ls-files | grep -q 'machine-settings.json$'; then
+  echo "FAIL: a machine-settings.json file is tracked, it must stay outside the repository"
+  failures=$((failures + 1))
+fi
 
 # A skill hidden from the model in one tool must be hidden in all three, `Claude Code`, `OpenCode` and `Copilot CLI`, and `Codex`.
 for skill_file in "$TESTS_SCRIPT_DIRECTORY"/../.config/agentic/skills/*/SKILL.md; do
