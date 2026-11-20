@@ -141,6 +141,19 @@ The most common way AI degrades a codebase: it hand-rolls what already exists. A
 
 Plain CSS transitions and `@starting-style` cover hover, fade, and simple enter/exit, no dependency needed. Reach for a spring-capable motion library only when the interaction needs gestures, interruptibility, or layout animation, drag, reordering, a value that can be grabbed mid-flight. A simple fade doesn't earn a library.
 
+### Platform: modern CSS and HTML before JavaScript
+
+Models default to legacy patterns, so check the current platform feature before writing JS or adding a dependency. Baseline widely available features need no fallback, for newer ones feature-detect with graceful degradation and keep the fallback under about 20 lines with no dependency, unless the project states its own browser support.
+
+- Overlays: `<dialog>` with `showModal()` and `closedby="any"` for light dismiss, the `popover` attribute with `popovertarget` for menus and tooltips, `::backdrop` for the scrim.
+- Positioning: `anchor-name` and `position-anchor` with `position-try-fallbacks` over a positioning library for tooltips and dropdowns.
+- Layout: container queries over viewport media queries for components, `subgrid` for aligned rows, `:has()` for parent state, `text-wrap: balance` and `pretty` for headings and paragraphs, `field-sizing: content` for auto-growing inputs.
+- Motion: `@starting-style` and `transition-behavior: allow-discrete` for enter and exit including `display`, View Transitions for route and state changes, scroll-driven animations (`animation-timeline`) over scroll listeners.
+- Color: `oklch()`, `color-mix()` and relative colors for palettes and states, `light-dark()` with `color-scheme` for themes.
+- Forms: `:user-invalid` over custom touched state, `accent-color`, native validation attributes before a validation library.
+- Performance: `content-visibility: auto` for long offscreen sections, `fetchpriority` on the LCP image, `scheduler.yield()` to break up long tasks that hurt INP.
+- Unsure a feature is current or safe? Look it up on MDN or web.dev before using it, never from memory.
+
 ### Styling: system → component → token → utility
 
 1. If the project has a design system, use it. `shadcn/Button`, a `CVA` variant set, a theme, a component library, use `<Button variant="…">` before writing a one-off. Match the codebase's styling convention.
