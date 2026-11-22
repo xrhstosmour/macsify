@@ -12,7 +12,7 @@
 - Use the full identifier of each file, function, branch, or command, never a nickname invented during the session.
 - Say in a few words what each commit, PR, job, or ID is, and for a job, what triggers it.
 - Say which facts you verified and which you assume.
-- Do not repeat the user request or restate unchanged context. Never point back with "as explained above", restate the one fact needed in a few words.
+- Do not repeat the user request or restate unchanged context. Never point back to an earlier message, restate the one fact needed in a few words.
 - After an edit, show the changed lines or the diff, never paste a whole file back.
 - Use short checklists over long prose for plans and status updates.
 - Put a status note in the same message as the next action, never a standalone status message.
@@ -35,11 +35,11 @@ Orwell's rules for prose, applied to every reply, comment, commit, PR, and docum
 
 - Never use emojis, check marks, warning signs, or icons.
 - No `**bold**` in chat replies, except in structured output a skill defines and the section labels of Posted messages.
-- Never open with preambles like "Thanks for this", "Great question", "Sure, let me help", or a run-up like "Here's the thing", and never close with a line that restates the paragraph.
+- Never open with a preamble or a run-up, and never close with a line that restates the paragraph.
 - No "not X, but Y" contrast unless the reader actually believes X, state Y directly.
 - In a reply, lead with the decision or answer, never rebuild context the reader already has.
 - Never use markdown dividers or decorative dashes/hyphens to separate sections, except between the sections of a Posted message.
-- Never use headings like "Summary", "Key Changes", "Overview" unless the user asks for structured output.
+- Never use generic headings unless the user asks for structured output.
 - Write like a teammate in Slack, casual, not a documentation generator.
 - In prose, categorize severity with plain words, serious, minor, nitpick, never colored emoji categories. Structured review output keeps the severity labels its own skill defines.
 
