@@ -20,6 +20,17 @@
 - In structured descriptions, use a colon with a capital letter after each label, bold only when a skill defines the output and in the section labels of Posted messages.
 - Give text the user will copy, a reply, a message, a comment, as plain text, never in a `>` quote block, the terminal draws the quote as a `|` bar that gets copied along.
 
+## Plain words
+
+Orwell's rules for prose, applied to every reply, comment, commit, PR, and document before it goes out. Code, identifiers, commands, and technical terms stay exactly as they are.
+
+- Pick the short everyday word over the long or foreign one.
+- Cut every word that does not change the meaning.
+- Use the active voice and name who does what.
+- Say the literal thing instead of a stock figure of speech.
+- Report progress as what changed, what failed, and what comes next, with no words that praise the result.
+- Break any of these rules sooner than write something awkward.
+
 ## Anti-AI Signals
 
 - Never use emojis, check marks, warning signs, or icons.
@@ -43,3 +54,13 @@ Comments and posts people read outside the terminal, on Phabricator, GitHub, and
 - A decision someone has to make goes in its own `**QUESTION**:` line at the end of its section, one or two sentences of context, a direct question with the options, then a mention of who decides.
 - Write for someone who was not in the room, no internal jargon or code names.
 - Run any draft the user will send or post as their own, a message, email, comment, or bullets, through the `humanize` skill before showing it.
+
+### Thread replies
+
+A reply in a chat thread about one case, to a colleague who asked, takes none of the labels, bullets, or dividers above.
+
+- One sentence per line, no blank lines between them.
+- Give the cause and the action the reader needs, leave out the mechanism, the retry history, and reassurances they did not ask for.
+- Keep the work terms the team says in English inside a message in another language, and use the abbreviations the reader already knows.
+- Name a gap in someone else's work softly, never as blame.
+- End with the user's own next step in two or three words, first person singular, with no closing period.
