@@ -37,6 +37,8 @@ Formal email, casual message, blog post, technical doc, social post, and so on. 
 
 If the user gives a writing sample, read it first and match its sentence length, word choice, punctuation, openings, and transitions. The sample overrides the checklists, including the dash rule: a sample that uses dashes keeps them at about the same rate. Without a sample, opinion pieces, blog posts, and personal writing keep the writer's opinions, doubts, humor, and asides, reference, technical, and legal text stays neutral and plain.
 
+A draft the user sends under their own name takes their voice. When the conversation holds messages the user wrote, those are the sample. Without one, a reply in a chat thread follows "Thread replies" in `communication.md`. In a draft you wrote yourself, cutting a detail the reader does not need is editing, not a lost fact, so Step 6 does not count it as one.
+
 ## Step 3: Preserve untouched content
 
 Facts, claims, names, numbers, dates, quotes, rankings, code blocks, inline code, commands, paths, links, technical terms, and any structure the user explicitly needs (required headings, a form template, SEO keywords). Rewriting is about voice and rhythm, not content.
@@ -56,6 +58,7 @@ Mix short and long sentences. A single fragment is fine where a person would use
 1. Compare against the original: did any fact, name, number, date, quote, citation, ranking, or claim that two things happen together get dropped or changed? Cutting triads, qualifiers, and bold labels loses facts most often. A lost claim is an error unless a tell called for cutting it.
 2. Read it aloud and ask what still sounds generated.
 3. Search again for the tells that survive a rewrite most: not-X-but-Y contrasts, one-line closers, triads, dashes, comma splices, and bold labels. A rewrite that still opens with "Moreover" or "Επιπλέον" hasn't been humanized.
+4. Check the prose against "Plain words" in `communication.md`: short everyday words, no word that does not change the meaning, active voice with a named actor, no stock figure of speech, no achievement words.
 
 Never fabricate new facts, examples, or personal anecdotes the user didn't supply. Restructure and rephrase only.
 
