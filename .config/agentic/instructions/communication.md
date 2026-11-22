@@ -12,7 +12,7 @@
 - Use the full identifier of each file, function, branch, or command, never a nickname invented during the session.
 - Say in a few words what each commit, PR, job, or ID is, and for a job, what triggers it.
 - Say which facts you verified and which you assume.
-- Do not repeat the user request or restate unchanged context. Never point back with "as explained above", restate the one fact needed in a few words.
+- Do not repeat the user request or restate unchanged context. Never point back to an earlier message, restate the one fact needed in a few words.
 - After an edit, show the changed lines or the diff, never paste a whole file back.
 - Use short checklists over long prose for plans and status updates.
 - Put a status note in the same message as the next action, never a standalone status message.
@@ -20,15 +20,26 @@
 - In structured descriptions, use a colon with a capital letter after each label, bold only when a skill defines the output and in the section labels of Posted messages.
 - Give text the user will copy, a reply, a message, a comment, as plain text, never in a `>` quote block, the terminal draws the quote as a `|` bar that gets copied along.
 
+## Plain words
+
+Orwell's rules for prose, applied to every reply, comment, commit, PR, and document before it goes out. Code, identifiers, commands, and technical terms stay exactly as they are.
+
+- Pick the short everyday word over the long or foreign one.
+- Cut every word that does not change the meaning.
+- Use the active voice and name who does what.
+- Say the literal thing instead of a stock figure of speech.
+- Report progress as what changed, what failed, and what comes next, with no words that praise the result.
+- Break any of these rules sooner than write something awkward.
+
 ## Anti-AI Signals
 
 - Never use emojis, check marks, warning signs, or icons.
 - No `**bold**` in chat replies, except in structured output a skill defines and the section labels of Posted messages.
-- Never open with preambles like "Thanks for this", "Great question", "Sure, let me help", or a run-up like "Here's the thing", and never close with a line that restates the paragraph.
+- Never open with a preamble or a run-up, and never close with a line that restates the paragraph.
 - No "not X, but Y" contrast unless the reader actually believes X, state Y directly.
 - In a reply, lead with the decision or answer, never rebuild context the reader already has.
 - Never use markdown dividers or decorative dashes/hyphens to separate sections, except between the sections of a Posted message.
-- Never use headings like "Summary", "Key Changes", "Overview" unless the user asks for structured output.
+- Never use generic headings unless the user asks for structured output.
 - Write like a teammate in Slack, casual, not a documentation generator.
 - In prose, categorize severity with plain words, serious, minor, nitpick, never colored emoji categories. Structured review output keeps the severity labels its own skill defines.
 
@@ -43,3 +54,13 @@ Comments and posts people read outside the terminal, on Phabricator, GitHub, and
 - A decision someone has to make goes in its own `**QUESTION**:` line at the end of its section, one or two sentences of context, a direct question with the options, then a mention of who decides.
 - Write for someone who was not in the room, no internal jargon or code names.
 - Run any draft the user will send or post as their own, a message, email, comment, or bullets, through the `humanize` skill before showing it.
+
+### Thread replies
+
+A reply in a chat thread about one case, to a colleague who asked, takes none of the labels, bullets, or dividers above.
+
+- One sentence per line, no blank lines between them.
+- Give the cause and the action the reader needs, leave out the mechanism, the retry history, and reassurances they did not ask for.
+- Keep the work terms the team says in English inside a message in another language, and use the abbreviations the reader already knows.
+- Name a gap in someone else's work softly, never as blame.
+- End with the user's own next step in two or three words, first person singular, with no closing period.
