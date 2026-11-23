@@ -100,6 +100,7 @@
       "Bash(~/.config/scripts/review/watch-review-requests.sh *)",
       "Bash(~/.config/scripts/review/post-pr-review.sh *)",
       "Bash(~/.config/scripts/review/post-thread-reply.sh *)",
+      "Bash(~/.config/scripts/review/review-threads.sh *)",
       "Bash(~/.config/scripts/review/review-worktree.sh *)",
       "Bash(~/.config/scripts/review/agent-slots.sh *)",
       "Read(~/.config/agentic/skills/review-github-prs-watcher/references/slot-run.md)",
