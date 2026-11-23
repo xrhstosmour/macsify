@@ -146,6 +146,9 @@ Separately, scan for the mandatory human-callout triggers, used later in "Synthe
 | `DROP`, bulk `DELETE`, `rm`, force-push, or other irreversible op | Irreversible/destructive operation         |
 | Feature flag added, removed, or a dormant one reused             | Feature flag change                        |
 | Changed default value in a config file                           | Configuration default change               |
+| A test declaration on a removed diff line whose name is not on an added line | Removed tests                  |
+
+For removed tests, scan the `-` lines of the diff for any test declaration, such as `it`, `test`, `describe`, `context`, `specify`, `def test_`, `class Test`, `func Test`, or `@Test`, a removed test changes what the suite verifies and the reviewer must agree with it, adapted from the `summarize-pr` skill. A test whose body moved under a new name is a rename, list it as one.
 
 Collect which of these apply and to which files, you'll need this for the "Human Reviewer Callouts" section later. Not finding any is a normal, common outcome, don't force a match.
 
@@ -350,6 +353,7 @@ applicable callouts, each bolded exactly as below. Write "- None" if none apply.
 - **This change includes irreversible or destructive operations:** <operation and scope>
 - **This change adds or removes feature flags:** <flags changed>, call out re-use of dormant flags
 - **This change changes configuration defaults:** <config var changed>
+- **This change removes tests:** <file:test name per removed test, renames marked as renamed to the new name>
 ```
 
 ## Next steps
