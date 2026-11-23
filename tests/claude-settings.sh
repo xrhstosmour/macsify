@@ -55,6 +55,10 @@ expect_rule allow 'Bash(tail -n *)' absent
 expect_rule allow 'Bash(nc -z *)' absent
 # The green watcher searches past sessions through `green-search.sh`, scoped to the checkout of the pull request, never a `Read` of every transcript.
 expect_rule allow 'Bash(~/.config/scripts/review/green-search.sh *)' present
+# The manual trigger moves only the branch of a line of the `manual-tests` file you wrote by hand, an agent never writes that file.
+expect_rule allow 'Bash(~/.config/scripts/review/green-manual-tests.sh *)' present
+# A shell redirect into the file would approve a branch move, the `Edit` deny covers the tool only. The pattern names the folder, a bare `*manual-tests*` would also deny the script and its test.
+expect_rule deny 'Bash(*green-github-prs-watcher/manual-tests*)' present
 expect_rule allow 'Read(~/.claude/projects/*-Developer-*/**)' absent
 expect_rule allow 'Read(~/.claude/projects/**)' absent
 # Only the read-only `qmd` commands, never a bare `qmd *` that would allow its writes too.
