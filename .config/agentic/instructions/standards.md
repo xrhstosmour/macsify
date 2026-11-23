@@ -74,7 +74,7 @@ Before writing code, confirm the requirement, ask if unsure, check existing patt
 Understand the problem and read the code the change touches first, then stop at the first rung that holds:
 
 1. Does it need to exist? Speculative need, skip it and say so.
-2. Already in this codebase? Reuse the helper, type, or pattern, prefer existing patterns over new abstractions.
+2. Already in this codebase? Reuse the helper, type, or pattern, prefer existing patterns over new abstractions. The same goes for work items, update the open PR, task, or branch for the change before opening a new one.
 3. Standard library or native platform feature (`<input type="date">`, a database constraint) over a dependency.
 4. An installed dependency over a new one, never add one for what a few lines can do.
 5. Otherwise the minimum code that works, one line if it fits, never a one-liner that needs decoding. Between options of equal size, take the one correct on edge cases.
