@@ -249,7 +249,7 @@ Body:
 ...
 ```
 
-State in the preview that after the PR is created it is prepared for review (fix failing checks, rebase onto `<base>`, autosquash, push with lease, trigger CI), so the one approval covers create and prepare, except a check fix or a conflict resolution, which the prepare skill asks about itself, see step 11. Get explicit approval before proceeding. If the user wants changes, iterate on Phase 4.
+State in the preview that after the PR is created it is prepared for review (fix failing checks, rebase onto `<base>`, autosquash, push with lease, trigger CI), so the one approval covers create and prepare, except a check fix or a conflict resolution, which the prepare skill asks about itself, see step 11. In a public repository, check the title, body, branch and commit messages against Public configuration in `~/.config/agentic/instructions/privacy.md` before the preview, and replace each work name with a generic example. Get explicit approval before proceeding. If the user wants changes, iterate on Phase 4.
 
 ### 7. Push
 
