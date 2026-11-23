@@ -86,8 +86,8 @@ expect_rule deny 'Bash(*XDG_CACHE_HOME=*)' present
 # `rg --pre` runs any command, so `rg` stays prompted.
 expect_rule allow 'Bash(rg *)' absent
 READ_TOOLS_FILE="$TESTS_SCRIPT_DIRECTORY/../claude/mcp-read-tools.json"
-# Raw SQL can return any row or write, and the other tools return customer data, rows, log lines or events, so they stay prompted on every MCP server setup allows the read tools under.
-for tool in metabase-mcp_execute_sql metabase-mcp_construct_native_query metabase-mcp_execute_query metabase-mcp_query metabase-mcp_execute_question metabase-mcp_construct_query grafana-mcp_query_loki_logs grafana-mcp_query_loki_patterns get_sentry_resource get_issue_details get_event_stacktrace get_event_attachment get_issue_breadcrumbs get_issue_tag_values get_issue_user_reports search_errors search_issue_events search_logs search_replays get_replay_details search_agent_conversations get_agent_conversation_details; do
+# Raw SQL can return any row or write, and the other tools run a query or return customer data, rows, log lines or events, so they stay prompted on every MCP server setup allows the read tools under. The Metabase `construct_*` tools only build a query handle, so they are allowed.
+for tool in metabase-mcp_execute_sql metabase-mcp_execute_query metabase-mcp_query metabase-mcp_execute_question grafana-mcp_query_loki_logs grafana-mcp_query_loki_patterns get_sentry_resource get_issue_details get_event_stacktrace get_event_attachment get_issue_breadcrumbs get_issue_tag_values get_issue_user_reports search_errors search_issue_events search_logs search_replays get_replay_details search_agent_conversations get_agent_conversation_details; do
   if jq -e --arg tool "$tool" '[.trusted[], .hosts[][]] | index($tool) != null' "$READ_TOOLS_FILE" >/dev/null; then
     echo "FAIL: '$tool' in claude/mcp-read-tools.json should be absent"
     failures=$((failures + 1))
