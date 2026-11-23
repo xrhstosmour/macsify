@@ -50,6 +50,7 @@ Before pushing, check the diff against this list:
 - The change reaches every case it should and none it should not, list the variants first, both directions, every flag state, every caller, every region or tenant, and check each.
 - New log lines carry IDs, never personal data, and an expected outcome is not logged as an error.
 - A dependency outage on the new path is handled or surfaced, not swallowed.
+- A new enum value, stored field, or cache key is handled by every existing reader, and a cache key changes when its shape does.
 - A touched trust boundary, new input, endpoint, permission check, secret, outbound request, file path, dependency, CI step, or model or tool call, passes the Security section of `~/.config/agentic/agents/reviewer.md`.
 - A runtime boundary, input, endpoint, permission check, outbound request, file path, or model or tool call, also gets a test that the unauthorized or invalid case is rejected, a dependency, secret, or CI step gets the check only.
 
