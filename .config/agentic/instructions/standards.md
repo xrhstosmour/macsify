@@ -51,6 +51,7 @@ Before pushing, check the diff against this list:
 - New log lines carry IDs, never personal data, and an expected outcome is not logged as an error.
 - A dependency outage on the new path is handled or surfaced, not swallowed.
 - A new enum value, stored field, or cache key is handled by every existing reader, and a cache key changes when its shape does.
+- A retried or repeated run leaves no keys, jobs, or records behind, and a job is enqueued only after its transaction commits.
 - A touched trust boundary, new input, endpoint, permission check, secret, outbound request, file path, dependency, CI step, or model or tool call, passes the Security section of `~/.config/agentic/agents/reviewer.md`.
 - A runtime boundary, input, endpoint, permission check, outbound request, file path, or model or tool call, also gets a test that the unauthorized or invalid case is rejected, a dependency, secret, or CI step gets the check only.
 
