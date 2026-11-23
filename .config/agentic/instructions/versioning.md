@@ -61,6 +61,7 @@ Wrong: `git commit --fixup <fixup_sha>`. Right: `git commit --fixup <original_sh
 ## Merge Workflow
 
 - Only merge a pull request when explicitly asked.
+- A conditional go-ahead, merge if CI is green, means check the condition, show the result, then merge, an unclear one means ask.
 - Never push directly to `main`/`master`, use a pull request. Force-push is fine on feature branches with `--force-with-lease`.
 - Keep pull requests single-topic, non-stacked, independently mergeable against `main`.
 - Before merging, verify `CI`/`CD` is green if configured, fix issues on the branch, never merge around a red check.
