@@ -46,8 +46,10 @@ Store `owner/repo/pr_number`.
 3. Fetch review threads:
 
    ```bash
-   gh api graphql --method POST -f query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$number){reviewThreads(first:100){nodes{id,isResolved,comments(first:50){nodes{databaseId,author{login},body,createdAt,path,line,originalCommit{oid}}}}}}}}' -F owner=<owner> -F repo=<repo> -F number=<pr_number>
+   ~/.config/scripts/review/review-threads.sh --comments <owner>/<repo> <pr_number>
    ```
+
+   It prints one JSON object per thread, `{id, isResolved, comments: [{databaseId, author, body, createdAt, path, line, originalCommit}]}`. Never inline the GraphQL query, a `gh api` call with `-f` stops on a permission prompt.
 
 4. Fetch standalone PR comments:
 
@@ -216,7 +218,7 @@ Reply and resolve review thread comments (for both human and bot authors) by pos
 
 Tagging, in this step and in Step 8:
 
-- Review thread replies are nested, so the thread already notifies its participants. Tag `@<author_login>` of the comment being answered only when more than one distinct author other than this agent's user wrote in the thread, counted from the Step 1 `comments.nodes[].author.login`. With a single other participant, post the reply with no tag.
+- Review thread replies are nested, so the thread already notifies its participants. Tag `@<author_login>` of the comment being answered only when more than one distinct author other than this agent's user wrote in the thread, counted from the Step 1 `comments[].author`. With a single other participant, post the reply with no tag.
 - Standalone comments and review bodies are not nested threads, so their replies always start with `@<author_login>` (`user.login` for both), then a blank line. Bot authors are tagged too when a reply is posted to them. Review body comments tag the review author.
 
 Write each body to a scratch file with the Write tool, then post it with `jq -Rs '{body: .}' < <body_file>`. Quotes, apostrophes, and newlines then need no shell escaping, typing the body inline through `echo` with `\n` breaks in some shells and the API answers HTTP 400.
