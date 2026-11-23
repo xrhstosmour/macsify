@@ -58,6 +58,7 @@ Before pushing, check the diff against this list:
 Before writing code, confirm the requirement, ask if unsure, check existing patterns, run lint and typecheck for a baseline only when the project documents a fast command, verify unfamiliar library APIs against official docs. After writing code, run lint and typecheck, review `git diff`, and run tests as follows:
 
 - With a CI test pipeline, a test job on the branch or PR, not a deployment pipeline, run only a targeted test locally, the single file or spec for the change, one quick command, and leave the full suite to that pipeline after the push. No long or serial suite locally, no local datastore stack just to run it.
+- When the test pipeline starts only on a manual trigger, such as a push to a test branch, trigger it after the push through Trigger CI of the `prepare-github-pr-for-review` skill, even when no PR is being prepared, and say which trigger ran.
 - Without a CI test pipeline, run the relevant tests locally before moving on.
 
 ## Implementation
