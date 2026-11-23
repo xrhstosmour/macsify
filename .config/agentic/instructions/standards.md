@@ -50,6 +50,8 @@ Before pushing, check the diff against this list:
 - The change reaches every case it should and none it should not, list the variants first, both directions, every flag state, every caller, every region or tenant, and check each.
 - New log lines carry IDs, never personal data, and an expected outcome is not logged as an error.
 - A dependency outage on the new path is handled or surfaced, not swallowed.
+- A new enum value, stored field, or cache key is handled by every existing reader, and a cache key changes when its shape does.
+- A retried or repeated run leaves no keys, jobs, or records behind, and a job is enqueued only after its transaction commits.
 - A touched trust boundary, new input, endpoint, permission check, secret, outbound request, file path, dependency, CI step, or model or tool call, passes the Security section of `~/.config/agentic/agents/reviewer.md`.
 - A runtime boundary, input, endpoint, permission check, outbound request, file path, or model or tool call, also gets a test that the unauthorized or invalid case is rejected, a dependency, secret, or CI step gets the check only.
 
@@ -58,6 +60,7 @@ Before pushing, check the diff against this list:
 Before writing code, confirm the requirement, ask if unsure, check existing patterns, run lint and typecheck for a baseline only when the project documents a fast command, verify unfamiliar library APIs against official docs. After writing code, run lint and typecheck, review `git diff`, and run tests as follows:
 
 - With a CI test pipeline, a test job on the branch or PR, not a deployment pipeline, run only a targeted test locally, the single file or spec for the change, one quick command, and leave the full suite to that pipeline after the push. No long or serial suite locally, no local datastore stack just to run it.
+- When the test pipeline starts only on a manual trigger, such as a push to a test branch, trigger it after the push through Trigger CI of the `prepare-github-pr-for-review` skill, even when no PR is being prepared, and say which trigger ran.
 - Without a CI test pipeline, run the relevant tests locally before moving on.
 
 ## Implementation
@@ -74,7 +77,7 @@ Before writing code, confirm the requirement, ask if unsure, check existing patt
 Understand the problem and read the code the change touches first, then stop at the first rung that holds:
 
 1. Does it need to exist? Speculative need, skip it and say so.
-2. Already in this codebase? Reuse the helper, type, or pattern, prefer existing patterns over new abstractions.
+2. Already in this codebase? Reuse the helper, type, or pattern, prefer existing patterns over new abstractions. The same goes for work items, update the open PR, task, or branch for the change before opening a new one.
 3. Standard library or native platform feature (`<input type="date">`, a database constraint) over a dependency.
 4. An installed dependency over a new one, never add one for what a few lines can do.
 5. Otherwise the minimum code that works, one line if it fits, never a one-liner that needs decoding. Between options of equal size, take the one correct on edge cases.

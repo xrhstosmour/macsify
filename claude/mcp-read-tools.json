@@ -29,6 +29,8 @@
     "phabricator-mcp_pha_wiki_history",
     "metabase-mcp_search",
     "metabase-mcp_read_resource",
+    "metabase-mcp_construct_query",
+    "metabase-mcp_construct_native_query",
     "grafana-mcp_analyze_loki_labels",
     "grafana-mcp_check_datasources_health",
     "grafana-mcp_generate_deeplink",
