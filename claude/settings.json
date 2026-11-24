@@ -146,6 +146,7 @@
       "mcp__claude_ai_Slack__slack_search_users"
     ],
     "deny": [
+      "Bash(tailscale funnel*)",
       "Read(**/.env)",
       "Read(**/.env.*)",
       "Read(!**/.env.example)",
