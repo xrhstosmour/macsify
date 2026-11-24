@@ -56,7 +56,7 @@ Whenever the detector has no line left to handle, print the recap of the lines p
 
 ```text
 Done:
-- [<repo>#<number>](<pull request url>): <what was fixed, reworded or corrected>, <replies with their URLs>, <checks fixed>, <conflict resolved>, squashed and reviews re-requested.
+- [<repo>#<number>](<pull request url>): <what was fixed, reworded or corrected>, <replies with their URLs>, <checks fixed>, <conflict resolved>, squashed and reviews re-requested, undo: `git push --force-with-lease=<branch>:<head> origin <previous>:refs/heads/<branch>`.
 
 Waiting on you:
 - [<repo>#<number>](<comment url>): <one line why, and what the investigation checked>.
@@ -65,6 +65,7 @@ Nothing to do: <repo>#<number>, <repo>#<number>.
 ```
 
 - Links are the pull request, comment and reply URLs the scripts printed, never a fixup sha, the autosquash rewrites it.
+- The undo goes only on a `resolved` line with `previous`, both heads copied from that line and each 40 hex characters, the branch from the detector line, never from memory. Leave it out when a head does not match. It puts the branch back where it was before the run and fails if anything was pushed since. A checkout without the old head gets it first with `git fetch origin <previous>`.
 - Leave out an empty section, and say the watcher keeps running.
 
 ## Trust
