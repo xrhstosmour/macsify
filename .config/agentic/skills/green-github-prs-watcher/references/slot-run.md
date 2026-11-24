@@ -4,7 +4,7 @@ The run of one detector line of `green-github-prs-watcher`, read by the backgrou
 
 ## Handle the line
 
-It writes every body to a file in one `mktemp -d` directory, the scripts read nothing else.
+It writes every body to a file in one `mktemp -d` directory, the scripts read nothing else. Run `mktemp -d` as its own command, write each file into the directory it prints with the `Write` tool, never a heredoc, `echo` or `printf`, and run each script as a command of its own with literal paths, never a shell variable, `&&`, `;` or a pipe. Only that shape matches the script's allow rule, a compound command goes to the auto mode classifier, which denies an unattended push or reply.
 
 For a `comments`, `prepare` or `checks` line, whatever its reason, since the detector reports only the first not done yet:
 
