@@ -17,7 +17,7 @@
 #   checks    no comments and nothing to prepare, but a check failed on the head and none still runs, so one run sees every failure, keyed `<owner>/<repo>#<number>=<head sha>`, apart from `prepare` so a conflict after a handled failure at the same head still counts, the push of its own run is a new head, so a failure after it starts the next cycle
 #   One line per pull request and poll, the first reason not done yet, a reason marked done falls through to the next, so an approval nobody answers never hides a conflict or a failed check. A reason still claimed holds the pull request, its run handles the rest.
 #   paused    the last `CYCLE_LIMIT` cycles of the pull request ran with nobody in between and this one would too, reported once per head, keyed `<owner>/<repo>#<number>@<head sha>`, so a bot that reviews every push or a check the watcher keeps breaking cannot loop. A cycle runs with nobody when no member or collaborator wrote any of its comments and its head is one `green-git.sh` pushed or one an earlier cycle already ran on, a bot answering the watcher's replies, or when its key was claimed before, a run that failed. A member's comment or a push of yours resumes it, nothing else does.
-# Outsiders never start an unattended change. Drafts, merged, closed, merge queue and cross repository pull requests are skipped, the push goes to `origin`.
+# Outsiders never start an unattended change. Drafts, merged, closed, merge queue, cross repository and `agent-stop` labeled pull requests are skipped, the push goes to `origin`.
 # A key is claimed at detection for two hours and recorded as done by `--mark`, same as `watch-review-requests.sh`. While any claim of a pull request is not done, the pull request is held, so a run still going is never started twice, not even for a reason its own push revealed. A run that failed without marking holds it until its claim expires, a newer comment waits too.
 # The newest 50 threads, 30 comments each, 50 comments and 50 reviews, 100 commits and 100 checks are read, a pull request with more is judged on those.
 
@@ -91,7 +91,8 @@ touch "$SEEN_FILE" "$CLAIMED_FILE" "$PUSHED_FILE"
 
 # One search per poll returns everything the decision needs. A failure shows on standard error, otherwise an expired token would look like no comments.
 # Search returns `null` nodes for items the token cannot read, such as repositories behind SAML single sign-on, they are skipped below.
-search="is:pr is:open -is:queued draft:false author:@me"
+# The `agent-stop` label keeps a pull request away from every watcher until it is removed.
+search="is:pr is:open -is:queued draft:false -label:agent-stop author:@me"
 if [ "$scope" != "me" ]; then
   search="$search org:$scope"
 fi

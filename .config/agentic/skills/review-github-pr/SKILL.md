@@ -39,7 +39,7 @@ Otherwise, use the current branch:
 gh pr view --json number,title,body,headRepository,url
 ```
 
-Store the PR title, description, and `owner/repo/number`.
+Store the PR title, description, and `owner/repo/number`. A `quick`, `standard` or `deep` next to the URL or branch, or a focus in words, is kept for "Pick the depth".
 
 ## Resolve the PR head
 
@@ -95,8 +95,8 @@ Store the diff and file list to pass to each sub-agent. In a re-review the diff 
 Read these once and pass specialists a short relevant excerpt instead of making each reload them:
 
 ```bash
-# Read them at the PR head, a PR that changes its own review rules is reviewed against them.
-for file in REVIEW_GUIDELINES.md REVIEW.md; do git show "<HEAD_SHA>:$file" 2>/dev/null; done
+# Read them at the merge base, a PR must never loosen the rules it is reviewed against, a change to them is a human callout instead.
+for file in REVIEW_GUIDELINES.md REVIEW.md; do git show "<MERGE_BASE>:$file" 2>/dev/null; done
 ```
 
 `REVIEW_GUIDELINES.md` and `REVIEW.md` are project-specific review rules that take precedence over the general rubric where they conflict. A useful one covers what the project does and where untrusted input enters, the components that matter most and least, what is out of scope, how this project rates severity, for example whether a post-auth injection is HIGH or CRITICAL, whether style, diagnostics, or cleanup findings are wanted, and what to leave alone. If the repo has none and the user asks for one, draft it along those lines.
@@ -133,6 +133,7 @@ Separately, scan for the mandatory human-callout triggers, used later in "Synthe
 | Feature flag added, removed, or a dormant one reused             | Feature flag change                        |
 | Changed default value in a config file                           | Configuration default change               |
 | A test declaration on a removed diff line whose name is not on an added line | Removed tests                  |
+| `REVIEW.md`, `REVIEW_GUIDELINES.md`, `CODEOWNERS`, `AGENTS.md`, `CLAUDE.md`, `.claude/`, `.agents/` or `.github/copilot-instructions.md` touched | Review rules or agent instructions changed |
 
 For removed tests, scan the `-` lines of the diff for any test declaration, such as `it`, `test`, `describe`, `context`, `specify`, `def test_`, `class Test`, `func Test`, or `@Test`, a removed test changes what the suite verifies and the reviewer must agree with it, adapted from the `summarize-pr` skill. A test whose body moved under a new name is a rename, list it as one.
 
@@ -149,6 +150,18 @@ Also rate the merge risk for the "Merge risk" section, adapted from Warp's `merg
 | Error detection (1)     | A failure would show in logs, metrics or alerts, or not applicable | Swallowed errors or fallbacks that hide breakage                                      |
 
 The weighted average gives `low` below 1.5, `medium` below 2.25, `high` from 2.25. Keep the numbers internal.
+
+## Pick the depth
+
+Pick one depth from the signals and callouts above, so a small change costs little and a risky one gets every pass:
+
+| Depth    | When                                                                                                                                                              | Passes                                                                                   |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| quick    | Docs only, tests only, or under about 150 changed lines with no migration, config or route change, no high-priority signal and no callout                         | `reviewer` only                                                                          |
+| standard | Anything not quick or deep                                                                                                                                        | `architect` and `reviewer`                                                               |
+| deep     | Any callout, an auth, security, migration or hot-path signal, more than 20 files, or a changed function or module that more than 10 files use, counted with `rg -l` | `architect`, `reviewer`, and a second `reviewer` on security and performance only, the verifier runs whatever the severities |
+
+An explicit depth from the user, `quick`, `standard` or `deep` as an argument or in words, wins over the table. A focus in words, "only the migration" or "go deep on auth", narrows every specialist's brief to it and picks `deep` when the focus is a deep signal, `standard` otherwise. Say the depth and why in the Coverage line.
 
 ## Review rubric
 
@@ -185,7 +198,7 @@ Report at most 3 NIT findings, keep the three with the clearest fix. When the sa
 
 ## Spawn sub-agents in parallel
 
-Invoke two sub-agents via the Task tool, running them concurrently. Skip the `architect` and run only the `reviewer` when the diff is under about 150 changed lines and touches no migrations, config, or routes, the two re-read the same files and the architect adds little on a small diff.
+Invoke the sub-agents of the depth from "Pick the depth" via the Task tool, running them concurrently. On a quick diff the architect adds little, both re-read the same files. The deep pass gets the `reviewer` prompt below with `Focus only on security and performance, the other reviewer covers the rest.` as its first line.
 
 For a diff over about 500 lines, send each specialist the file list plus only the hunks in its area instead of the full diff. The `architect` gets hunks for migrations, config, routes, infrastructure, and new modules or boundaries, the `reviewer` gets hunks with logic, handlers, auth, queries, and tests. A hunk that fits both goes to both, and config, routes, auth, permission, CORS/CSP, CI workflow, and dependency manifest hunks always go to both.
 
@@ -267,12 +280,12 @@ Description: {pr_description}
 {review_threads_or_omit_if_none}
 ```
 
-Both agents run in parallel. Wait for both to complete before proceeding.
+All agents run in parallel. Wait for every one to complete before proceeding.
 
 ## Verify findings
 
-1. Dedup the findings of both specialists, merging those with the same root cause or the same `file:line` region, keeping the highest severity and listing every source and location. Never merge a security finding into a general one. Number the result.
-2. Skip the verifier entirely when no finding is above LOW, Security included, and none is marked `Possibly moved`, and say so in the Coverage line.
+1. Dedup the findings of all specialists, merging those with the same root cause or the same `file:line` region, keeping the highest severity and listing every source and location. Never merge a security finding into a general one. Number the result.
+2. Skip the verifier when there are no findings, or, below deep depth, when no finding is above LOW, Security included, and none is marked `Possibly moved`, and say so in the Coverage line.
 3. Otherwise spawn one verifier through the Task tool, with the Explore subagent where the tool has one, it is read-only and cheap, and otherwise the `tester` agent. It is a verification task, not a test run, so tell it that its own output format is ignored. Pass it only the hunks around each cited `file:line` plus the numbered findings, not the full diff. Prompt it with:
 
 ```
@@ -325,7 +338,8 @@ Findings rated LOW or NIT, at most 3 NIT. Brief, not exhaustive.
 Findings tagged Pre-existing, report-only, not posted and not part of the verdict.
 
 ### Coverage
-- Architecture: found N issues
+- Depth: quick, standard or deep, and the reason in a few words, `deep, auth middleware changed`
+- Architecture: found N issues, or skipped at quick depth
 - Quality/Performance: found N issues
 - Security: found N issues
 - Verification: dropped N, unverified N, or skipped when nothing is above LOW
@@ -342,6 +356,7 @@ applicable callouts, each bolded exactly as below. Write "- None" if none apply.
 - **This change adds or removes feature flags:** <flags changed>, call out re-use of dormant flags
 - **This change changes configuration defaults:** <config var changed>
 - **This change removes tests:** <file:test name per removed test, renames marked as renamed to the new name>
+- **This change edits review rules or agent instructions:** <files>, they were not applied to this review
 ```
 
 ## Next steps

@@ -33,7 +33,7 @@ Use the `Monitor` tool on the detector, it streams one line per pull request int
   - `prepare` is keyed `<owner>/<repo>#<number>~<head sha>` and `checks` `<owner>/<repo>#<number>=<head sha>`, once per head each, so a conflict after the failed checks of the same head were handled still comes. The push of a run is a new head, so a failure on it starts the next cycle.
   - One line per pull request, the first reason not marked done, in that order. A reason marked done falls through to the next, so an approval nobody answers never hides a conflict or a failed check. Any claim of the pull request not marked done yet holds it, so a fixup its own run pushed before the autosquash, or a comment that lands mid-run, never starts a second run.
   - `paused`: the last three cycles of the pull request ran with nobody in between and this one would too, so a bot that reviews every push, a check the watcher keeps breaking or a run that keeps failing cannot loop it. A cycle runs with nobody when no member or collaborator wrote any of its comments and its head is one `green-git.sh` pushed or one an earlier cycle already ran on, a bot answering the watcher's replies, or when its key was claimed before. A member's comment or a push of yours resumes it on the next poll, there is no time window. The key is `<owner>/<repo>#<number>@<head sha>`, reported once per head.
-- Only your open pull requests that are not drafts, from a branch of the same repository, never the merge queue. Outsiders, deleted accounts and bot comments outside a review thread never count.
+- Only your open pull requests that are not drafts, from a branch of the same repository, never the merge queue or one labeled `agent-stop`. Add the label to stop the watcher on one pull request from the next poll, remove it to bring the pull request back. Outsiders, deleted accounts and bot comments outside a review thread never count.
 - The detector claims a key for two hours when it reports it and skips a key marked done in `~/.cache/green-github-prs-watcher/seen`. It never marks anything done itself, the last step does. To run one key again, delete its line in `seen`, it is reported once its two hour claim lapses, as a cycle with nobody in between. A recheck, of one pull request or of all of them, never deletes or empties the whole files, and never touches `claimed` or `pushed`, they tell the watcher's own cycles from yours.
 - It polls every 60 seconds. `Monitor` ends after its deadline, restart it with the same command when its notice arrives. Without `Monitor`, use `CronCreate` every 5 minutes running the detector with `--once`.
 - Run one green watcher at a time, a second one would hand out the same worktrees.
@@ -56,7 +56,7 @@ Whenever the detector has no line left to handle, print the recap of the lines p
 
 ```text
 Done:
-- [<repo>#<number>](<pull request url>): <what was fixed, reworded or corrected>, <replies with their URLs>, <checks fixed>, <conflict resolved>, squashed and reviews re-requested.
+- [<repo>#<number>](<pull request url>): <what was fixed, reworded or corrected>, <replies with their URLs>, <checks fixed>, <conflict resolved>, squashed and reviews re-requested, undo: `git push --force-with-lease=<branch>:<head> origin <previous>:refs/heads/<branch>`.
 
 Waiting on you:
 - [<repo>#<number>](<comment url>): <one line why, and what the investigation checked>.
@@ -65,6 +65,7 @@ Nothing to do: <repo>#<number>, <repo>#<number>.
 ```
 
 - Links are the pull request, comment and reply URLs the scripts printed, never a fixup sha, the autosquash rewrites it.
+- The undo goes only on a `resolved` line with `previous`, both heads copied from that line and each 40 hex characters, the branch from the detector line, never from memory. Leave it out when a head does not match. It puts the branch back where it was before the run and fails if anything was pushed since. A checkout without the old head gets it first with `git fetch origin <previous>`.
 - Leave out an empty section, and say the watcher keeps running.
 
 ## Trust

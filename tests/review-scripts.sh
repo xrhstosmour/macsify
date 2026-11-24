@@ -4,7 +4,7 @@
 # never the real GitHub. The detector reports a requested review, and a pull
 # request reviewed without approving after a push or an answer in a thread of the
 # viewer, never an approved one, once while its review runs and until it is
-# marked done, leaves out the merge queue, and rejects a scope that could carry
+# marked done, leaves out the merge queue and the `agent-stop` label, and rejects a scope that could carry
 # a search qualifier. The poster rejects a bad repository, number,
 # commit, event or comment shape, refuses a pull request that moved to another
 # commit or one it already reviewed at that commit, and otherwise posts one review with the validated payload.
@@ -36,18 +36,25 @@ cat >"$TEST_DIRECTORY/bin/gh" <<'STUB'
 case "$*" in
   "api graphql"*)
     # Answers the two searches with the nodes the test set, plus a queued pull
-    # request when the query does not leave the merge queue out, then applies
-    # the `--jq` filter the way `gh` does.
+    # request when the query does not leave the merge queue out, and to each
+    # search a labeled pull request when it does not leave `agent-stop` out, then
+    # applies the `--jq` filter the way `gh` does.
     requested="${STUB_REQUESTED:-[]}"
+    reviewed="${STUB_REVIEWED:-[]}"
     case "$*" in
       *-is:queued*) ;;
       *) requested="$(jq -c '. + [{number: 9, url: "https://github.com/owner/repo/pull/9", headRefOid: "'"$STUB_HEAD_SHA"'", repository: {nameWithOwner: "owner/repo"}}]' <<<"$requested")" ;;
     esac
     while [ $# -gt 0 ]; do
-      [ "$1" = "--jq" ] && filter="$2"
+      case "$1" in
+        --jq) filter="$2" ;;
+        requested=*-label:agent-stop* | reviewed=*-label:agent-stop*) ;;
+        requested=*) requested="$(jq -c '. + [{number: 8, url: "https://github.com/owner/repo/pull/8", headRefOid: "'"$STUB_HEAD_SHA"'", repository: {nameWithOwner: "owner/repo"}}]' <<<"$requested")" ;;
+        reviewed=*) reviewed="$(jq -c '. + [{number: 8, url: "https://github.com/owner/repo/pull/8", headRefOid: "'"$STUB_HEAD_SHA"'", repository: {nameWithOwner: "owner/repo"}, reviews: {nodes: [{author: {login: "me"}, state: "COMMENTED", commit: {oid: "old"}}]}, reviewThreads: {nodes: []}}]' <<<"$reviewed")" ;;
+      esac
       shift
     done
-    jq -n --argjson requested "$requested" --argjson reviewed "${STUB_REVIEWED:-[]}" \
+    jq -n --argjson requested "$requested" --argjson reviewed "$reviewed" \
       '{data: {viewer: {login: "me"}, requested: {nodes: $requested}, reviewed: {nodes: $reviewed}}}' | jq -r "$filter" ;;
   *"--method POST"*) cat >"$STUB_POSTED_FILE"; echo "https://github.com/owner/repo/pull/5#review" ;;
   "api user"*) echo "me" ;;
@@ -105,10 +112,10 @@ echo "0 $KEY" >"$XDG_CACHE_HOME/review-github-prs-watcher/claimed"
 set_nodes STUB_REQUESTED "$(node 5 "$OLD_SHA")"
 [ -n "$(detect)" ] || fail "the detector missed a push to a requested pull request"
 
-# The merge queue stays out, the stub adds a queued pull request to any query that does not exclude it.
+# The merge queue and the `agent-stop` label stay out, the stub adds a pull request to any query that does not exclude them.
 reset_state
 export STUB_REQUESTED="[]"
-[ -z "$(detect)" ] || fail "the detector reported a pull request in the merge queue"
+[ -z "$(detect)" ] || fail "the detector reported a pull request in the merge queue or labeled agent-stop"
 
 # A pull request that was reviewed without approving comes back after a push.
 reset_state

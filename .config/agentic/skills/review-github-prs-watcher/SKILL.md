@@ -29,6 +29,7 @@ Use the `Monitor` tool on the detector, it streams one line per pull request int
   - `pushed`: you reviewed it without approving and the author pushed since, a re-review.
   - `reply`: you reviewed it without approving and someone other than a bot answered in a thread you took part in.
 - A pull request you approved never comes back unless your review is requested again. Drafts, your own pull requests, merged, closed and merge queue ones are skipped.
+- An `agent-stop` label on a pull request keeps this watcher and `green-github-prs-watcher` off it from the next poll, removing the label brings it back. Anybody with triage access to the repository can add it, so a teammate can keep the unattended review off their own pull request.
 - The detector claims a key for two hours when it reports it, so a review still running is not started twice, and skips a key marked done in `~/.cache/review-github-prs-watcher/seen`. It never marks anything done itself, the last step does. A review that failed is reported again once the claim expires. To review one again right away, delete its lines in `seen` and `claimed` in that folder.
 - It polls every 60 seconds. `Monitor` ends after its deadline, restart it with the same command when its notice arrives, the claims keep it from repeating. Without `Monitor`, use `CronCreate` every 5 minutes running the detector with `--once`.
 - `--once` polls one time and exits. `--dry-run` claims nothing, use it to check a scope first.

@@ -5,7 +5,8 @@
 # the viewer once a member, a collaborator or a bot reviewer commented after the
 # viewer, once while its run goes and until it is marked done, never for an
 # outsider, the viewer, a deleted author, a bot outside a review thread, a
-# resolved thread or a pull request from a fork, keys a cycle without the head so
+# resolved thread, a pull request from a fork, in the merge queue or labeled
+# `agent-stop`, keys a cycle without the head so
 # its own push does not start it again, holds a pull request while any of its
 # runs goes, pauses it after three cycles in a row with nobody in between, on
 # heads the watcher pushed or already ran on, or of a failed run claimed again, until a member
@@ -45,7 +46,8 @@ STATE="$XDG_CACHE_HOME/green-github-prs-watcher"
 
 # The stub answers the search with the nodes the test set, and applies the `--jq`
 # filter the way `gh` does. A query that does not leave the merge queue out also
-# gets a queued pull request. For the responder it prints what the `--jq` filters
+# gets a queued pull request, one that does not leave `agent-stop` out a labeled
+# one. For the responder it prints what the `--jq` filters
 # of the script would, review comment 2 replies to 1 on pull request 5, review
 # comment 9 and issue comment 8 are on pull request 6, issue comment 3 on 5, and
 # thread `PRRT_five` is on 5. A write keeps its endpoint and standard input.
@@ -101,6 +103,10 @@ case "$*" in
     case "$*" in
       *-is:queued*) ;;
       *) nodes="$(jq -c '. + [{number: 9, url: "u", headRefOid: "q", headRefName: "queued", isCrossRepository: false, repository: {nameWithOwner: "owner/repo"}, reviewThreads: {nodes: []}, comments: {nodes: [{author: {__typename: "User", login: "author"}, authorAssociation: "MEMBER", createdAt: "2026-11-05T11:00:00Z"}]}, reviews: {nodes: []}}]' <<<"$nodes")" ;;
+    esac
+    case "$*" in
+      *-label:agent-stop*) ;;
+      *) nodes="$(jq -c '. + [{number: 8, url: "u", headRefOid: "s", headRefName: "stopped", isCrossRepository: false, repository: {nameWithOwner: "owner/repo"}, reviewThreads: {nodes: []}, comments: {nodes: [{author: {__typename: "User", login: "author"}, authorAssociation: "MEMBER", createdAt: "2026-11-05T11:00:00Z"}]}, reviews: {nodes: []}}]' <<<"$nodes")" ;;
     esac
     while [ $# -gt 0 ]; do
       [ "$1" = "--jq" ] && filter="$2"
@@ -182,13 +188,13 @@ nodes "$(node '[]' '[["author","2026-11-05T10:00:00Z"],["me","2026-11-05T11:00:0
 nodes "$(node '[]' '[["deploy","2026-11-05T11:00:00Z","Bot","NONE"]]' '[["copilot","2026-11-05T11:00:00Z","Bot","NONE"]]')"
 [ -z "$(detect)" ] || fail "the detector reported a bot outside a review thread"
 
-# The newest comment keys the cycle, a pull request from a fork and the merge queue stay out.
+# The newest comment keys the cycle, a pull request from a fork, the merge queue and one labeled `agent-stop` stay out.
 nodes "$(node '[[false, [["author","2026-11-05T09:00:00Z"]]]]' '[["author","2026-11-05T11:00:00Z"]]')"
 [ "$(detect)" = "$LINE" ] || fail "the detector did not key the cycle on the newest comment"
 nodes "$(node '[[false, [["author","2026-11-05T11:00:00Z"]]]]' '[]' '[]' true)"
 [ -z "$(detect)" ] || fail "the detector reported a pull request from a fork"
 nodes ""
-[ -z "$(detect)" ] || fail "the detector reported a pull request in the merge queue"
+[ -z "$(detect)" ] || fail "the detector reported a pull request in the merge queue or labeled agent-stop"
 
 # Three cycles in a row on heads the watcher pushed, with nobody in between, pause the pull request on the fourth, reported once per head.
 PAUSED="owner/repo#5@$HEAD_SHA $HEAD_SHA https://github.com/owner/repo/pull/5 fix/thing paused"

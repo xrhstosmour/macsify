@@ -86,9 +86,9 @@ touch "$SEEN_FILE" "$CLAIMED_FILE"
 # Search returns `null` nodes for items the token cannot read, such as repositories behind SAML single sign-on, they are skipped below, not reported as pull requests.
 # Two searches per poll, both return what the decision needs, so the cost does not grow with the pull requests waiting. A failure shows on standard error, otherwise an expired token would look like no requests.
 # `user-review-requested` is you only, `review-requested` also matches every team you are in, and GitHub clears it when you review, so it only matches again when the author asks again. Own pull requests never ask for the author's review.
-# `is:open` leaves out merged and closed, `-is:queued` the ones already in the merge queue.
-requested_query="is:pr is:open -is:queued draft:false user-review-requested:@me -author:@me"
-reviewed_query="is:pr is:open -is:queued draft:false reviewed-by:@me -author:@me"
+# `is:open` leaves out merged and closed, `-is:queued` the ones already in the merge queue, `-label:agent-stop` the ones anybody took away from the watchers.
+requested_query="is:pr is:open -is:queued draft:false -label:agent-stop user-review-requested:@me -author:@me"
+reviewed_query="is:pr is:open -is:queued draft:false -label:agent-stop reviewed-by:@me -author:@me"
 if [ "$scope" != "me" ]; then
   requested_query="$requested_query org:$scope"
   reviewed_query="$reviewed_query org:$scope"
