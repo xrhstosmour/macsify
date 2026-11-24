@@ -39,7 +39,7 @@ Otherwise, use the current branch:
 gh pr view --json number,title,body,headRepository,url
 ```
 
-Store the PR title, description, and `owner/repo/number`.
+Store the PR title, description, and `owner/repo/number`. A `quick`, `standard` or `deep` next to the URL or branch, or a focus in words, is kept for "Pick the depth".
 
 ## Resolve the PR head
 
@@ -151,6 +151,18 @@ Also rate the merge risk for the "Merge risk" section, adapted from Warp's `merg
 
 The weighted average gives `low` below 1.5, `medium` below 2.25, `high` from 2.25. Keep the numbers internal.
 
+## Pick the depth
+
+Pick one depth from the signals and callouts above, so a small change costs little and a risky one gets every pass:
+
+| Depth    | When                                                                                                                                                              | Passes                                                                                   |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| quick    | Docs only, tests only, or under about 150 changed lines with no migration, config or route change, no high-priority signal and no callout                         | `reviewer` only                                                                          |
+| standard | Anything not quick or deep                                                                                                                                        | `architect` and `reviewer`                                                               |
+| deep     | Any callout, an auth, security, migration or hot-path signal, more than 20 files, or a changed function or module that more than 10 files use, counted with `rg -l` | `architect`, `reviewer`, and a second `reviewer` on security and performance only, the verifier runs whatever the severities |
+
+An explicit depth from the user, `quick`, `standard` or `deep` as an argument or in words, wins over the table. A focus in words, "only the migration" or "go deep on auth", narrows every specialist's brief to it and picks `deep` when the focus is a deep signal, `standard` otherwise. Say the depth and why in the Coverage line.
+
 ## Review rubric
 
 `agents/reviewer.md` is the single source for the severity calibration, the untrusted-input and security checks, and the finding format. Do not copy them into prompts, except the one-line finding format and the severity paragraph inlined in the `architect` prompt. Append this rubric to the `reviewer` sub-agent prompt, plus the project context from "Load project context once", labeled as project-specific and taking precedence over the rubric below where the two conflict. The `architect` gets only "Determining what to flag" and "Line references", the rest is outside its brief. The `reviewer` gets all sections.
@@ -186,7 +198,7 @@ Report at most 3 NIT findings, keep the three with the clearest fix. When the sa
 
 ## Spawn sub-agents in parallel
 
-Invoke two sub-agents via the Task tool, running them concurrently. Skip the `architect` and run only the `reviewer` when the diff is under about 150 changed lines and touches no migrations, config, or routes, the two re-read the same files and the architect adds little on a small diff.
+Invoke the sub-agents of the depth from "Pick the depth" via the Task tool, running them concurrently. On a quick diff the architect adds little, both re-read the same files. The deep pass gets the `reviewer` prompt below with `Focus only on security and performance, the other reviewer covers the rest.` as its first line.
 
 For a diff over about 500 lines, send each specialist the file list plus only the hunks in its area instead of the full diff. The `architect` gets hunks for migrations, config, routes, infrastructure, and new modules or boundaries, the `reviewer` gets hunks with logic, handlers, auth, queries, and tests. A hunk that fits both goes to both, and config, routes, auth, permission, CORS/CSP, CI workflow, and dependency manifest hunks always go to both.
 
@@ -268,12 +280,12 @@ Description: {pr_description}
 {review_threads_or_omit_if_none}
 ```
 
-Both agents run in parallel. Wait for both to complete before proceeding.
+All agents run in parallel. Wait for every one to complete before proceeding.
 
 ## Verify findings
 
-1. Dedup the findings of both specialists, merging those with the same root cause or the same `file:line` region, keeping the highest severity and listing every source and location. Never merge a security finding into a general one. Number the result.
-2. Skip the verifier entirely when no finding is above LOW, Security included, and none is marked `Possibly moved`, and say so in the Coverage line.
+1. Dedup the findings of all specialists, merging those with the same root cause or the same `file:line` region, keeping the highest severity and listing every source and location. Never merge a security finding into a general one. Number the result.
+2. Skip the verifier when there are no findings, or, below deep depth, when no finding is above LOW, Security included, and none is marked `Possibly moved`, and say so in the Coverage line.
 3. Otherwise spawn one verifier through the Task tool, with the Explore subagent where the tool has one, it is read-only and cheap, and otherwise the `tester` agent. It is a verification task, not a test run, so tell it that its own output format is ignored. Pass it only the hunks around each cited `file:line` plus the numbered findings, not the full diff. Prompt it with:
 
 ```
@@ -326,7 +338,8 @@ Findings rated LOW or NIT, at most 3 NIT. Brief, not exhaustive.
 Findings tagged Pre-existing, report-only, not posted and not part of the verdict.
 
 ### Coverage
-- Architecture: found N issues
+- Depth: quick, standard or deep, and the reason in a few words, `deep, auth middleware changed`
+- Architecture: found N issues, or skipped at quick depth
 - Quality/Performance: found N issues
 - Security: found N issues
 - Verification: dropped N, unverified N, or skipped when nothing is above LOW
