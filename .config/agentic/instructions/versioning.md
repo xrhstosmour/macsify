@@ -70,7 +70,7 @@ Wrong: `git commit --fixup <fixup_sha>`. Right: `git commit --fixup <original_sh
 
 ## Change Summaries
 
-For a non-trivial change, state what changed per file in one line each, with anything left untouched or risky in the Flagging Convention (`standards.md`) instead of a separate block. Skip it for a trivial change.
+For a non-trivial change, state what changed per file in one line each, with anything left untouched or risky in the `FLAGGED:` block of the Message footer (`communication.md`) instead of a separate block. Skip it for a trivial change.
 
 ## Worktrees
 
