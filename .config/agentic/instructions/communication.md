@@ -38,6 +38,7 @@ Orwell's rules for prose, applied to every reply, comment, commit, PR, and docum
 - Never open with a preamble or a run-up, and never close with a line that restates the paragraph.
 - No "not X, but Y" contrast unless the reader actually believes X, state Y directly.
 - In a reply, lead with the decision or answer, never rebuild context the reader already has.
+- When you offer options, list the recommended one first, start its bullet with `Recommended:`, and give the reason in the same bullet. The `TODO:` item that asks for the pick names it too, `Pick A, recommended, or B or C`.
 - Never use markdown dividers or decorative dashes/hyphens to separate sections, except between the sections of a Posted message.
 - Never use generic headings unless the user asks for structured output.
 - Write like a teammate in Slack, casual, not a documentation generator.
@@ -64,7 +65,7 @@ Comments and posts people read outside the terminal, on Phabricator, GitHub, and
 - One section per subject, a bold label with a colon naming the subject, and a divider between sections. A message with one subject has no label and no divider. In Slack, bold is `*label*` and a blank line replaces the divider, Slack has none.
 - Bullets under the label, one idea per bullet, plain sentences, concrete numbers and dates, the reason right after the fact.
 - Link the task or PR a fact comes from inline, next to the fact.
-- A decision someone has to make goes in its own `**QUESTION**:` line at the end of its section, one or two sentences of context, a direct question with the options, then a mention of who decides.
+- A decision someone has to make goes in its own `**QUESTION**:` line at the end of its section, one or two sentences of context, a direct question with the options, the recommended one first with its reason, then a mention of who decides.
 - Write for someone who was not in the room, no internal jargon or code names.
 - Run any draft the user will send or post as their own, a message, email, comment, or bullets, through the `humanize` skill before showing it.
 
