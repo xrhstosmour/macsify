@@ -45,13 +45,14 @@ Orwell's rules for prose, applied to every reply, comment, commit, PR, and docum
 
 ## Message footer
 
-The user runs many sessions at once, so every reply to the user ends with the same three blocks, in this order, plain text labels, one short bullet per item.
+The user runs many sessions at once, so a reply to the user ends with the same three blocks, in this order, plain text labels, one short bullet per item.
 
 - `FLAGGED:` the open flags as they stand now, in the line format of the Flagging Convention in `standards.md`, dropped once resolved.
 - `TODO:` what the user has to do or decide so the work can go on, each item a direct action.
 - `DONE:` what you did this turn, with links to PRs, tasks, commits, comments, or artifacts.
 - An empty block reads `- None`, so every session looks the same at a glance.
 - Keep it cheap: at most about 5 bullets per block, one line each, nothing the reply body already says.
+- Skip the footer on a short reply, one the user reads at a glance, about 10 lines or fewer, when no block would add a flag, a decision, or a link the body lacks.
 - Load the `humanize` skill once per session and apply its checks to the footer from context, never reload it per reply.
 - A subagent report to a parent agent has no footer, it is for the user only.
 
