@@ -146,6 +146,7 @@ Structural tells and their fix:
 - Long, comma-heavy, uniform sentences with no natural fragment or run-on variance → vary sentence length.
 - Missing colloquial particles and contractions a real Greek writer uses in casual register: `δηλαδή`, `βασικά`, `ας πούμε`, `μάλλον`, `κάπως`, `θα 'ναι` instead of `θα είναι` → add them back when the register is casual, never in a formal document.
 - Balanced parallel construction `δεν είναι μόνο [X], αλλά και [Y]` (the Greek calque of "not only X but also Y") → say it plainly, in one direction.
+- Parallel sentences that each open with an article and a new subject, `Το ... . Η ... . Αυτό ...`, one fact per sentence in the same shape → merge the facts, or start a sentence with the verb.
 - Same generic sentence-opener reused across paragraphs as a crutch, `με άλλα λόγια`, `κατά κανόνα`, `για παράδειγμα`, `το πρόβλημα, βέβαια, είναι` → vary the opener or cut it, let the idea start the sentence.
 - Overuse of the em dash (`—`) to introduce a mid-sentence clarification and the colon (`:`) to join two closely related independent clauses, both grammatically correct but rare in everyday Greek writing → prefer a period, comma, or parentheses instead.
 
