@@ -67,6 +67,7 @@ Nothing to do: <repo>#<number>, <repo>#<number>.
 - Links are the pull request, comment and reply URLs the scripts printed, never a fixup sha, the autosquash rewrites it.
 - The undo goes only on a `resolved` line with `previous`, both heads copied from that line and each 40 hex characters, the branch from the detector line, never from memory. Leave it out when a head does not match. It puts the branch back where it was before the run and fails if anything was pushed since. A checkout without the old head gets it first with `git fetch origin <previous>`.
 - Leave out an empty section, and say the watcher keeps running.
+- A `needs a manual trigger` line means the one approval of Manual trigger is missing for that repository and workflow, so every pull request would come back with it. Say so once per repository and workflow, with the line to add to `manual-tests`, `<owner/repo> <workflow file> <branch>`, the branch a name of your own that the workflow's push trigger matches. Once you say it is written, dispatch `<owner>/<repo>#<number> <head sha> <url> <branch> tests <workflow file> manual` for each pull request still waiting on it, the head and branch from its last detector line.
 
 ## Trust
 
