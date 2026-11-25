@@ -2,12 +2,12 @@
 # Starts a test workflow that `green-respond.sh dispatch` and `green-git.sh tests` refuse because its tree mentions a deploy word, by moving your own branch to the head of the pull request, a branch whose push runs that workflow, the manual trigger you would run by hand.
 # Only for a repository and workflow you listed once in `manual-tests` next to the trust file of `lib.sh`, one `<owner/repo> <workflow file> <branch>` per line, written by hand, never by an agent, `claude/settings.json` denies the edit. Listing a line approves moving that branch for every pull request of the repository, so it must be a branch you use for nothing else, which nothing deploys from.
 # Allowed in claude/settings.json by its path, so it validates every input and config line itself and calls fixed endpoints, never a caller supplied one.
-# It never moves `main`, `master`, the default branch, a branch named after a deploy target or the branch of the pull request itself, and moves nothing while a run of the branch is not completed, the branch is yours too and a push would cancel or mix that run.
+# It never moves `main`, `master`, the default branch, a branch named after a deploy target or the branch of the pull request itself, and moves nothing while a run of the branch is not completed, another slot is moving it, or it moved under two minutes ago, the branch is yours too and a push would cancel or mix that run.
 #
 # Usage: green-manual-tests.sh <owner/repo> <number> <head sha> <workflow file>
 #        green-manual-tests.sh due <owner/repo> <number> <head sha> <workflow file>
 # Prints `<branch> <head sha>` once the branch is at the head.
-# Exit 0 moved, 1 refused, 2 bad input, 6 no line of `manual-tests` for the repository and workflow, so the caller keeps its own needs attention line, 7 the branch has a run that is not completed, or the last busy try of this head is under five minutes old, so the caller tries again later, 8 six busy tries of this head already, so the caller gives up and shows it.
+# Exit 0 moved, 1 refused, 2 bad input, 6 no line of `manual-tests` for the repository and workflow, so the caller keeps its own needs attention line, 7 the branch is busy as above, or the last busy try of this head is under five minutes old, so the caller tries again later, 8 six busy tries of this head already, so the caller gives up and shows it.
 # `due` reads only the busy tries and calls nothing, exit 0 when a try may run now, 7 or 8 as above, so the dispatcher starts no agent that would only wait.
 # The limits live here and not in the dispatcher's prose, so a busy branch can never start an agent every poll.
 
@@ -120,13 +120,41 @@ if [ "$branch" = "main" ] || [ "$branch" = "master" ] || [ "$branch" = "$default
   exit 1
 fi
 
+state_directory="$(dirname "$tries_file")"
+mkdir -p "$state_directory"
+record_busy() {
+  echo "$(date +%s) $try_key" >>"$tries_file"
+  echo "$1, try again later" >&2
+  exit 7
+}
+
+# The watcher runs this from several slots at once, the lock keeps two of them from both finding the branch idle and both moving it. A lock left by a killed run frees itself after ten minutes.
+lock="$state_directory/manual-lock-${repository//\//_}-${branch//\//_}"
+find "$lock" -maxdepth 0 -mmin +10 -exec rmdir {} \; 2>/dev/null || true
+if ! mkdir "$lock" 2>/dev/null; then
+  record_busy "another run is moving $branch"
+fi
+trap 'rmdir "$lock"' EXIT
+
+# The run a move starts takes a while to show up in the run list, so the branch stays busy for two minutes after a move.
+moves_file="$state_directory/manual-moves"
+move_seconds=120
+last_move=0
+if [ -f "$moves_file" ]; then
+  while read -r move_time move_repository move_branch; do
+    if [ "$move_repository $move_branch" = "$repository $branch" ]; then
+      last_move="$move_time"
+    fi
+  done <"$moves_file"
+fi
+if [ $(($(date +%s) - last_move)) -lt "$move_seconds" ]; then
+  record_busy "$branch was moved under $move_seconds seconds ago"
+fi
+
 busy="$(gh run list --repo "$repository" --branch "$branch" --json status --jq '[.[] | select(.status != "completed")] | length')"
 require_number "run count" "$busy"
 if [ "$busy" -gt 0 ]; then
-  mkdir -p "$(dirname "$tries_file")"
-  echo "$(date +%s) $try_key" >>"$tries_file"
-  echo "$branch has $busy run not completed, try again later" >&2
-  exit 7
+  record_busy "$branch has $busy run not completed"
 fi
 
 # The reads above took a while, a push in the meantime would run a head nobody checked.
@@ -141,4 +169,5 @@ if grep -qxF -- "refs/heads/$branch" <<<"$existing"; then
 else
   gh api -X POST "repos/$repository/git/refs" -f "ref=refs/heads/$branch" -f "sha=$head_sha" >/dev/null
 fi
+echo "$(date +%s) $repository $branch" >>"$moves_file"
 echo "$branch $head_sha"
