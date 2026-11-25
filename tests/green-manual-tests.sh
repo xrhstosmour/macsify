@@ -7,7 +7,8 @@
 # refuses a bad input, a bad or linked file, a line naming `main`, the default
 # branch, a deploy target or the branch of the pull request, a pull request of
 # another author, from a fork, a draft, moved, or changing `.github`, and exits 7
-# without moving anything while a run of the branch is not completed.
+# without moving anything while a run of the branch is not completed, another
+# slot holds its lock, or it moved under two minutes ago.
 
 TESTS_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 SCRIPT="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/review/green-manual-tests.sh"
@@ -138,6 +139,8 @@ grep -qF -- 'run list --repo owner/repo --branch ci/me --json status' "$STUB_CAL
 
 # A busy try is recorded, the next one within five minutes waits without calling `gh`, `due` says the same.
 TRIES_FILE="$HOME/.cache/green-github-prs-watcher/manual-tries"
+MOVES_FILE="$HOME/.cache/green-github-prs-watcher/manual-moves"
+LOCK="$HOME/.cache/green-github-prs-watcher/manual-lock-owner_repo-ci_me"
 [ "$(grep -c " owner/repo#5 $HEAD_SHA tests.yml$" "$TRIES_FILE")" = 1 ] || fail "the busy try was not recorded"
 expect_exit 7 "a try under five minutes after a busy one" owner/repo 5 "$HEAD_SHA" tests.yml
 [ ! -s "$STUB_CALLS" ] || fail "a try under five minutes reached gh"
@@ -158,9 +161,27 @@ run owner/repo 5 "$HEAD_SHA" tests.yml || fail "the script refused an idle branc
 [ "$(cat "$TEST_DIRECTORY/output")" = "ci/me $HEAD_SHA" ] || fail "the script printed $(cat "$TEST_DIRECTORY/output")"
 grep -qxF -- "api -X PATCH repos/owner/repo/git/refs/heads/ci/me -f sha=$HEAD_SHA -F force=true" "$STUB_CALLS" || fail "the script did not force the branch to the head"
 ! grep -q -- 'api -X POST' "$STUB_CALLS" || fail "the script created a branch that exists"
+[ ! -e "$LOCK" ] || fail "the script left its lock behind"
+
+# A branch moved under two minutes ago is busy, its run may not be listed yet.
+expect_exit 7 "a branch moved under two minutes ago" owner/repo 5 "$HEAD_SHA" tests.yml
+! grep -q -- 'run list' "$STUB_CALLS" || fail "a recent move still read the runs"
+rm -f "$TRIES_FILE" "$MOVES_FILE"
+
+# Another slot holding the lock is busy, a lock older than ten minutes is taken over.
+mkdir "$LOCK"
+expect_exit 7 "a branch another slot is moving" owner/repo 5 "$HEAD_SHA" tests.yml
+[ -d "$LOCK" ] || fail "the script removed the lock of another slot"
+rm -f "$TRIES_FILE"
+touch -t 202001010000 "$LOCK"
+run owner/repo 5 "$HEAD_SHA" tests.yml || fail "the script refused a branch with a stale lock"
+[ ! -e "$LOCK" ] || fail "the script kept a stale lock"
+rm -f "$MOVES_FILE"
+
 STUB_REFS="refs/heads/ci/me-other" run owner/repo 5 "$HEAD_SHA" tests.yml || fail "the script refused a missing branch"
 grep -qxF -- "api -X POST repos/owner/repo/git/refs -f ref=refs/heads/ci/me -f sha=$HEAD_SHA" "$STUB_CALLS" || fail "the script did not create the branch at the head"
 ! grep -q -- 'api -X PATCH' "$STUB_CALLS" || fail "the script moved a branch that another name prefixes"
+rm -f "$MOVES_FILE"
 
 # The first line of the repository and workflow wins.
 manual_file 'owner/repo tests.yml ci/first' 'owner/repo tests.yml ci/second'
