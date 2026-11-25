@@ -21,7 +21,7 @@
 
 ## Flagging Convention
 
-Use this for anything adjacent, out of scope, dead, or risky. Skip it when there is nothing to flag, one line per item, no block for a trivial change:
+Use this for anything adjacent, out of scope, dead, or risky, one line per item. The block goes in the Message footer of `communication.md`:
 
 ``` text
 FLAGGED:

@@ -43,6 +43,18 @@ Orwell's rules for prose, applied to every reply, comment, commit, PR, and docum
 - Write like a teammate in Slack, casual, not a documentation generator.
 - In prose, categorize severity with plain words, serious, minor, nitpick, never colored emoji categories. Structured review output keeps the severity labels its own skill defines.
 
+## Message footer
+
+The user runs many sessions at once, so every reply to the user ends with the same three blocks, in this order, plain text labels, one short bullet per item.
+
+- `FLAGGED:` the open flags as they stand now, in the line format of the Flagging Convention in `standards.md`, dropped once resolved.
+- `TODO:` what the user has to do or decide so the work can go on, each item a direct action.
+- `DONE:` what you did this turn, with links to PRs, tasks, commits, comments, or artifacts.
+- An empty block reads `- None`, so every session looks the same at a glance.
+- Keep it cheap: at most about 5 bullets per block, one line each, nothing the reply body already says.
+- Load the `humanize` skill once per session and apply its checks to the footer from context, never reload it per reply.
+- A subagent report to a parent agent has no footer, it is for the user only.
+
 ## Posted messages
 
 Comments and posts people read outside the terminal, on Phabricator, GitHub, and Slack, unless a skill gives that message its own format, like the review comments of `review-github-pr`, the SHA replies of `resolve-github-pr-comments`, and the `Status update comment` of `manage-phabricator-task`. Chat replies keep the rules above. Platform formatting, like Remarkup blank lines, stays in each skill.
