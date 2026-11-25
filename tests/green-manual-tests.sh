@@ -8,7 +8,8 @@
 # branch, a deploy target or the branch of the pull request, a pull request of
 # another author, from a fork, a draft, moved, or changing `.github`, and exits 7
 # without moving anything while a run of the branch is not completed, another
-# slot holds its lock, or it moved under two minutes ago.
+# slot holds its lock, or it moved under two minutes ago. `due` answers the same
+# from the runs, the lock and the last move, without recording a try.
 
 TESTS_SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 SCRIPT="$TESTS_SCRIPT_DIRECTORY/../.config/scripts/review/green-manual-tests.sh"
@@ -150,7 +151,15 @@ expect_exit 0 "due for another head" due owner/repo 5 11111111111111111111111111
 old=$(($(date +%s) - 600))
 printf '%s owner/repo#5 %s tests.yml\n' "$old" "$HEAD_SHA" "$old" "$HEAD_SHA" "$old" "$HEAD_SHA" "$old" "$HEAD_SHA" "$old" "$HEAD_SHA" >"$TRIES_FILE"
 expect_exit 0 "due after five minutes" due owner/repo 5 "$HEAD_SHA" tests.yml
-[ ! -s "$STUB_CALLS" ] || fail "due reached gh"
+[ "$(cat "$STUB_CALLS")" = "run list --repo owner/repo --branch ci/me --json status --jq [.[] | select(.status != \"completed\")] | length" ] || fail "due called gh for more than the runs of the branch"
+# `due` waits while a run is going, records no try for it, and never reads a failed run list as idle.
+STUB_RUNS=1 expect_exit 7 "due with a run not completed" due owner/repo 5 "$HEAD_SHA" tests.yml
+[ "$(grep -c " owner/repo#5 $HEAD_SHA tests.yml$" "$TRIES_FILE")" = 5 ] || fail "due recorded a busy try"
+STUB_RUNS=x expect_exit 2 "due with a failed run list" due owner/repo 5 "$HEAD_SHA" tests.yml
+mv "$MANUAL_FILE" "$TEST_DIRECTORY/kept"
+expect_exit 0 "due without a manual-tests file" due owner/repo 5 "$HEAD_SHA" tests.yml
+[ ! -s "$STUB_CALLS" ] || fail "due without a file reached gh"
+mv "$TEST_DIRECTORY/kept" "$MANUAL_FILE"
 STUB_RUNS=1 expect_exit 7 "the sixth busy try" owner/repo 5 "$HEAD_SHA" tests.yml
 expect_exit 8 "a seventh try" owner/repo 5 "$HEAD_SHA" tests.yml
 expect_exit 8 "due after six busy tries" due owner/repo 5 "$HEAD_SHA" tests.yml
@@ -164,16 +173,21 @@ grep -qxF -- "api -X PATCH repos/owner/repo/git/refs/heads/ci/me -f sha=$HEAD_SH
 [ ! -e "$LOCK" ] || fail "the script left its lock behind"
 
 # A branch moved under two minutes ago is busy, its run may not be listed yet.
+expect_exit 7 "due on a branch moved under two minutes ago" due owner/repo 5 "$HEAD_SHA" tests.yml
+[ ! -e "$TRIES_FILE" ] || fail "due recorded a busy try for a recent move"
 expect_exit 7 "a branch moved under two minutes ago" owner/repo 5 "$HEAD_SHA" tests.yml
 ! grep -q -- 'run list' "$STUB_CALLS" || fail "a recent move still read the runs"
 rm -f "$TRIES_FILE" "$MOVES_FILE"
 
 # Another slot holding the lock is busy, a lock older than ten minutes is taken over.
 mkdir "$LOCK"
+expect_exit 7 "due on a branch another slot is moving" due owner/repo 5 "$HEAD_SHA" tests.yml
 expect_exit 7 "a branch another slot is moving" owner/repo 5 "$HEAD_SHA" tests.yml
 [ -d "$LOCK" ] || fail "the script removed the lock of another slot"
 rm -f "$TRIES_FILE"
 touch -t 202001010000 "$LOCK"
+expect_exit 0 "due on a branch with a stale lock" due owner/repo 5 "$HEAD_SHA" tests.yml
+[ -d "$LOCK" ] || fail "due removed a stale lock"
 run owner/repo 5 "$HEAD_SHA" tests.yml || fail "the script refused a branch with a stale lock"
 [ ! -e "$LOCK" ] || fail "the script kept a stale lock"
 rm -f "$MOVES_FILE"

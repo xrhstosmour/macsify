@@ -8,7 +8,7 @@
 #        green-manual-tests.sh due <owner/repo> <number> <head sha> <workflow file>
 # Prints `<branch> <head sha>` once the branch is at the head.
 # Exit 0 moved, 1 refused, 2 bad input, 6 no line of `manual-tests` for the repository and workflow, so the caller keeps its own needs attention line, 7 the branch is busy as above, or the last busy try of this head is under five minutes old, so the caller tries again later, 8 six busy tries of this head already, so the caller gives up and shows it.
-# `due` reads only the busy tries and calls nothing, exit 0 when a try may run now, 7 or 8 as above, so the dispatcher starts no agent that would only wait.
+# `due` reads the busy tries, the lock, the last move and the runs of the branch, and moves and records nothing, exit 0 when a try may run now, 7 or 8 as above, so the dispatcher starts no agent that would only wait and spends no busy try while a run is going.
 # The limits live here and not in the dispatcher's prose, so a busy branch can never start an agent every poll.
 
 set -e
@@ -57,21 +57,25 @@ if [ $(($(date +%s) - last_try)) -lt "$retry_seconds" ]; then
   echo "the last busy try at $head_sha is under $retry_seconds seconds old, try again later" >&2
   exit 7
 fi
-if [ "$due_only" = true ]; then
-  exit 0
-fi
+
+# `due` leaves a missing or bad file to the run, which prints the line of that case.
+file_problem() {
+  if [ "$due_only" = true ]; then
+    exit 0
+  fi
+  echo "$2" >&2
+  exit "$1"
+}
 
 manual_tests_file="$HOME/.config/green-github-prs-watcher/manual-tests"
 manual_tests_pattern='^[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9._-]{1,100} [A-Za-z0-9_][A-Za-z0-9._-]{0,99}\.ya?ml [A-Za-z0-9_][A-Za-z0-9._/-]{0,100}$'
 
 if [ ! -e "$manual_tests_file" ] && [ ! -L "$manual_tests_file" ]; then
-  echo "no manual-tests file, trigger $workflow by hand" >&2
-  exit 6
+  file_problem 6 "no manual-tests file, trigger $workflow by hand"
 fi
 # A file nobody can read, or with a line that is not an entry, fails closed like the trust file, it must not approve anything.
 if [ -L "$manual_tests_file" ] || [ ! -f "$manual_tests_file" ] || grep -qvE "$manual_tests_pattern" "$manual_tests_file"; then
-  echo "$manual_tests_file is not a plain file of <owner/repo> <workflow file> <branch> lines, fix or remove it" >&2
-  exit 1
+  file_problem 1 "$manual_tests_file is not a plain file of <owner/repo> <workflow file> <branch> lines, fix or remove it"
 fi
 # The first line of the repository and workflow wins, so the answer never depends on the order a reader picks.
 branch=""
@@ -82,13 +86,50 @@ while read -r line_repository line_workflow line_branch; do
   fi
 done <"$manual_tests_file"
 if [ -z "$branch" ]; then
-  echo "no manual-tests line for $repository $workflow, trigger it by hand" >&2
-  exit 6
+  file_problem 6 "no manual-tests line for $repository $workflow, trigger it by hand"
 fi
 # A line git cannot take as a branch name is as bad as a line that is no entry.
 if ! git check-ref-format "refs/heads/$branch"; then
-  echo "invalid manual-tests branch: $branch" >&2
-  exit 1
+  file_problem 1 "invalid manual-tests branch: $branch"
+fi
+
+state_directory="$(dirname "$tries_file")"
+lock="$state_directory/manual-lock-${repository//\//_}-${branch//\//_}"
+moves_file="$state_directory/manual-moves"
+move_seconds=120
+# Prints why the branch is busy, nothing when it is idle. The run that a move starts takes a while to show up in the run list, so the branch stays busy for two minutes after a move.
+branch_busy() {
+  local last_move=0 move_time move_repository move_branch busy
+  if [ -f "$moves_file" ]; then
+    while read -r move_time move_repository move_branch; do
+      if [ "$move_repository $move_branch" = "$repository $branch" ]; then
+        last_move="$move_time"
+      fi
+    done <"$moves_file"
+  fi
+  if [ $(($(date +%s) - last_move)) -lt "$move_seconds" ]; then
+    echo "$branch was moved under $move_seconds seconds ago"
+    return
+  fi
+  busy="$(gh run list --repo "$repository" --branch "$branch" --json status --jq '[.[] | select(.status != "completed")] | length')"
+  require_number "run count" "$busy"
+  if [ "$busy" -gt 0 ]; then
+    echo "$branch has $busy run not completed"
+  fi
+}
+
+# A failed read exits the script through the assignment, so it never reads as an idle branch.
+if [ "$due_only" = true ]; then
+  if [ -d "$lock" ] && [ -z "$(find "$lock" -maxdepth 0 -mmin +10)" ]; then
+    echo "another run is moving $branch, try again later" >&2
+    exit 7
+  fi
+  reason="$(branch_busy)"
+  if [ -n "$reason" ]; then
+    echo "$reason, try again later" >&2
+    exit 7
+  fi
+  exit 0
 fi
 
 viewer="$(gh api user --jq .login)"
@@ -120,7 +161,6 @@ if [ "$branch" = "main" ] || [ "$branch" = "master" ] || [ "$branch" = "$default
   exit 1
 fi
 
-state_directory="$(dirname "$tries_file")"
 mkdir -p "$state_directory"
 record_busy() {
   echo "$(date +%s) $try_key" >>"$tries_file"
@@ -129,32 +169,15 @@ record_busy() {
 }
 
 # The watcher runs this from several slots at once, the lock keeps two of them from both finding the branch idle and both moving it. A lock left by a killed run frees itself after ten minutes.
-lock="$state_directory/manual-lock-${repository//\//_}-${branch//\//_}"
 find "$lock" -maxdepth 0 -mmin +10 -exec rmdir {} \; 2>/dev/null || true
 if ! mkdir "$lock" 2>/dev/null; then
   record_busy "another run is moving $branch"
 fi
 trap 'rmdir "$lock"' EXIT
 
-# The run a move starts takes a while to show up in the run list, so the branch stays busy for two minutes after a move.
-moves_file="$state_directory/manual-moves"
-move_seconds=120
-last_move=0
-if [ -f "$moves_file" ]; then
-  while read -r move_time move_repository move_branch; do
-    if [ "$move_repository $move_branch" = "$repository $branch" ]; then
-      last_move="$move_time"
-    fi
-  done <"$moves_file"
-fi
-if [ $(($(date +%s) - last_move)) -lt "$move_seconds" ]; then
-  record_busy "$branch was moved under $move_seconds seconds ago"
-fi
-
-busy="$(gh run list --repo "$repository" --branch "$branch" --json status --jq '[.[] | select(.status != "completed")] | length')"
-require_number "run count" "$busy"
-if [ "$busy" -gt 0 ]; then
-  record_busy "$branch has $busy run not completed"
+reason="$(branch_busy)"
+if [ -n "$reason" ]; then
+  record_busy "$reason"
 fi
 
 # The reads above took a while, a push in the meantime would run a head nobody checked.
