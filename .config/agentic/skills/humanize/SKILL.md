@@ -37,7 +37,22 @@ Formal email, casual message, blog post, technical doc, social post, and so on. 
 
 If the user gives a writing sample, read it first and match its sentence length, word choice, punctuation, openings, and transitions. The sample overrides the checklists, including the dash rule: a sample that uses dashes keeps them at about the same rate. Without a sample, opinion pieces, blog posts, and personal writing keep the writer's opinions, doubts, humor, and asides, reference, technical, and legal text stays neutral and plain.
 
-A draft the user sends under their own name takes their voice. When the conversation holds messages the user wrote, those are the sample. Without one, a reply in a chat thread follows "Thread replies" in `communication.md`. In a draft you wrote yourself, cutting a detail the reader does not need is editing, not a lost fact, so Step 6 does not count it as one.
+A draft the user sends under their own name takes their voice. When the conversation holds messages the user wrote, those are the sample. Without one, follow "The user's voice" below, and a reply in a chat thread also follows "Thread replies" in `communication.md`. In a draft you wrote yourself, cutting a detail the reader does not need is editing, not a lost fact, so Step 6 does not count it as one.
+
+## The user's voice
+
+How the user writes in chat, taken from their own messages and from the drafts they sent back as too long or too polished. It applies to drafts they send as their own, never to Claude's live replies.
+
+- Greek unless the thread is in English. Work terms the team says in English stay in Latin script and lower case, on it, fix, PR, review, staging, FYI, btw, thanks.
+- About a third of a first draft's length. Write the message itself, never a summary about the message.
+- A one-line reply starts lower case and has no closing period. A longer message uses capitalized sentences with periods, one per line.
+- A greeting only when opening a new thread to a group, a short "hello," or "Καλησπέρα,", none inside a thread.
+- Own actions in first-person present ("Βγάζω fix και δοκιμάζω πάλι"), then the ask on the last line as a direct question with its options. When a message holds both, keep what the user did apart from what they ask.
+- Greek questions end with `?`, never `;`. Accents stay, even in a one-line reply.
+- `άρα` for a conclusion, `νομίζω` before a judgment, `μάλλον` or `κάπως` for doubt.
+- A link sits on a word, "εδώ", "PR", "staging", never a bare URL or a label before it.
+- Numbers inline. No emoji, bold, bullets, tables, or sign-off in a chat message.
+- A prefix the user set, like "Update:", stays, with one line after it.
 
 ## Step 3: Preserve untouched content
 
