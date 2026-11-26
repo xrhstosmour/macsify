@@ -71,8 +71,8 @@ Store `owner/repo/pr_number`.
    ```bash
    # Check replies to review comment.
    gh api "repos/<owner>/<repo>/pulls/<pr_number>/comments" --jq '.[] | select(.id==<databaseId>) | ._links.self.href' | xargs -I {} gh api "{}/replies" --jq '.[] | select(.user.login=="<user>")'
-   # Check replies to standalone comment.
-   gh api "repos/<owner>/<repo>/issues/comments/<id>/replies" --jq '.[] | select(.user.login=="<user>")'
+   # Standalone comments have no replies endpoint, a reply is a later issue comment from this agent that quotes the original.
+   gh api "repos/<owner>/<repo>/issues/<pr_number>/comments" --jq '.[] | select(.user.login=="<user>" and (.body | contains("<text of the original>"))) | .id'
    ```
 
 ## 2. Assess
@@ -226,8 +226,8 @@ Write each body to a scratch file with the Write tool, then post it with `jq -Rs
 ```bash
 # Review thread reply, body is the fixup URL, prefixed with the tag and a blank line only when more than one other participant wrote in the thread.
 jq -Rs '{body: .}' < <body_file> | gh api "repos/<owner>/<repo>/pulls/<pr_number>/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
-# Standalone comment reply, body starts with the tag, a blank line, the quoted original text, a blank line, then the fixup URL.
-jq -Rs '{body: .}' < <body_file> | gh api "repos/<owner>/<repo>/issues/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
+# Standalone comment reply, a plain issue comment because the replies endpoint returns 404, body starts with the tag, a blank line, the quoted original text, a blank line, then the fixup URL.
+jq -Rs '{body: .}' < <body_file> | gh api "repos/<owner>/<repo>/issues/<pr_number>/comments" -X POST -H "Accept: application/vnd.github+json" --input -
 ```
 
 Review bodies have no reply endpoint and cannot be resolved. Answer inline whenever possible: a note that maps to a review thread is answered by that thread's own reply above, never with a second reply or a standalone comment. Only a review body with an actionable note that has no thread anywhere gets a standalone PR comment that quotes the note and links the review `html_url`, followed by the fixup SHA URL(s) when valid or the reason when not valid:
@@ -255,8 +255,8 @@ For review bodies: Answer inline when a thread exists, otherwise with a standalo
 # Body is the reason, tagged only when more than one other participant wrote in the thread, see Step 7.
 jq -Rs '{body: .}' < <body_file> | gh api "repos/<owner>/<repo>/pulls/<pr_number>/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
 gh api graphql -f query='mutation($threadId:ID!){resolveReviewThread(input:{threadId:$threadId}){thread{isResolved}}}' -F threadId=<thread_id>
-# Standalone comment, non-bot only, tagged quote reply with reason, no resolve.
-jq -Rs '{body: .}' < <body_file> | gh api "repos/<owner>/<repo>/issues/comments/<id>/replies" -X POST -H "Accept: application/vnd.github+json" --input -
+# Standalone comment, non-bot only, tagged quote reply with reason as a plain issue comment, no resolve.
+jq -Rs '{body: .}' < <body_file> | gh api "repos/<owner>/<repo>/issues/<pr_number>/comments" -X POST -H "Accept: application/vnd.github+json" --input -
 ```
 
 ## 9. Finish
