@@ -173,6 +173,7 @@
       "Bash(*green-github-prs-watcher/claimed*)",
       "Bash(*green-github-prs-watcher/pushed*)",
       "Bash(*green-github-prs-watcher/manual-tests*)",
+      "Bash(*green-github-prs-watcher/manual-handling*)",
       "Bash(*XDG_CACHE_HOME=*)",
       "Bash(*trusted-workflows*)",
       "WebFetch(domain:github.com)",
