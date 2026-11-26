@@ -18,6 +18,7 @@
 #   One line per pull request and poll, the first reason not done yet, a reason marked done falls through to the next, so an approval nobody answers never hides a conflict or a failed check. A reason still claimed holds the pull request, its run handles the rest.
 #   paused    the last `CYCLE_LIMIT` cycles of the pull request ran with nobody in between and this one would too, reported once per head, keyed `<owner>/<repo>#<number>@<head sha>`, so a bot that reviews every push or a check the watcher keeps breaking cannot loop. A cycle runs with nobody when no member or collaborator wrote any of its comments and its head is one `green-git.sh` pushed or one an earlier cycle already ran on, a bot answering the watcher's replies, or when its key was claimed before, a run that failed. A member's comment or a push of yours resumes it, nothing else does.
 # Outsiders never start an unattended change. Drafts, merged, closed, merge queue, cross repository and `agent-stop` labeled pull requests are skipped, the push goes to `origin`.
+# A pull request listed as `<owner/repo>#<number>` in `manual-handling` is skipped too, a private `agent-stop` for the ones whose comments you decide yourself, written by hand, never by an agent, `claude/settings.json` denies the edit.
 # A key is claimed at detection for two hours and recorded as done by `--mark`, same as `watch-review-requests.sh`. While any claim of a pull request is not done, the pull request is held, so a run still going is never started twice, not even for a reason its own push revealed. A run that failed without marking holds it until its claim expires, a newer comment waits too.
 # The newest 50 threads, 30 comments each, 50 comments and 50 reviews, 100 commits and 100 checks are read, a pull request with more is judged on those.
 
@@ -30,6 +31,7 @@ STATE_DIRECTORY="${XDG_CACHE_HOME:-$HOME/.cache}/green-github-prs-watcher"
 SEEN_FILE="$STATE_DIRECTORY/seen"
 CLAIMED_FILE="$STATE_DIRECTORY/claimed"
 PUSHED_FILE="$STATE_DIRECTORY/pushed"
+MANUAL_FILE="$HOME/.config/green-github-prs-watcher/manual-handling"
 CLAIM_SECONDS=7200
 CYCLE_LIMIT=3
 
@@ -147,6 +149,11 @@ done_key() {
   awk -v key="$1" -v since="${2:-0}" '$2 == key && $1 > since { found = 1 } END { exit !found }' "$SEEN_FILE"
 }
 
+# Whether you listed the pull request in `manual-handling`, a missing file lists none.
+manual() {
+  [ -f "$MANUAL_FILE" ] && awk -v pull_request="$1" '$1 == pull_request { found = 1 } END { exit !found }' "$MANUAL_FILE"
+}
+
 # Whether a key is claimed by a run that started less than two hours ago, after an optional epoch.
 running() {
   awk -v key="$1" -v since="${2:-0}" -v now="$(date +%s)" -v limit="$CLAIM_SECONDS" '$2 == key && $1 > since && now - $1 < limit { found = 1 } END { exit !found }' "$CLAIMED_FILE"
@@ -202,7 +209,7 @@ poll() {
       [ -n "$repository" ] || continue
 
       pull_request="$repository#$number"
-      if [ "$pull_request" = "$held" ]; then
+      if [ "$pull_request" = "$held" ] || manual "$pull_request"; then
         continue
       fi
       case "$reason" in
