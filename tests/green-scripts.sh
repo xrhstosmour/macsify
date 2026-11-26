@@ -5,8 +5,8 @@
 # the viewer once a member, a collaborator or a bot reviewer commented after the
 # viewer, once while its run goes and until it is marked done, never for an
 # outsider, the viewer, a deleted author, a bot outside a review thread, a
-# resolved thread, a pull request from a fork, in the merge queue or labeled
-# `agent-stop`, keys a cycle without the head so
+# resolved thread, a pull request from a fork, in the merge queue, labeled
+# `agent-stop` or listed in `manual-handling`, keys a cycle without the head so
 # its own push does not start it again, holds a pull request while any of its
 # runs goes, pauses it after three cycles in a row with nobody in between, on
 # heads the watcher pushed or already ran on, or of a failed run claimed again, until a member
@@ -195,6 +195,17 @@ nodes "$(node '[[false, [["author","2026-11-05T11:00:00Z"]]]]' '[]' '[]' true)"
 [ -z "$(detect)" ] || fail "the detector reported a pull request from a fork"
 nodes ""
 [ -z "$(detect)" ] || fail "the detector reported a pull request in the merge queue or labeled agent-stop"
+
+# A pull request listed in `manual-handling` stays out and is not claimed, a longer number with the same prefix does not list it.
+MANUAL_FILE="$HOME/.config/green-github-prs-watcher/manual-handling"
+mkdir -p "${MANUAL_FILE%/*}"
+echo "owner/repo#5" >"$MANUAL_FILE"
+nodes "$(node '[[false, [["author","2026-11-05T11:00:00Z"]]]]')"
+[ -z "$(detect)" ] || fail "the detector reported a pull request listed in manual-handling"
+[ ! -s "$STATE/claimed" ] || fail "the detector claimed a pull request listed in manual-handling"
+echo "owner/repo#55" >"$MANUAL_FILE"
+[ "$(detect)" = "$LINE" ] || fail "the detector skipped a pull request whose number only starts like a listed one"
+rm "$MANUAL_FILE"
 
 # Three cycles in a row on heads the watcher pushed, with nobody in between, pause the pull request on the fourth, reported once per head.
 PAUSED="owner/repo#5@$HEAD_SHA $HEAD_SHA https://github.com/owner/repo/pull/5 fix/thing paused"
