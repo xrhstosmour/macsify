@@ -42,13 +42,18 @@ if [ -z "$rewritten" ]; then
   failures=$((failures + 1))
 else
   output=$(bash -c "$rewritten")
+  capture_file=$(printf '%s\n' "$output" | sed -n 's/^\[5000 bytes elided, full output in \(.*\)\]$/\1/p')
   expected="$(printf 'x%.0s' $(seq 10000))
-[5000 bytes elided]
+[5000 bytes elided, full output in $capture_file]
 $(printf 'x%.0s' $(seq 9997))END"
-  if [ "$output" != "$expected" ]; then
-    echo "FAIL: command printing 25000 bytes did not keep the first and last 10000 bytes around an elision line"
+  if [ -z "$capture_file" ] || [ "$output" != "$expected" ]; then
+    echo "FAIL: command printing 25000 bytes did not keep the first and last 10000 bytes around an elision line naming the capture file"
+    failures=$((failures + 1))
+  elif [ "$(wc -c < "$capture_file" | tr -d ' ')" != 25000 ]; then
+    echo "FAIL: the capture file named in the elision line does not hold the full 25000 bytes"
     failures=$((failures + 1))
   fi
+  rm -f "$capture_file"
 fi
 
 for command in 'git push --force origin main' 'git push origin main' 'git branch -D feature/example' 'git reset --hard HEAD' 'git clean -fd' 'git checkout .' 'git restore .' 'gh pr merge 1' 'sudo ls' 'dd if=/dev/zero of=file'; do
