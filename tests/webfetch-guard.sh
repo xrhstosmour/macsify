@@ -57,8 +57,10 @@ check "https://blog.example.com/learn-grafana" allow
 check "https://github.com.example.com/owner" allow
 check "https://notgithub.com/owner" allow
 
-# The plugin also caps `bash` output like `bash-output-cap.sh` does. It keeps the first and last halves around an elision line, a cut inside a multi-byte character at either end drops it whole, and a command that asks for the full output passes untouched.
+# The plugin also caps `bash` output like `bash-output-cap.sh` does. It keeps the first and last halves around an elision line naming a file with the full output, a cut inside a multi-byte character at either end drops it whole, and a command that asks for the full output passes untouched.
 capped=$(node --input-type=module -e "
+  const { readFileSync, rmSync } = await import('node:fs');
+  const { dirname } = await import('node:path');
   const { AgenticGuardsPlugin } = await import(process.argv[1]);
   const hooks = await AgenticGuardsPlugin();
   const run = async (command, text) => {
@@ -70,14 +72,20 @@ capped=$(node --input-type=module -e "
   const capped = await run('ls', long);
   const multibyte = await run('ls', 'a' + 'é'.repeat(15000) + 'a');
   const full = await run('git diff', long);
+  const captureFile = capped.match(/^\[5000 bytes elided, full output in (.+)\]$/m)?.[1];
+  const captured = captureFile ? readFileSync(captureFile, 'utf8') : '';
+  for (const file of [captureFile, multibyte.match(/full output in (.+)\]$/m)?.[1]]) {
+    if (file) rmSync(dirname(file), { recursive: true });
+  }
   console.log(JSON.stringify([
-    capped === 'a'.repeat(10000) + '\n[5000 bytes elided]\n' + 'a'.repeat(9997) + 'END',
+    capped === 'a'.repeat(10000) + '\n[5000 bytes elided, full output in ' + captureFile + ']\n' + 'a'.repeat(9997) + 'END',
+    captured === long,
     !multibyte.includes('�'),
     full === long,
   ]));
 " "$temporary_directory/opencode-guards.mjs")
-if [ "$capped" != "[true,true,true]" ]; then
-  echo "FAIL: opencode output cap gave $capped, expected a plain command capped to its first and last halves, no split character, and an untouched git diff"
+if [ "$capped" != "[true,true,true,true]" ]; then
+  echo "FAIL: opencode output cap gave $capped, expected a plain command capped to its first and last halves around the path of a file holding the full output, no split character, and an untouched git diff"
   failures=$((failures + 1))
 fi
 
