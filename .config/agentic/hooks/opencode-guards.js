@@ -20,6 +20,9 @@
 //     only guards a 1MB in-memory capture safety limit), so bash's returned
 //     output is otherwise uncapped. This is a gap Claude Code's Bash tool
 //     shares too, hence bash-output-cap.sh existing at all.
+//     bash-output-cap.sh also skips auto mode, whose classifier denies a
+//     rewritten call. OpenCode has no such classifier and this hook rewrites
+//     nothing, so it caps in every mode.
 //
 // Static instructions (communication/standards/versioning/privacy/security) load via opencode.json's
 // `instructions` array instead, no hook needed for those.
@@ -30,6 +33,10 @@
 // awaits the trigger before returning `output` to the LLM. So mutating
 // output.output here is honored, unlike Claude Code's PostToolUse, which is
 // read-only (code.claude.com/docs/en/hooks).
+
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 // Service URLs that must go through a dedicated CLI, never WebFetch. Patterns
 // match against the hostname only (see below), anchored to a label boundary,
@@ -99,13 +106,22 @@ export const AgenticGuardsPlugin = async () => {
       const encoded = new TextEncoder().encode(output.output);
       if (encoded.length <= BASH_OUTPUT_MAX_BYTES) return;
       // First and last halves, like bash-output-cap.sh, errors and test
-      // summaries land at the end.
+      // summaries land at the end. The full output goes to a file named in the
+      // elision line, so the middle can be read without a rerun.
       const half = BASH_OUTPUT_MAX_BYTES / 2;
       const decoder = new TextDecoder("utf-8");
       const head = headUtf8(encoded, half);
       const tail = tailUtf8(encoded, half);
       const elided = encoded.length - head.length - tail.length;
-      output.output = decoder.decode(head) + `\n[${elided} bytes elided]\n` + decoder.decode(tail);
+      let elisionLine = `[${elided} bytes elided]`;
+      try {
+        const captureFile = join(mkdtempSync(join(tmpdir(), "bash-output-cap.")), "output");
+        writeFileSync(captureFile, encoded);
+        elisionLine = `[${elided} bytes elided, full output in ${captureFile}]`;
+      } catch {
+        // A failed write still caps the output, only the path is left out.
+      }
+      output.output = decoder.decode(head) + `\n${elisionLine}\n` + decoder.decode(tail);
     },
   };
 };

@@ -31,6 +31,13 @@ if [ -z "$command" ]; then
   exit 0
 fi
 
+# Auto mode's classifier reviews the command Claude wrote, so a rewrite after it
+# gets the call denied with no verdict and the command never runs
+# (code.claude.com/docs/en/permission-modes).
+if [ "$(printf '%s' "$input" | jq -r '.permission_mode // empty')" = "auto" ]; then
+  exit 0
+fi
+
 # Multi-line commands (heredocs, or one with a trailing `#` comment) can't
 # be safely wrapped by string concatenation, appending anything after a
 # heredoc delimiter or a comment marker breaks or silently swallows it.
@@ -85,10 +92,12 @@ case "$command" in
 esac
 
 # Output past the cap keeps its first and last halves, test summaries and
-# errors land at the end, and losing them costs a rerun.
+# errors land at the end, and losing them costs a rerun. The capture file then
+# stays and its path is printed, so the elided middle can still be read without
+# a rerun, Claude Code's own limit drops it for a failing command.
 half_bytes=$((max_bytes / 2))
 capture_file="${TMPDIR:-/tmp}/bash-output-cap.$$"
-wrapped_command="{ $command ; } > '$capture_file' 2>&1; __bash_output_cap_exit=\$?; __bash_output_cap_size=\$(wc -c < '$capture_file'); if [ \"\$__bash_output_cap_size\" -gt $max_bytes ]; then head -c $half_bytes '$capture_file'; printf '\n[%s bytes elided]\n' \$((__bash_output_cap_size - $max_bytes)); tail -c $half_bytes '$capture_file'; else cat '$capture_file'; fi; rm -f '$capture_file'; exit \$__bash_output_cap_exit"
+wrapped_command="{ $command ; } > '$capture_file' 2>&1; __bash_output_cap_exit=\$?; __bash_output_cap_size=\$(wc -c < '$capture_file'); if [ \"\$__bash_output_cap_size\" -gt $max_bytes ]; then head -c $half_bytes '$capture_file'; printf '\n[%s bytes elided, full output in %s]\n' \$((__bash_output_cap_size - $max_bytes)) '$capture_file'; tail -c $half_bytes '$capture_file'; else cat '$capture_file'; rm -f '$capture_file'; fi; exit \$__bash_output_cap_exit"
 
 # No permissionDecision: the rewritten command still goes through Claude
 # Code's normal permission flow (allow/deny/ask rules, the interactive
