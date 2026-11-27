@@ -77,6 +77,8 @@ Mix short and long sentences. A single fragment is fine where a person would use
 
 Never fabricate new facts, examples, or personal anecdotes the user didn't supply. Restructure and rephrase only.
 
+In embedded mode, a claim you wrote about a system, a team, or a cause traces to something read in this session, otherwise turn it into a question or cut it. This skill keeps facts, it does not make a guess true.
+
 ## What to return
 
 - Pasted text, the default: the final rewrite, plus a short list of tells that remain on purpose, if any.

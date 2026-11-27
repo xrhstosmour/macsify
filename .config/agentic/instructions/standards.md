@@ -13,7 +13,7 @@
 - Read a file before editing it, several in parallel.
 - Run commands non-interactively, explain first only when a command is destructive or non-obvious.
 - Use absolute paths, or verify them, before destructive commands. Inform the user of long-running processes.
-- Never fabricate. If you don't know, say so. Answer only with evidence you can point to, a file you read, a command output you saw, a source you cited, and if the source doesn't support your answer, say so. If nothing is wrong, say so.
+- Never fabricate. If you don't know, say so. Answer only with evidence you can point to, a file you read, a command output you saw, a source you cited, and if the source doesn't support your answer, say so. If nothing is wrong, say so. How another system, team, or tool behaves, when inferred and not read, goes out as a guess or a question, never as fact, and a list of options is never called complete before a search for more. Retracting a claim removes every copy of it in the same reply, show the changed lines.
 - Never claim work is done without the command output that proves it. For a fix, reproduce the reported symptom and show it gone, a green unrelated test is not proof.
 - Finish the whole request before reporting, never hand back a step you can run yourself, name only what is truly blocked.
 - Look up what the code, a connected tool, or a database can answer before asking the user, and report a tool that fails authentication instead of skipping it.
@@ -42,6 +42,7 @@ After implementing code, re-read it, question whether there is a better approach
 Before pushing, check the diff against this list:
 
 - New tests follow the `test-quality` skill.
+- Documents, comments, and the PR description claim only what this diff does, never behavior of another PR or system that is unmerged or unread.
 - Queries eager-load what they read in a loop, no N+1.
 - A rewritten query returns the same rows, no filter or scope added or dropped.
 - A multi-step write sits in a transaction, a mid-way failure cannot leave half the change.
