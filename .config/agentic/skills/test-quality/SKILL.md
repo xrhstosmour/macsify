@@ -17,6 +17,7 @@ Before writing or flagging a test, check these, a match means rewrite or drop it
 - Trivial wiring: source or import greps, getter and setter round-trips with no logic.
 - Wrong-reason pass: a negative-control or error test that would also pass for an unrelated failure.
 - Overpromising name: claims more than the assertions check.
+- Outcome-blind: passes whether or not the change under test happened, such as a matcher that accepts both the old and the new value.
 
 Test authoring rules, on top of the patterns above:
 
