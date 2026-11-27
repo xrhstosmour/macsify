@@ -5,7 +5,8 @@
 # used to turn the wrapper into a syntax error. Then that output past the cap
 # keeps its first and last halves around an elision line, and that the
 # commands `claude/settings.json` denies or asks about are never rewritten, a
-# wrapper would defeat their end-anchored patterns.
+# wrapper would defeat their end-anchored patterns, and that nothing is
+# rewritten in auto mode, whose classifier denies a rewritten call.
 
 set -e
 
@@ -57,6 +58,12 @@ for command in 'git push --force origin main' 'git push origin main' 'git branch
     failures=$((failures + 1))
   fi
 done
+
+auto_mode_output=$(jq -n '{permission_mode: "auto", tool_input: {command: "echo hello"}}' | bash "$HOOK_SCRIPT")
+if [ -n "$auto_mode_output" ]; then
+  echo "FAIL: 'echo hello' was rewritten in auto mode, the classifier would deny it with no verdict"
+  failures=$((failures + 1))
+fi
 
 if [ "$failures" -gt 0 ]; then
   exit 1

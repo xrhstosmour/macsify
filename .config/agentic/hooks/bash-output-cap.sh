@@ -31,6 +31,13 @@ if [ -z "$command" ]; then
   exit 0
 fi
 
+# Auto mode's classifier reviews the command Claude wrote, so a rewrite after it
+# gets the call denied with no verdict and the command never runs
+# (code.claude.com/docs/en/permission-modes).
+if [ "$(printf '%s' "$input" | jq -r '.permission_mode // empty')" = "auto" ]; then
+  exit 0
+fi
+
 # Multi-line commands (heredocs, or one with a trailing `#` comment) can't
 # be safely wrapped by string concatenation, appending anything after a
 # heredoc delimiter or a comment marker breaks or silently swallows it.
